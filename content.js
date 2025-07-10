@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 響應式完整版 */
+  /* BV SHOP 條碼列印排版器 - 響應式完整版（底圖版本） */
   
   /* 檢查是否為行動裝置 */
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -60,6 +60,7 @@ javascript:(function(){
       transition: all 0.2s ease;
       margin-bottom: 10px;
       border-radius: 4px;
+      overflow: hidden; /* 確保底圖不會超出邊界 */
     }
     
     /* 標籤懸停效果 - 桌面版才有 */
@@ -702,7 +703,7 @@ javascript:(function(){
       font-style: italic;
     }
     
-    /* Logo 上傳樣式 */
+    /* 底圖上傳樣式 */
     .logo-upload-area {
       border: 2px dashed #d4d7dd;
       border-radius: 12px;
@@ -802,16 +803,22 @@ javascript:(function(){
       box-shadow: 0 4px 10px rgba(240, 71, 71, 0.35);
     }
     
-    /* Logo 在標籤上的樣式 */
+    /* 底圖在標籤上的樣式 */
     .print_sample {
       position: relative !important;
     }
     
-    .label-logo {
+    .label-background-logo {
       position: absolute !important;
-      z-index: 10;
+      z-index: 1 !important; /* 在最底層 */
       pointer-events: none;
       object-fit: contain !important;
+    }
+    
+    /* 確保內容在底圖上方 */
+    .print_sample > *:not(.label-background-logo) {
+      position: relative !important;
+      z-index: 2 !important;
     }
     
     /* 新增載入動畫 */
@@ -1093,31 +1100,31 @@ javascript:(function(){
           </div>
         </div>
         
-        <!-- Logo 設定區塊 -->
+        <!-- 底圖設定區塊 -->
         <div class="section">
           <div class="section-header" data-section="logo">
             <h4>
               <span class="material-icons section-icon">image</span>
-              Logo 設定
+              底圖設定
             </h4>
             <span class="material-icons section-toggle">expand_more</span>
           </div>
           <div class="section-content" id="logo-content">
             <div class="control-group">
-              <div class="control-group-title">Logo 上傳與設定</div>
+              <div class="control-group-title">底圖上傳與設定</div>
               
               <div class="logo-upload-area" id="logo-upload-area">
-                <input type="file" id="logo-input" accept="image/png" style="display:none;">
+                <input type="file" id="logo-input" accept="image/png,image/jpeg,image/jpg" style="display:none;">
                 <img id="logo-preview" class="logo-preview" style="display:none;">
                 <div id="upload-prompt">
                   <span class="material-icons" style="font-size:36px; background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">add_photo_alternate</span>
-                  <div class="upload-hint">點擊上傳 PNG Logo${isMobile ? '' : '（建議透明背景）'}</div>
+                  <div class="upload-hint">點擊上傳底圖（支援 PNG/JPG）</div>
                 </div>
               </div>
               
               <div class="logo-controls" id="logo-controls">
                 <div class="control-label">
-                  <span>Logo 大小${isMobile ? '' : '（相對標籤高度）'}</span>
+                  <span>底圖大小${isMobile ? '' : '（相對標籤高度）'}</span>
                   <span class="value-badge" id="logo-size">30%</span>
                 </div>
                 <input type="range" id="logo-size-slider" min="10" max="100" value="30">
@@ -1135,14 +1142,14 @@ javascript:(function(){
                 <input type="range" id="logo-y-slider" min="0" max="100" value="50">
                 
                 <div class="control-label" style="margin-top: 20px;">
-                  <span>透明度</span>
-                  <span class="value-badge" id="logo-opacity">0%</span>
+                  <span>淡化程度</span>
+                  <span class="value-badge" id="logo-opacity">20%</span>
                 </div>
-                <input type="range" id="logo-opacity-slider" min="0" max="100" value="0">
+                <input type="range" id="logo-opacity-slider" min="0" max="100" value="20">
                 
                 <button class="remove-logo-btn" id="remove-logo-btn">
                   <span class="material-icons" style="font-size: 16px;">delete</span>
-                  移除 Logo
+                  移除底圖
                 </button>
               </div>
             </div>
@@ -1219,7 +1226,7 @@ javascript:(function(){
       if (logoInput) {
         logoInput.addEventListener('change', function(e) {
           const file = e.target.files[0];
-          if (file && file.type === 'image/png') {
+          if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
             const reader = new FileReader();
             reader.onload = function(event) {
               logoDataUrl = event.target.result;
@@ -1241,7 +1248,7 @@ javascript:(function(){
             };
             reader.readAsDataURL(file);
           } else {
-            showNotification('請上傳 PNG 格式的圖片', 'warning');
+            showNotification('請上傳 PNG 或 JPG 格式的圖片', 'warning');
           }
         });
       }
@@ -1313,7 +1320,7 @@ javascript:(function(){
         logoSize: 30,
         logoX: 50,
         logoY: 50,
-        logoOpacity: 0,
+        logoOpacity: 20,
         logoAspectRatio: 1
       };
       
@@ -1430,7 +1437,7 @@ javascript:(function(){
             font-family: ${fontFamily.value} !important;
           }
           
-          /* 商品資訊對齊方式 */
+           /* 商品資訊對齊方式 */
           .print_barcode_area .print_sample .spec_info {
             text-align: ${textAlign.value} !important;
           }
@@ -1441,19 +1448,19 @@ javascript:(function(){
             line-height: ${mainLineHeight}px !important;
             font-weight: ${mainFontWeight} !important;
             margin-bottom: ${mainGap.value}px !important;
-			white-space: normal !important; /* 允許自動換行 */
-			  word-break: break-all !important; /* 單字太長也會換行 */
-			  overflow: visible !important;     /* 顯示全部內容 */
-			}
+            white-space: normal !important; /* 允許自動換行 */
+            word-break: break-all !important; /* 單字太長也會換行 */
+            overflow: visible !important;     /* 顯示全部內容 */
+          }
           
           /* 規格/編號/價格樣式 - 統一設定 */
           .print_barcode_area .print_sample .spec_info .sub {
             font-size: ${subSize.value}px !important;
             line-height: ${subLineHeight}px !important;
             font-weight: ${subFontWeight} !important;
-			white-space: normal !important;
-			word-break: break-all !important;
-			overflow: visible !important;
+            white-space: normal !important;
+            word-break: break-all !important;
+            overflow: visible !important;
           }
           
           /* 多行文字處理 */
@@ -1489,36 +1496,36 @@ javascript:(function(){
             font-family: ${fontFamily.value};
           }
           
-          /* Logo 樣式 - 保持原始寬高比 */
-          .label-logo {
+          /* 底圖樣式 - 保持原始寬高比 */
+          .label-background-logo {
             width: ${logoWidthMM}mm !important;
             height: ${logoHeightMM}mm !important;
             left: ${logoXSlider ? logoXSlider.value : 50}% !important;
             top: ${logoYSlider ? logoYSlider.value : 50}% !important;
             transform: translate(-50%, -50%) !important;
-            opacity: ${logoOpacitySlider ? 1 - (logoOpacitySlider.value / 100) : 1} !important;
+            opacity: ${logoOpacitySlider ? (100 - logoOpacitySlider.value) / 100 : 0.8} !important;
           }
         `;
         
-        /* 更新所有標籤的 Logo */
+        /* 更新所有標籤的底圖 */
         updateLogos();
         
         /* 自動保存當前設定為臨時設定 */
         saveSettingsToLocal('_current_temp_settings', saveCurrentSettings());
       }
       
-      /* 更新所有標籤的 Logo */
+      /* 更新所有標籤的底圖 */
       function updateLogos() {
-        /* 移除現有的 Logo */
-        document.querySelectorAll('.label-logo').forEach(logo => logo.remove());
+        /* 移除現有的底圖 */
+        document.querySelectorAll('.label-background-logo').forEach(logo => logo.remove());
         
-        /* 如果有 Logo，添加到每個標籤 */
+        /* 如果有底圖，添加到每個標籤 */
         if (logoDataUrl) {
           document.querySelectorAll('.print_sample').forEach(sample => {
             const logo = document.createElement('img');
-            logo.className = 'label-logo';
+            logo.className = 'label-background-logo';
             logo.src = logoDataUrl;
-            sample.appendChild(logo);
+            sample.insertBefore(logo, sample.firstChild); // 插入到最前面，確保在底層
           });
         }
       }
@@ -1560,7 +1567,7 @@ javascript:(function(){
       if (resetFormatBtn) {
         resetFormatBtn.addEventListener('click', function() {
           if (confirm('確定要將所有設定重置為 BV SHOP 原始預設值嗎？\n\n此操作無法復原。')) {
-            /* 清除 Logo */
+            /* 清除底圖 */
             if (logoDataUrl) {
               logoDataUrl = null;
               logoAspectRatio = 1;
@@ -1622,7 +1629,7 @@ javascript:(function(){
           logoSize: logoSizeSlider ? logoSizeSlider.value : 30,
           logoX: logoXSlider ? logoXSlider.value : 50,
           logoY: logoYSlider ? logoYSlider.value : 50,
-          logoOpacity: logoOpacitySlider ? logoOpacitySlider.value : 0,
+          logoOpacity: logoOpacitySlider ? logoOpacitySlider.value : 20,
           logoAspectRatio: logoAspectRatio
         };
         return settings;
@@ -1658,7 +1665,7 @@ javascript:(function(){
         
         textAreaRatio.value = settings.textAreaRatio || defaultSettings.textAreaRatio;
         
-        /* Logo 設定 */
+        /* 底圖設定 */
         if (settings.logoDataUrl) {
           logoDataUrl = settings.logoDataUrl;
           logoAspectRatio = settings.logoAspectRatio || 1;
