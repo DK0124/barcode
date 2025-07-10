@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "BV SHOP 條碼列印排版器",
+  "version": "1.2.2",
+  "description": "專為 BV SHOP 設計的條碼列印排版工具，可自訂LOGO、字體大小、行高、版面配置，並支援多種繁體中文字體與設定檔儲存功能。",
+  "author": "Derek Yu",
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  
+  "permissions": [
+    "storage"
+  ],
+  
+  "host_permissions": [
+    "*://*.bvshop.tw/*"
+  ],
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.bvshop.tw/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_title": "BV SHOP 條碼列印排版器",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  
+  "minimum_chrome_version": "88",
+  
+  "offline_enabled": true,
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
