@@ -50,12 +50,12 @@ javascript:(function(){
   /* 建立基本樣式 */
   const style = document.createElement('style');
   style.innerHTML = `
-    /* 響應式預設顯示 */
+    /* 響應式預設顯示 - 移除電腦版的 zoom */
     body {
-      zoom: ${shouldUseMobileLayout ? 1 : 2};
-      -moz-transform: scale(${shouldUseMobileLayout ? 1 : 2});
+      zoom: 1;
+      -moz-transform: scale(1);
       -moz-transform-origin: 0 0;
-      -webkit-transform: scale(${shouldUseMobileLayout ? 1 : 2});
+      -webkit-transform: scale(1);
       -webkit-transform-origin: 0 0;
       background: #f8f9fa;
       margin: 0;
@@ -170,9 +170,6 @@ javascript:(function(){
         width: 100%;
         max-height: 80vh;
         border-radius: 20px 20px 0 0;
-        zoom: 1;
-        -moz-transform: scale(1);
-        -webkit-transform: scale(1);
       ` : `
         ${isIPad ? `
           top: 50%;
@@ -188,9 +185,6 @@ javascript:(function(){
           width: 400px;
           max-height: 90vh;
           border-radius: 20px;
-          zoom: 0.5;
-          -moz-transform: scale(0.5);
-          -moz-transform-origin: top right;
         `}
       `}
       z-index: 99999;
@@ -300,6 +294,46 @@ javascript:(function(){
         min-height: 50px;
       }
     ` : ''}
+    
+    /* 改善通知樣式 - 移除電腦版的縮放 */
+    .barcode-notification {
+      position: fixed !important;
+      top: ${shouldUseMobileLayout ? '60px' : '20px'} !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      z-index: 100000 !important;
+    }
+    
+    .notification {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: ${shouldUseMobileLayout ? '14px 24px' : (isIPad ? '18px 32px' : '14px 24px')};
+      border-radius: 20px;
+      font-size: ${shouldUseMobileLayout ? '14px' : (isIPad ? '16px' : '14px')};
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      animation: slideDown 0.3s ease-out;
+      display: flex;
+      align-items: center;
+      gap: ${shouldUseMobileLayout ? '10px' : '10px'};
+      white-space: nowrap;
+    }
+    
+    .notification.success {
+      border-left: 4px solid #10b981;
+      color: #059669;
+    }
+    
+    .notification.warning {
+      border-left: 4px solid #f59e0b;
+      color: #d97706;
+    }
+    
+    .notification .material-icons {
+      font-size: ${shouldUseMobileLayout ? '20px' : (isIPad ? '24px' : '20px')};
+    }
   `;
   
   /* 繼續添加其餘的樣式... */
