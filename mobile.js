@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 完整無縮放版本 */
+  /* BV SHOP 條碼列印排版器 - Brother 連續長圖版本 */
   
   /* 裝置偵測 */
   const userAgent = navigator.userAgent;
@@ -12,6 +12,22 @@ javascript:(function(){
     alert('請在 BV SHOP 條碼列印頁面使用此工具');
     return;
   }
+
+  /* 載入必要的函式庫 */
+  const loadScript = (src) => {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  };
+
+  /* 載入 html2canvas */
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js').then(() => {
+    console.log('html2canvas 載入完成');
+  });
 
   /* 載入字體 */
   const fontLink = document.createElement('link');
@@ -49,6 +65,25 @@ javascript:(function(){
       -moz-transform: none !important;
       -webkit-transform: none !important;
       transform: none !important;
+    }
+    
+    /* 防止 iOS 將數字識別為電話號碼 */
+    .print_sample * {
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+    
+    .spec_barcode .sub {
+      pointer-events: none !important;
+      -webkit-text-decoration: none !important;
+      text-decoration: none !important;
+      color: inherit !important;
+    }
+    
+    /* 防止自動識別 */
+    meta[name="format-detection"] {
+      content: "telephone=no" !important;
     }
   `;
   document.head.appendChild(resetStyle);
@@ -457,8 +492,154 @@ javascript:(function(){
       box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
     }
     
+    .action-button.brother-button {
+      background: linear-gradient(135deg, #00a0e9 0%, #0068b7 100%);
+    }
+    
+    .action-button.brother-button:hover {
+      box-shadow: 0 4px 12px rgba(0, 160, 233, 0.3);
+    }
+    
+    /* 其他樣式 */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, #e8eaed 50%, transparent 100%);
+      margin: 12px 0;
+    }
+    
+    .control-hint {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    
+    .control-label-with-button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    /* 通知樣式 */
+    .barcode-notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100000;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 12px 24px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    .notification.success {
+      border-left: 4px solid #10b981;
+      color: #059669;
+    }
+    
+    .notification.warning {
+      border-left: 4px solid #f59e0b;
+      color: #d97706;
+    }
+    
+    .notification.info {
+      border-left: 4px solid #00a0e9;
+      color: #0068b7;
+    }
+    
+    .notification .material-icons {
+      font-size: 20px;
+    }
+    
+    /* 手機版浮動按鈕 */
+    .mobile-toggle-btn {
+      display: ${shouldUseMobileLayout ? 'flex' : 'none'};
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+      cursor: pointer;
+      z-index: 99998;
+    }
+    
+    .mobile-toggle-btn .material-icons {
+      color: white;
+      font-size: 28px;
+    }
+    
+    #barcode-control-panel.hidden {
+      transform: ${shouldUseMobileLayout ? 'translateY(100%)' : 'translateX(100%)'};
+    }
+    
+    /* 動畫 */
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+      }
+    }
+    
+    /* 條碼圖示 */
+    .barcode-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 3px;
+    }
+    
+    .barcode-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: white;
+    }
+    
+    /* 底圖樣式 */
+    .label-background-logo {
+      position: absolute !important;
+      z-index: 1 !important;
+      pointer-events: none;
+      object-fit: contain !important;
+    }
+    
+    .print_sample > *:not(.label-background-logo) {
+      position: relative !important;
+      z-index: 2 !important;
+    }
+    
     /* 輸入框樣式 */
-    input[type="text"] {
+    input[type="text"], input[type="number"] {
       width: 100%;
       padding: 10px 12px;
       border: 2px solid #e8eaed;
@@ -543,139 +724,6 @@ javascript:(function(){
       gap: 6px;
     }
     
-    /* 底圖樣式 */
-    .label-background-logo {
-      position: absolute !important;
-      z-index: 1 !important;
-      pointer-events: none;
-      object-fit: contain !important;
-    }
-    
-    .print_sample > *:not(.label-background-logo) {
-      position: relative !important;
-      z-index: 2 !important;
-    }
-    
-    /* 通知樣式 */
-    .barcode-notification {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 100000;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 12px 24px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: slideDown 0.3s ease-out;
-    }
-    
-    .notification.success {
-      border-left: 4px solid #10b981;
-      color: #059669;
-    }
-    
-    .notification.warning {
-      border-left: 4px solid #f59e0b;
-      color: #d97706;
-    }
-    
-    .notification .material-icons {
-      font-size: 20px;
-    }
-    
-    /* 手機版浮動按鈕 */
-    .mobile-toggle-btn {
-      display: ${shouldUseMobileLayout ? 'flex' : 'none'};
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
-      border-radius: 50%;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
-      cursor: pointer;
-      z-index: 99998;
-    }
-    
-    .mobile-toggle-btn .material-icons {
-      color: white;
-      font-size: 28px;
-    }
-    
-    #barcode-control-panel.hidden {
-      transform: ${shouldUseMobileLayout ? 'translateY(100%)' : 'translateX(100%)'};
-    }
-    
-    /* 動畫 */
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-    }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
-      to {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
-      }
-    }
-    
-    /* 條碼圖示 */
-    .barcode-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      padding: 3px;
-    }
-    
-    .barcode-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: white;
-    }
-    
-    /* 其他樣式 */
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent 0%, #e8eaed 50%, transparent 100%);
-      margin: 12px 0;
-    }
-    
-    .control-hint {
-      font-size: 12px;
-      color: #6c757d;
-      margin-top: 4px;
-      font-style: italic;
-    }
-    
-    .control-label-with-button {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
     /* 滾動條 */
     .panel-body::-webkit-scrollbar {
       width: 8px;
@@ -696,6 +744,281 @@ javascript:(function(){
     }
   `;
   document.head.appendChild(style);
+
+  /* Brother 連續長圖匯出功能 */
+  window.exportBrotherContinuousImage = async function() {
+    if (!window.html2canvas) {
+      showNotification('請稍候，正在載入必要元件...', 'info');
+      setTimeout(() => exportBrotherContinuousImage(), 1000);
+      return;
+    }
+
+    const labels = document.querySelectorAll('.print_sample');
+    if (labels.length === 0) {
+      showNotification('找不到標籤資料', 'warning');
+      return;
+    }
+
+    showNotification('正在生成 Brother 連續長圖...', 'info');
+
+    try {
+      // 預設尺寸 29 x 42mm
+      const labelWidthMM = 29;
+      const labelHeightMM = 42;
+      
+      // 轉換為像素 (300 DPI)
+      const pixelPerMM = 11.811; // 300 DPI
+      const labelWidth = Math.round(labelWidthMM * pixelPerMM); // 342px
+      const labelHeight = Math.round(labelHeightMM * pixelPerMM); // 496px
+      
+      // 建立橫向連續長圖畫布
+      const totalWidth = labelWidth * labels.length;
+      const canvas = document.createElement('canvas');
+      canvas.width = totalWidth;
+      canvas.height = labelHeight;
+      const ctx = canvas.getContext('2d');
+      
+      // 白色背景
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 處理每個標籤
+      for (let i = 0; i < labels.length; i++) {
+        const label = labels[i];
+        
+        // 複製標籤以避免修改原始元素
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = `
+          position: fixed;
+          left: -9999px;
+          top: 0;
+          width: ${label.offsetWidth}px;
+          height: ${label.offsetHeight}px;
+          background: white;
+          overflow: visible;
+        `;
+        
+        const clonedLabel = label.cloneNode(true);
+        
+        // 確保條碼數字不會被識別為電話號碼
+        const barcodeTexts = clonedLabel.querySelectorAll('.spec_barcode .sub');
+        barcodeTexts.forEach(text => {
+          text.style.cssText += `
+            pointer-events: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            text-decoration: none !important;
+            color: inherit !important;
+          `;
+          // 包裹在 span 中以防止識別
+          const span = document.createElement('span');
+          span.style.cssText = 'display: inline-block;';
+          span.textContent = text.textContent;
+          text.textContent = '';
+          text.appendChild(span);
+        });
+        
+        tempContainer.appendChild(clonedLabel);
+        document.body.appendChild(tempContainer);
+        
+        // 使用 html2canvas 繪製標籤
+        const tempCanvas = await html2canvas(clonedLabel, {
+          scale: 3,
+          backgroundColor: '#FFFFFF',
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          width: clonedLabel.offsetWidth,
+          height: clonedLabel.offsetHeight
+        });
+        
+        // 移除臨時容器
+        tempContainer.remove();
+        
+        // 計算縮放比例
+        const scaleX = labelWidth / tempCanvas.width;
+        const scaleY = labelHeight / tempCanvas.height;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // 計算繪製尺寸和位置（置中）
+        const drawWidth = tempCanvas.width * scale;
+        const drawHeight = tempCanvas.height * scale;
+        const drawX = i * labelWidth + (labelWidth - drawWidth) / 2;
+        const drawY = (labelHeight - drawHeight) / 2;
+        
+        // 繪製到連續長圖
+        ctx.drawImage(tempCanvas, drawX, drawY, drawWidth, drawHeight);
+        
+        // 添加分隔線（可選）
+        if (i < labels.length - 1) {
+          ctx.strokeStyle = '#f0f0f0';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo((i + 1) * labelWidth, 0);
+          ctx.lineTo((i + 1) * labelWidth, labelHeight);
+          ctx.stroke();
+        }
+      }
+
+      // 轉換為 Blob
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        
+        // 在新視窗中顯示
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <meta name="format-detection" content="telephone=no">
+              <title>Brother 標籤長圖</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 20px;
+                  background: #f0f0f0;
+                  text-align: center;
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+                }
+                img {
+                  max-width: 100%;
+                  height: auto;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                  border-radius: 8px;
+                  display: block;
+                  margin: 0 auto 20px;
+                }
+                .info {
+                  background: white;
+                  padding: 20px;
+                  border-radius: 12px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                  margin-bottom: 20px;
+                  max-width: 600px;
+                  margin-left: auto;
+                  margin-right: auto;
+                }
+                .info h3 {
+                  margin: 0 0 10px 0;
+                  color: #333;
+                  font-size: 18px;
+                }
+                .info p {
+                  margin: 5px 0;
+                  color: #666;
+                  font-size: 14px;
+                }
+                .button {
+                  display: inline-block;
+                  background: linear-gradient(135deg, #00a0e9 0%, #0068b7 100%);
+                  color: white;
+                  padding: 12px 24px;
+                  border-radius: 8px;
+                  text-decoration: none;
+                  font-weight: 600;
+                  margin: 10px;
+                  font-size: 16px;
+                  box-shadow: 0 4px 12px rgba(0, 160, 233, 0.3);
+                  transition: all 0.2s ease;
+                }
+                .button:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 16px rgba(0, 160, 233, 0.4);
+                }
+                .secondary-button {
+                  background: white;
+                  color: #333;
+                  border: 2px solid #e0e0e0;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .secondary-button:hover {
+                  background: #f8f9fa;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+              </style>
+            </head>
+            <body>
+              <div class="info">
+                <h3>Brother 標籤連續長圖</h3>
+                <p>尺寸：29 x 42mm × ${labels.length} 張</p>
+                <p>總長度：${(labelWidthMM * labels.length / 10).toFixed(1)} cm</p>
+                <p>解析度：300 DPI</p>
+              </div>
+              
+              <img src="${url}" alt="Brother 標籤長圖">
+              
+              <div style="margin: 20px;">
+                <a href="${url}" download="brother_labels_${new Date().getTime()}.png" class="button">
+                  下載圖片
+                </a>
+                <button onclick="saveToPhotos('${url}')" class="button secondary-button">
+                  儲存到相簿
+                </button>
+              </div>
+              
+              <div class="info" style="margin-top: 20px;">
+                <h3>使用說明</h3>
+                <p>1. 點擊「下載圖片」或「儲存到相簿」</p>
+                <p>2. 開啟 Brother iPrint&Label App</p>
+                <p>3. 選擇「相簿列印」功能</p>
+                <p>4. 選擇此圖片並列印</p>
+              </div>
+              
+              <script>
+                function saveToPhotos(url) {
+                  // iOS Safari
+                  if (navigator.share) {
+                    fetch(url)
+                      .then(res => res.blob())
+                      .then(blob => {
+                        const file = new File([blob], 'brother_labels.png', { type: 'image/png' });
+                        navigator.share({
+                          files: [file],
+                          title: 'Brother 標籤'
+                        });
+                      });
+                  } else {
+                    // 其他瀏覽器：長按圖片儲存
+                    alert('請長按圖片，選擇「儲存圖片」');
+                  }
+                }
+                
+                // 防止電話號碼識別
+                document.addEventListener('DOMContentLoaded', function() {
+                  const meta = document.createElement('meta');
+                  meta.name = 'format-detection';
+                  meta.content = 'telephone=no';
+                  document.head.appendChild(meta);
+                });
+              </script>
+            </body>
+            </html>
+          `);
+          
+          showNotification('已在新視窗開啟 Brother 標籤長圖', 'success');
+        } else {
+          // 如果無法開啟新視窗，直接下載
+          const link = document.createElement('a');
+          link.download = `brother_labels_${new Date().getTime()}.png`;
+          link.href = url;
+          link.click();
+          
+          showNotification('已下載 Brother 標籤長圖', 'success');
+        }
+        
+        // 延遲清理 URL
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }, 'image/png', 1.0);
+
+    } catch (error) {
+      console.error('生成圖片失敗:', error);
+      showNotification('生成圖片時發生錯誤', 'warning');
+    }
+  };
 
   /* 建立控制面板 */
   setTimeout(() => {
@@ -748,6 +1071,19 @@ javascript:(function(){
             <input type="text" id="new-preset-name" placeholder="輸入設定檔名稱">
             <button class="small-button primary" id="confirm-save">確認</button>
             <button class="small-button" id="cancel-save">取消</button>
+          </div>
+        </div>
+        
+        <!-- Brother 匯出區塊 -->
+        <div class="control-group" style="background: #f0f8ff; border-color: #00a0e9;">
+          <div class="control-group-title" style="color: #0068b7;">Brother 印表機專用</div>
+          <button class="action-button brother-button" onclick="exportBrotherContinuousImage()">
+            <span class="material-icons">panorama_horizontal</span>
+            <span>匯出 Brother 連續長圖 (29×42mm)</span>
+          </button>
+          <div class="control-hint" style="margin-top: 10px;">
+            點擊後會在新視窗顯示橫向連續長圖，<br>
+            可直接儲存到相簿並使用 Brother iPrint&Label 列印
           </div>
         </div>
         
@@ -999,6 +1335,35 @@ javascript:(function(){
       input.style.setProperty('--value', value + '%');
     }
     
+    /* 顯示通知訊息 */
+    function showNotification(message, type = 'success') {
+      /* 移除現有的通知 */
+      const existingNotification = document.querySelector('.barcode-notification');
+      if (existingNotification) {
+        existingNotification.remove();
+      }
+      
+      const notification = document.createElement('div');
+      notification.className = `barcode-notification notification ${type}`;
+      
+      /* 添加圖標 */
+      const icon = document.createElement('span');
+      icon.className = 'material-icons';
+      icon.style.fontSize = '20px';
+      icon.textContent = type === 'success' ? 'check_circle' : (type === 'warning' ? 'warning' : 'info');
+      
+      notification.appendChild(icon);
+      notification.appendChild(document.createTextNode(message));
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideUp 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+    
+    window.showNotification = showNotification;
+    
     /* 延遲初始化所有控制項 */
     setTimeout(() => {
       /* Logo 上傳功能 */
@@ -1123,7 +1488,7 @@ javascript:(function(){
         logoAspectRatio: 1
       };
       
-      /* 預設值設置（與 BV SHOP 原始值相同） */
+      /* 預設值設置 */
       const defaultSettings = { ...bvShopDefaults };
 
       /* 粗體按鈕點擊事件 */
@@ -1219,12 +1584,21 @@ javascript:(function(){
           body .print_barcode_area .print_sample .spec_info {
             height: ${specInfoHeight}mm !important;
             margin-bottom: 0 !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
           }
           
           /* 條碼區域高度 - 使用計算的百分比高度 */
           html .print_barcode_area .print_sample .spec_barcode,
           body .print_barcode_area .print_sample .spec_barcode {
             height: ${specBarcodeHeight}mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
           }
           
           /* 確保字體套用到所有元素 */
@@ -1249,7 +1623,11 @@ javascript:(function(){
             margin-bottom: ${mainGap.value}px !important;
             white-space: normal !important; /* 允許自動換行 */
             word-break: break-all !important; /* 單字太長也會換行 */
-            overflow: visible !important;     /* 顯示全部內容 */
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
           }
           
           /* 規格/編號/價格樣式 - 統一設定 */
@@ -1257,9 +1635,9 @@ javascript:(function(){
             font-size: ${subSize.value}px !important;
             line-height: ${subLineHeight}px !important;
             font-weight: ${subFontWeight} !important;
-            white-space: normal !important;
-            word-break: break-all !important;
-            overflow: visible !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
           }
           
           /* 多行文字處理 */
@@ -1268,10 +1646,17 @@ javascript:(function(){
             line-height: ${mainLineHeight}px !important;
           }
           
-          /* 條碼下方數字樣式 */
+          /* 條碼下方數字樣式 - 防止電話連結 */
           .print_barcode_area .print_sample .spec_barcode .sub {
             font-size: ${barcodeTextSize.value}px !important;
             font-weight: ${barcodeTextFontWeight} !important;
+            pointer-events: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            text-decoration: none !important;
+            color: inherit !important;
+            white-space: nowrap !important;
           }
           
           /* 條碼圖片高度和寬度 - 使用百分比寬度 */
@@ -1279,7 +1664,8 @@ javascript:(function(){
             height: ${barcodeHeight.value}mm !important;
             width: ${barcodeActualWidth}mm !important;
             max-width: 100% !important;
-            object-fit: fill !important;
+            object-fit: contain !important;
+            margin: 0 auto !important;
           }
           
           /* 確保條碼容器能適應條碼大小 */
@@ -1288,6 +1674,7 @@ javascript:(function(){
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
+            justify-content: center !important;
           }
           
           /* 確保字體覆蓋所有可能的元素 */
@@ -1304,10 +1691,23 @@ javascript:(function(){
             transform: translate(-50%, -50%) !important;
             opacity: ${logoOpacitySlider ? (100 - logoOpacitySlider.value) / 100 : 0.8} !important;
           }
+          
+          /* 防止任何連結樣式 */
+          .print_barcode_area a {
+            text-decoration: none !important;
+            color: inherit !important;
+            pointer-events: none !important;
+          }
         `;
         
         /* 更新所有標籤的底圖 */
         updateLogos();
+        
+        /* 防止條碼數字被識別為電話號碼 */
+        document.querySelectorAll('.spec_barcode .sub').forEach(element => {
+          element.setAttribute('x-ms-format-detection', 'none');
+          element.setAttribute('format-detection', 'telephone=no');
+        });
         
         /* 自動保存當前設定為臨時設定 */
         saveSettingsToLocal('_current_temp_settings', saveCurrentSettings());
@@ -1697,82 +2097,6 @@ javascript:(function(){
         }
       }
       
-      /* 顯示通知訊息 */
-      function showNotification(message, type = 'success') {
-        /* 移除現有的通知 */
-        const existingNotification = document.querySelector('.barcode-notification');
-        if (existingNotification) {
-          existingNotification.remove();
-        }
-        
-        const notification = document.createElement('div');
-        notification.className = `barcode-notification notification ${type}`;
-        notification.style.cssText = `
-          position: fixed;
-          top: ${shouldUseMobileLayout ? '60px' : '20px'};
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 100000;
-          background: rgba(255, 255, 255, 0.95);
-          color: ${type === 'success' ? '#059669' : '#d97706'};
-          padding: 12px 24px;
-          border-radius: 20px;
-          font-size: 14px;
-          font-weight: 500;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          animation: slideDown 0.3s ease-out;
-          border-left: 4px solid ${type === 'success' ? '#10b981' : '#f59e0b'};
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          white-space: nowrap;
-        `;
-        
-        /* 添加圖標 */
-        const icon = document.createElement('span');
-        icon.className = 'material-icons';
-        icon.style.fontSize = '20px';
-        icon.textContent = type === 'success' ? 'check_circle' : 'warning';
-        
-        notification.appendChild(icon);
-        notification.appendChild(document.createTextNode(message));
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-          notification.style.animation = 'slideUp 0.3s ease-out';
-          setTimeout(() => notification.remove(), 300);
-        }, 3000);
-      }
-      
-      /* 新增動畫關鍵幀 */
-      const animationStyle = document.createElement('style');
-      animationStyle.innerHTML = `
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
-        
-        @keyframes slideUp {
-          from {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateX(-50%) translateY(-20px);
-          }
-        }
-      `;
-      document.head.appendChild(animationStyle);
-      
       /* 載入上次設定或預設設定 */
       function loadInitialSettings() {
         /* 嘗試載入上次選擇的設定檔 */
@@ -1826,6 +2150,12 @@ javascript:(function(){
           -moz-user-select: none;
           -ms-user-select: none;
           user-select: none;
+        }
+        
+        /* 特別防止條碼數字被識別為電話 */
+        .spec_barcode .sub {
+          -webkit-text-size-adjust: 100%;
+          -webkit-tap-highlight-color: transparent;
         }
       `;
       document.head.appendChild(preventSelectionStyle);
