@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=40mm, height=29mm" />
   <title>40x29 條碼列印</title>
   <style>
-    /* 設定列印紙張為 40mm x 29mm，無邊界 */
     @page {
       size: 40mm 29mm;
       margin: 0;
@@ -23,20 +22,32 @@
       justify-content: center;
       align-items: center;
     }
+    #print-btn {
+      position: fixed;
+      top: 8px;
+      right: 8px;
+      padding: 6px 12px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 9999;
+      cursor: pointer;
+    }
+
+    @media print {
+      #print-btn {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body>
-  <div id="barcode-container"></div>
+  <button id="print-btn" onclick="window.print()">列印</button>
 
-  <script>
-    // 在這裡插入條碼，例如用 JS 自動生成
-    const container = document.getElementById('barcode-container');
-
-    const barcode = document.createElement('img');
-    barcode.src = 'https://bwipjs-api.metafloor.com/?bcid=code128&text=1234567890&scale=2&includetext';
-    barcode.style.maxWidth = '100%';
-    barcode.style.maxHeight = '100%';
-    container.appendChild(barcode);
-  </script>
+  <div id="barcode-container">
+    <img id="barcode" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=1234567890&scale=2&includetext" style="max-width: 100%; max-height: 100%;">
+  </div>
 </body>
 </html>
