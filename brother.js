@@ -301,9 +301,9 @@ javascript:(function(){
     showNotification('正在生成 Brother 連續長圖...', 'info');
 
     try {
-      // 預設尺寸 29 x 42mm
-      const labelWidthMM = 29;
-      const labelHeightMM = 42;
+      // 預設尺寸 42 x 29mm
+      const labelWidthMM = 42;
+      const labelHeightMM = 29;
       
       // 轉換為像素 (300 DPI)
       const dpi = 300;
@@ -507,7 +507,7 @@ javascript:(function(){
             <body>
               <div class="info">
                 <h3>Brother 標籤連續長圖</h3>
-                <p>尺寸：29 x 42mm × ${labels.length} 張</p>
+                <p>尺寸：42 x 29mm × ${labels.length} 張</p>
                 <p>總長度：${(labelWidthMM * labels.length / 10).toFixed(1)} cm</p>
                 <p>解析度：300 DPI</p>
               </div>
@@ -607,7 +607,7 @@ javascript:(function(){
       </h3>
       <button class="action-button" onclick="exportBrotherContinuousImage()">
         <span class="material-icons">panorama_horizontal</span>
-        <span>匯出 Brother 連續長圖 (29×42mm)</span>
+        <span>匯出 Brother 連續長圖 (42×29mm)</span>
       </button>
       <div class="control-hint">
         點擊後會在新視窗顯示橫向連續長圖，<br>
