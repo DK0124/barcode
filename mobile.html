@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=40mm, height=29mm" />
+  <title>40x29 條碼列印</title>
+  <style>
+    /* 設定列印紙張為 40mm x 29mm，無邊界 */
+    @page {
+      size: 40mm 29mm;
+      margin: 0;
+    }
+    html, body {
+      width: 40mm;
+      height: 29mm;
+      margin: 0;
+      padding: 0;
+    }
+    #barcode-container {
+      width: 40mm;
+      height: 29mm;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="barcode-container"></div>
+
+  <script>
+    // 在這裡插入條碼，例如用 JS 自動生成
+    const container = document.getElementById('barcode-container');
+
+    const barcode = document.createElement('img');
+    barcode.src = 'https://bwipjs-api.metafloor.com/?bcid=code128&text=1234567890&scale=2&includetext';
+    barcode.style.maxWidth = '100%';
+    barcode.style.maxHeight = '100%';
+    container.appendChild(barcode);
+  </script>
+</body>
+</html>
