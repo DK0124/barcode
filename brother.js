@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - Brother 列印版本 */
+  /* BV SHOP 條碼列印排版器 - Brother 連續長圖版本 */
   
   /* 裝置偵測 */
   const userAgent = navigator.userAgent;
@@ -48,17 +48,6 @@ javascript:(function(){
     { name: '思源黑體', value: '"Noto Sans TC", sans-serif' }
   ];
 
-  /* Brother 標籤尺寸選項 (單位: mm) */
-  const brotherLabelSizes = [
-    { name: '29 x 90mm', width: 29, height: 90, pixels: { width: 696, height: 2165 } },
-    { name: '29 x 62mm', width: 29, height: 62, pixels: { width: 696, height: 1492 } },
-    { name: '29 x 42mm', width: 29, height: 42, pixels: { width: 696, height: 1010 } },
-    { name: '29 x 29mm', width: 29, height: 29, pixels: { width: 696, height: 696 } },
-    { name: '29 x 15.24mm', width: 29, height: 15.24, pixels: { width: 696, height: 366 } },
-    { name: '29 x 13mm', width: 29, height: 13, pixels: { width: 696, height: 312 } },
-    { name: '自訂高度', width: 29, height: 30, pixels: { width: 696, height: 720 } }
-  ];
-
   /* 重置原本的縮放設定 */
   const resetStyle = document.createElement('style');
   resetStyle.innerHTML = `
@@ -76,6 +65,25 @@ javascript:(function(){
       -moz-transform: none !important;
       -webkit-transform: none !important;
       transform: none !important;
+    }
+    
+    /* 防止 iOS 將數字識別為電話號碼 */
+    .print_sample * {
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+    
+    .spec_barcode .sub {
+      pointer-events: none !important;
+      -webkit-text-decoration: none !important;
+      text-decoration: none !important;
+      color: inherit !important;
+    }
+    
+    /* 防止自動識別 */
+    meta[name="format-detection"] {
+      content: "telephone=no" !important;
     }
   `;
   document.head.appendChild(resetStyle);
@@ -492,111 +500,24 @@ javascript:(function(){
       box-shadow: 0 4px 12px rgba(0, 160, 233, 0.3);
     }
     
-    .action-button.csv-button {
-      background: linear-gradient(135deg, #00c851 0%, #009624 100%);
+    /* 其他樣式 */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, #e8eaed 50%, transparent 100%);
+      margin: 12px 0;
     }
     
-    .action-button.csv-button:hover {
-      box-shadow: 0 4px 12px rgba(0, 200, 81, 0.3);
-    }
-    
-    /* 輸入框樣式 */
-    input[type="text"], input[type="number"] {
-      width: 100%;
-      padding: 10px 12px;
-      border: 2px solid #e8eaed;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-    
-    /* 小按鈕 */
-    .small-button {
-      padding: 6px 16px;
-      background: white;
-      border: 2px solid #e8eaed;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .small-button.primary {
-      background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
-      color: white;
-      border-color: transparent;
-    }
-    
-    /* 底圖上傳區域 */
-    .logo-upload-area {
-      border: 2px dashed #d4d7dd;
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: #fafbff;
-      margin-bottom: 16px;
-    }
-    
-    .logo-upload-area:hover {
-      border-color: #7289DA;
-      background: #f8f9ff;
-    }
-    
-    .logo-upload-area.has-logo {
-      border-style: solid;
-      padding: 16px;
-      background: white;
-    }
-    
-    .logo-preview {
-      max-width: 100%;
-      max-height: 100px;
-      margin: 0 auto;
-      display: block;
-    }
-    
-    .upload-hint {
+    .control-hint {
+      font-size: 12px;
       color: #6c757d;
-      font-size: 13px;
-      margin-top: 8px;
+      margin-top: 4px;
+      font-style: italic;
     }
     
-    .logo-controls {
-      display: none;
-    }
-    
-    .logo-controls.active {
-      display: block;
-    }
-    
-    .remove-logo-btn {
-      background: #f04747;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 12px;
-      display: inline-flex;
+    .control-label-with-button {
+      display: flex;
       align-items: center;
-      gap: 6px;
-    }
-    
-    /* 底圖樣式 */
-    .label-background-logo {
-      position: absolute !important;
-      z-index: 1 !important;
-      pointer-events: none;
-      object-fit: contain !important;
-    }
-    
-    .print_sample > *:not(.label-background-logo) {
-      position: relative !important;
-      z-index: 2 !important;
+      gap: 10px;
     }
     
     /* 通知樣式 */
@@ -704,24 +625,103 @@ javascript:(function(){
       fill: white;
     }
     
-    /* 其他樣式 */
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent 0%, #e8eaed 50%, transparent 100%);
-      margin: 12px 0;
+    /* 底圖樣式 */
+    .label-background-logo {
+      position: absolute !important;
+      z-index: 1 !important;
+      pointer-events: none;
+      object-fit: contain !important;
     }
     
-    .control-hint {
-      font-size: 12px;
+    .print_sample > *:not(.label-background-logo) {
+      position: relative !important;
+      z-index: 2 !important;
+    }
+    
+    /* 輸入框樣式 */
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e8eaed;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    /* 小按鈕 */
+    .small-button {
+      padding: 6px 16px;
+      background: white;
+      border: 2px solid #e8eaed;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .small-button.primary {
+      background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    /* 底圖上傳區域 */
+    .logo-upload-area {
+      border: 2px dashed #d4d7dd;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #fafbff;
+      margin-bottom: 16px;
+    }
+    
+    .logo-upload-area:hover {
+      border-color: #7289DA;
+      background: #f8f9ff;
+    }
+    
+    .logo-upload-area.has-logo {
+      border-style: solid;
+      padding: 16px;
+      background: white;
+    }
+    
+    .logo-preview {
+      max-width: 100%;
+      max-height: 100px;
+      margin: 0 auto;
+      display: block;
+    }
+    
+    .upload-hint {
       color: #6c757d;
-      margin-top: 4px;
-      font-style: italic;
+      font-size: 13px;
+      margin-top: 8px;
     }
     
-    .control-label-with-button {
-      display: flex;
+    .logo-controls {
+      display: none;
+    }
+    
+    .logo-controls.active {
+      display: block;
+    }
+    
+    .remove-logo-btn {
+      background: #f04747;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
     }
     
     /* 滾動條 */
@@ -742,54 +742,14 @@ javascript:(function(){
     .panel-body::-webkit-scrollbar-thumb:hover {
       background: #b8bcc4;
     }
-    
-    /* 進度條樣式 */
-    .export-progress {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-      z-index: 100001;
-      text-align: center;
-    }
-    
-    .export-progress h4 {
-      margin: 0 0 20px 0;
-      font-size: 18px;
-      color: #333;
-    }
-    
-    .progress-bar {
-      width: 300px;
-      height: 6px;
-      background: #e8eaed;
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #00a0e9 0%, #0068b7 100%);
-      transition: width 0.3s ease;
-    }
-    
-    .progress-text {
-      font-size: 14px;
-      color: #6c757d;
-    }
   `;
   document.head.appendChild(style);
 
-  /* Brother 圖片匯出功能 */
-  window.exportForBrotherApp = async function() {
+  /* Brother 連續長圖匯出功能 */
+  window.exportBrotherContinuousImage = async function() {
     if (!window.html2canvas) {
       showNotification('請稍候，正在載入必要元件...', 'info');
-      setTimeout(() => exportForBrotherApp(), 1000);
+      setTimeout(() => exportBrotherContinuousImage(), 1000);
       return;
     }
 
@@ -799,215 +759,264 @@ javascript:(function(){
       return;
     }
 
-    // 取得選擇的標籤尺寸
-    const labelSizeSelect = document.getElementById('brother-label-size');
-    const selectedSize = brotherLabelSizes.find(size => 
-      size.name === labelSizeSelect.value
-    ) || brotherLabelSizes[0];
-
-    let customHeight = selectedSize.height;
-    if (selectedSize.name === '自訂高度') {
-      const customHeightInput = document.getElementById('custom-label-height');
-      customHeight = parseFloat(customHeightInput.value) || 30;
-    }
-
-    // 計算像素尺寸 (300 DPI)
-    const pixelWidth = 696; // 29mm @ 300dpi
-    const pixelHeight = Math.round(customHeight * 24.094); // mm to pixels @ 300dpi
-
-    // 顯示進度條
-    const progressDiv = document.createElement('div');
-    progressDiv.className = 'export-progress';
-    progressDiv.innerHTML = `
-      <h4>正在匯出 Brother 標籤圖片...</h4>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: 0%"></div>
-      </div>
-      <div class="progress-text">處理中 0 / ${labels.length}</div>
-    `;
-    document.body.appendChild(progressDiv);
-
-    const progressFill = progressDiv.querySelector('.progress-fill');
-    const progressText = progressDiv.querySelector('.progress-text');
+    showNotification('正在生成 Brother 連續長圖...', 'info');
 
     try {
+      // 預設尺寸 29 x 42mm
+      const labelWidthMM = 29;
+      const labelHeightMM = 42;
+      
+      // 轉換為像素 (300 DPI)
+      const pixelPerMM = 11.811; // 300 DPI
+      const labelWidth = Math.round(labelWidthMM * pixelPerMM); // 342px
+      const labelHeight = Math.round(labelHeightMM * pixelPerMM); // 496px
+      
+      // 建立橫向連續長圖畫布
+      const totalWidth = labelWidth * labels.length;
+      const canvas = document.createElement('canvas');
+      canvas.width = totalWidth;
+      canvas.height = labelHeight;
+      const ctx = canvas.getContext('2d');
+      
+      // 白色背景
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 處理每個標籤
       for (let i = 0; i < labels.length; i++) {
         const label = labels[i];
         
-        // 更新進度
-        const progress = ((i + 1) / labels.length) * 100;
-        progressFill.style.width = progress + '%';
-        progressText.textContent = `處理中 ${i + 1} / ${labels.length}`;
-
-        // 建立畫布
-        const canvas = document.createElement('canvas');
-        canvas.width = pixelWidth;
-        canvas.height = pixelHeight;
-        const ctx = canvas.getContext('2d');
-
-        // 白色背景
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+        // 複製標籤以避免修改原始元素
+        const tempContainer = document.createElement('div');
+        tempContainer.style.cssText = `
+          position: fixed;
+          left: -9999px;
+          top: 0;
+          width: ${label.offsetWidth}px;
+          height: ${label.offsetHeight}px;
+          background: white;
+          overflow: visible;
+        `;
+        
+        const clonedLabel = label.cloneNode(true);
+        
+        // 確保條碼數字不會被識別為電話號碼
+        const barcodeTexts = clonedLabel.querySelectorAll('.spec_barcode .sub');
+        barcodeTexts.forEach(text => {
+          text.style.cssText += `
+            pointer-events: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            text-decoration: none !important;
+            color: inherit !important;
+          `;
+          // 包裹在 span 中以防止識別
+          const span = document.createElement('span');
+          span.style.cssText = 'display: inline-block;';
+          span.textContent = text.textContent;
+          text.textContent = '';
+          text.appendChild(span);
+        });
+        
+        tempContainer.appendChild(clonedLabel);
+        document.body.appendChild(tempContainer);
+        
         // 使用 html2canvas 繪製標籤
-        const tempCanvas = await html2canvas(label, {
+        const tempCanvas = await html2canvas(clonedLabel, {
           scale: 3,
           backgroundColor: '#FFFFFF',
           logging: false,
           useCORS: true,
-          width: label.offsetWidth,
-          height: label.offsetHeight
+          allowTaint: true,
+          width: clonedLabel.offsetWidth,
+          height: clonedLabel.offsetHeight
         });
-
-        // 計算縮放比例以適應目標尺寸
-        const scaleX = pixelWidth / tempCanvas.width;
-        const scaleY = pixelHeight / tempCanvas.height;
-        const scale = Math.min(scaleX, scaleY) * 0.9; // 留一些邊距
-
-        // 置中繪製
+        
+        // 移除臨時容器
+        tempContainer.remove();
+        
+        // 計算縮放比例
+        const scaleX = labelWidth / tempCanvas.width;
+        const scaleY = labelHeight / tempCanvas.height;
+        const scale = Math.min(scaleX, scaleY);
+        
+        // 計算繪製尺寸和位置（置中）
         const drawWidth = tempCanvas.width * scale;
         const drawHeight = tempCanvas.height * scale;
-        const offsetX = (pixelWidth - drawWidth) / 2;
-        const offsetY = (pixelHeight - drawHeight) / 2;
-
-        ctx.drawImage(tempCanvas, offsetX, offsetY, drawWidth, drawHeight);
-
-        // 轉換為 Blob 並下載
-        await new Promise((resolve) => {
-          canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `brother_label_${String(i + 1).padStart(3, '0')}.png`;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-            resolve();
-          }, 'image/png', 1.0);
-        });
-
-        // 延遲避免瀏覽器阻擋
+        const drawX = i * labelWidth + (labelWidth - drawWidth) / 2;
+        const drawY = (labelHeight - drawHeight) / 2;
+        
+        // 繪製到連續長圖
+        ctx.drawImage(tempCanvas, drawX, drawY, drawWidth, drawHeight);
+        
+        // 添加分隔線（可選）
         if (i < labels.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300));
+          ctx.strokeStyle = '#f0f0f0';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo((i + 1) * labelWidth, 0);
+          ctx.lineTo((i + 1) * labelWidth, labelHeight);
+          ctx.stroke();
         }
       }
 
-      progressDiv.remove();
-      showNotification(`成功匯出 ${labels.length} 張標籤圖片`, 'success');
-    } catch (error) {
-      progressDiv.remove();
-      console.error('匯出失敗:', error);
-      showNotification('匯出過程發生錯誤', 'warning');
-    }
-  };
-
-  /* CSV 匯出功能 */
-  window.exportAsCSV = function() {
-    const labels = document.querySelectorAll('.print_sample');
-    if (labels.length === 0) {
-      showNotification('找不到標籤資料', 'warning');
-      return;
-    }
-
-    let csvContent = '\ufeff'; // UTF-8 BOM
-    csvContent += '商品名稱,規格,編號,價格,條碼\n';
-    
-    labels.forEach((label, index) => {
-      const name = label.querySelector('.spec_info .main')?.textContent?.trim() || '';
-      
-      // 取得所有 sub 元素
-      const subs = label.querySelectorAll('.spec_info .sub');
-      let spec = '', code = '', price = '';
-      
-      subs.forEach((sub, subIndex) => {
-        const text = sub.textContent?.trim() || '';
-        if (subIndex === 0) spec = text;
-        else if (subIndex === 1) code = text;
-        else if (subIndex === 2) price = text;
-      });
-      
-      const barcode = label.querySelector('.spec_barcode .sub')?.textContent?.trim() || '';
-      
-      // 跳脫 CSV 特殊字元
-      const escapeCsv = (str) => {
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
-      
-      csvContent += `${escapeCsv(name)},${escapeCsv(spec)},${escapeCsv(code)},${escapeCsv(price)},${escapeCsv(barcode)}\n`;
-    });
-    
-    // 下載 CSV
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.download = `barcode_labels_${new Date().toISOString().slice(0,10)}.csv`;
-    link.href = URL.createObjectURL(blob);
-    link.click();
-    
-    showNotification(`已匯出 ${labels.length} 筆標籤資料`, 'success');
-  };
-
-  /* 批次匯出所有標籤為單一圖片 */
-  window.exportAsSingleImage = async function() {
-    if (!window.html2canvas) {
-      showNotification('請稍候，正在載入必要元件...', 'info');
-      setTimeout(() => exportAsSingleImage(), 1000);
-      return;
-    }
-
-    const labels = document.querySelectorAll('.print_sample');
-    if (labels.length === 0) {
-      showNotification('找不到標籤資料', 'warning');
-      return;
-    }
-
-    showNotification('正在生成圖片，請稍候...', 'info');
-
-    try {
-      // 建立暫存容器
-      const container = document.createElement('div');
-      container.style.cssText = `
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        background: white;
-        width: 696px;
-      `;
-      document.body.appendChild(container);
-
-      // 複製所有標籤到容器
-      labels.forEach((label, index) => {
-        const clone = label.cloneNode(true);
-        clone.style.marginBottom = '20px';
-        container.appendChild(clone);
-      });
-
-      // 使用 html2canvas 生成圖片
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        backgroundColor: '#FFFFFF',
-        logging: false,
-        useCORS: true
-      });
-
-      // 移除暫存容器
-      container.remove();
-
-      // 下載圖片
+      // 轉換為 Blob
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `all_labels_${new Date().getTime()}.png`;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
+        
+        // 在新視窗中顯示
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <meta name="format-detection" content="telephone=no">
+              <title>Brother 標籤長圖</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 20px;
+                  background: #f0f0f0;
+                  text-align: center;
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+                }
+                img {
+                  max-width: 100%;
+                  height: auto;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                  border-radius: 8px;
+                  display: block;
+                  margin: 0 auto 20px;
+                }
+                .info {
+                  background: white;
+                  padding: 20px;
+                  border-radius: 12px;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                  margin-bottom: 20px;
+                  max-width: 600px;
+                  margin-left: auto;
+                  margin-right: auto;
+                }
+                .info h3 {
+                  margin: 0 0 10px 0;
+                  color: #333;
+                  font-size: 18px;
+                }
+                .info p {
+                  margin: 5px 0;
+                  color: #666;
+                  font-size: 14px;
+                }
+                .button {
+                  display: inline-block;
+                  background: linear-gradient(135deg, #00a0e9 0%, #0068b7 100%);
+                  color: white;
+                  padding: 12px 24px;
+                  border-radius: 8px;
+                  text-decoration: none;
+                  font-weight: 600;
+                  margin: 10px;
+                  font-size: 16px;
+                  box-shadow: 0 4px 12px rgba(0, 160, 233, 0.3);
+                  transition: all 0.2s ease;
+                }
+                .button:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 6px 16px rgba(0, 160, 233, 0.4);
+                }
+                .secondary-button {
+                  background: white;
+                  color: #333;
+                  border: 2px solid #e0e0e0;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .secondary-button:hover {
+                  background: #f8f9fa;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+              </style>
+            </head>
+            <body>
+              <div class="info">
+                <h3>Brother 標籤連續長圖</h3>
+                <p>尺寸：29 x 42mm × ${labels.length} 張</p>
+                <p>總長度：${(labelWidthMM * labels.length / 10).toFixed(1)} cm</p>
+                <p>解析度：300 DPI</p>
+              </div>
+              
+              <img src="${url}" alt="Brother 標籤長圖">
+              
+              <div style="margin: 20px;">
+                <a href="${url}" download="brother_labels_${new Date().getTime()}.png" class="button">
+                  下載圖片
+                </a>
+                <button onclick="saveToPhotos('${url}')" class="button secondary-button">
+                  儲存到相簿
+                </button>
+              </div>
+              
+              <div class="info" style="margin-top: 20px;">
+                <h3>使用說明</h3>
+                <p>1. 點擊「下載圖片」或「儲存到相簿」</p>
+                <p>2. 開啟 Brother iPrint&Label App</p>
+                <p>3. 選擇「相簿列印」功能</p>
+                <p>4. 選擇此圖片並列印</p>
+              </div>
+              
+              <script>
+                function saveToPhotos(url) {
+                  // iOS Safari
+                  if (navigator.share) {
+                    fetch(url)
+                      .then(res => res.blob())
+                      .then(blob => {
+                        const file = new File([blob], 'brother_labels.png', { type: 'image/png' });
+                        navigator.share({
+                          files: [file],
+                          title: 'Brother 標籤'
+                        });
+                      });
+                  } else {
+                    // 其他瀏覽器：長按圖片儲存
+                    alert('請長按圖片，選擇「儲存圖片」');
+                  }
+                }
+                
+                // 防止電話號碼識別
+                document.addEventListener('DOMContentLoaded', function() {
+                  const meta = document.createElement('meta');
+                  meta.name = 'format-detection';
+                  meta.content = 'telephone=no';
+                  document.head.appendChild(meta);
+                });
+              </script>
+            </body>
+            </html>
+          `);
+          
+          showNotification('已在新視窗開啟 Brother 標籤長圖', 'success');
+        } else {
+          // 如果無法開啟新視窗，直接下載
+          const link = document.createElement('a');
+          link.download = `brother_labels_${new Date().getTime()}.png`;
+          link.href = url;
+          link.click();
+          
+          showNotification('已下載 Brother 標籤長圖', 'success');
+        }
+        
+        // 延遲清理 URL
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
       }, 'image/png', 1.0);
 
-      showNotification('已匯出所有標籤為單一圖片', 'success');
     } catch (error) {
-      console.error('匯出失敗:', error);
-      showNotification('匯出過程發生錯誤', 'warning');
+      console.error('生成圖片失敗:', error);
+      showNotification('生成圖片時發生錯誤', 'warning');
     }
   };
 
@@ -1065,59 +1074,16 @@ javascript:(function(){
           </div>
         </div>
         
-        <!-- Brother 匯出設定 -->
-        <div class="section">
-          <div class="section-header" data-section="brother">
-            <h4>
-              <span class="material-icons section-icon">print</span>
-              Brother 印表機匯出
-            </h4>
-            <span class="material-icons section-toggle">expand_more</span>
-          </div>
-          <div class="section-content" id="brother-content">
-            <div class="control-group">
-              <div class="control-group-title">Brother 標籤尺寸</div>
-              <div class="control-label">
-                <span>選擇標籤規格</span>
-              </div>
-              <select id="brother-label-size">
-                ${brotherLabelSizes.map(size => 
-                  `<option value="${size.name}">${size.name}</option>`
-                ).join('')}
-              </select>
-              
-              <div id="custom-height-group" style="display:none; margin-top: 10px;">
-                <div class="control-label">
-                  <span>自訂高度 (mm)</span>
-                </div>
-                <input type="number" id="custom-label-height" min="10" max="200" value="30" step="0.1">
-              </div>
-              
-              <div style="margin-top: 20px;">
-                <button class="action-button brother-button" onclick="exportForBrotherApp()">
-                  <span class="material-icons">download</span>
-                  <span>匯出 Brother 專用圖片</span>
-                </button>
-                
-                <button class="action-button csv-button" onclick="exportAsCSV()" style="margin-top: 10px;">
-                  <span class="material-icons">table_chart</span>
-                  <span>匯出 CSV 資料檔</span>
-                </button>
-                
-                <button class="action-button" onclick="exportAsSingleImage()" style="margin-top: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                  <span class="material-icons">image</span>
-                  <span>匯出為單一圖片</span>
-                </button>
-              </div>
-              
-              <div class="control-hint" style="margin-top: 15px;">
-                <strong>使用說明：</strong><br>
-                1. 選擇合適的標籤尺寸<br>
-                2. 點擊「匯出 Brother 專用圖片」<br>
-                3. 圖片會自動下載到您的裝置<br>
-                4. 使用 Brother iPrint&Label App 開啟圖片並列印
-              </div>
-            </div>
+        <!-- Brother 匯出區塊 -->
+        <div class="control-group" style="background: #f0f8ff; border-color: #00a0e9;">
+          <div class="control-group-title" style="color: #0068b7;">Brother 印表機專用</div>
+          <button class="action-button brother-button" onclick="exportBrotherContinuousImage()">
+            <span class="material-icons">panorama_horizontal</span>
+            <span>匯出 Brother 連續長圖 (29×42mm)</span>
+          </button>
+          <div class="control-hint" style="margin-top: 10px;">
+            點擊後會在新視窗顯示橫向連續長圖，<br>
+            可直接儲存到相簿並使用 Brother iPrint&Label 列印
           </div>
         </div>
         
@@ -1355,18 +1321,6 @@ javascript:(function(){
       });
     }
 
-    /* Brother 標籤尺寸選擇事件 */
-    const brotherLabelSizeSelect = document.getElementById('brother-label-size');
-    const customHeightGroup = document.getElementById('custom-height-group');
-    
-    brotherLabelSizeSelect.addEventListener('change', function() {
-      if (this.value === '自訂高度') {
-        customHeightGroup.style.display = 'block';
-      } else {
-        customHeightGroup.style.display = 'none';
-      }
-    });
-
     /* 建立動態樣式元素 */
     const dynamicStyle = document.createElement('style');
     document.head.appendChild(dynamicStyle);
@@ -1534,7 +1488,7 @@ javascript:(function(){
         logoAspectRatio: 1
       };
       
-      /* 預設值設置（與 BV SHOP 原始值相同） */
+      /* 預設值設置 */
       const defaultSettings = { ...bvShopDefaults };
 
       /* 粗體按鈕點擊事件 */
@@ -1630,12 +1584,21 @@ javascript:(function(){
           body .print_barcode_area .print_sample .spec_info {
             height: ${specInfoHeight}mm !important;
             margin-bottom: 0 !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
           }
           
           /* 條碼區域高度 - 使用計算的百分比高度 */
           html .print_barcode_area .print_sample .spec_barcode,
           body .print_barcode_area .print_sample .spec_barcode {
             height: ${specBarcodeHeight}mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden !important;
           }
           
           /* 確保字體套用到所有元素 */
@@ -1660,7 +1623,11 @@ javascript:(function(){
             margin-bottom: ${mainGap.value}px !important;
             white-space: normal !important; /* 允許自動換行 */
             word-break: break-all !important; /* 單字太長也會換行 */
-            overflow: visible !important;     /* 顯示全部內容 */
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
           }
           
           /* 規格/編號/價格樣式 - 統一設定 */
@@ -1668,9 +1635,9 @@ javascript:(function(){
             font-size: ${subSize.value}px !important;
             line-height: ${subLineHeight}px !important;
             font-weight: ${subFontWeight} !important;
-            white-space: normal !important;
-            word-break: break-all !important;
-            overflow: visible !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
           }
           
           /* 多行文字處理 */
@@ -1679,10 +1646,17 @@ javascript:(function(){
             line-height: ${mainLineHeight}px !important;
           }
           
-          /* 條碼下方數字樣式 */
+          /* 條碼下方數字樣式 - 防止電話連結 */
           .print_barcode_area .print_sample .spec_barcode .sub {
             font-size: ${barcodeTextSize.value}px !important;
             font-weight: ${barcodeTextFontWeight} !important;
+            pointer-events: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            text-decoration: none !important;
+            color: inherit !important;
+            white-space: nowrap !important;
           }
           
           /* 條碼圖片高度和寬度 - 使用百分比寬度 */
@@ -1690,7 +1664,8 @@ javascript:(function(){
             height: ${barcodeHeight.value}mm !important;
             width: ${barcodeActualWidth}mm !important;
             max-width: 100% !important;
-            object-fit: fill !important;
+            object-fit: contain !important;
+            margin: 0 auto !important;
           }
           
           /* 確保條碼容器能適應條碼大小 */
@@ -1699,6 +1674,7 @@ javascript:(function(){
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
+            justify-content: center !important;
           }
           
           /* 確保字體覆蓋所有可能的元素 */
@@ -1715,10 +1691,23 @@ javascript:(function(){
             transform: translate(-50%, -50%) !important;
             opacity: ${logoOpacitySlider ? (100 - logoOpacitySlider.value) / 100 : 0.8} !important;
           }
+          
+          /* 防止任何連結樣式 */
+          .print_barcode_area a {
+            text-decoration: none !important;
+            color: inherit !important;
+            pointer-events: none !important;
+          }
         `;
         
         /* 更新所有標籤的底圖 */
         updateLogos();
+        
+        /* 防止條碼數字被識別為電話號碼 */
+        document.querySelectorAll('.spec_barcode .sub').forEach(element => {
+          element.setAttribute('x-ms-format-detection', 'none');
+          element.setAttribute('format-detection', 'telephone=no');
+        });
         
         /* 自動保存當前設定為臨時設定 */
         saveSettingsToLocal('_current_temp_settings', saveCurrentSettings());
@@ -2161,6 +2150,12 @@ javascript:(function(){
           -moz-user-select: none;
           -ms-user-select: none;
           user-select: none;
+        }
+        
+        /* 特別防止條碼數字被識別為電話 */
+        .spec_barcode .sub {
+          -webkit-text-size-adjust: 100%;
+          -webkit-tap-highlight-color: transparent;
         }
       `;
       document.head.appendChild(preventSelectionStyle);
