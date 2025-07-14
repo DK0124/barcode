@@ -1553,21 +1553,23 @@ javascript:(function(){
       const textAlign = document.getElementById('text-align');
       const fontFamily = document.getElementById('font-family-select');
     
+      /* 動態取得 BV SHOP 原始預設值 */
+      const nativeSettings = getBVShopNativeSettings();
       const bvShopDefaults = nativeSettings || {
-        mainSize: 10,       // 根據 CSS
-        mainBold: true,     // font-weight: 700
-        mainGap: 0,         // 沒有 margin-bottom
-        subSize: 8,         // 根據 CSS
-        subBold: true,      // font-weight: 700
-        barcodeTextSize: 8, // 根據 CSS
-        barcodeTextBold: false, // CSS 中沒有指定粗體
-        barcodeHeight: 10,  // 根據 CSS: 10mm
-        barcodeWidth: 100,  // 預設佔滿寬度
-        labelWidth: 40,     // 根據 CSS: 40mm
-        labelHeight: 26,    // 根據 CSS: 26mm (不是 30mm)
-        labelPadding: 1,    // 根據 CSS: 1mm
-        textAlign: 'left',  // 根據 CSS: text-align: left
-        fontFamily: 'Arial, 微軟正黑體, sans-serif',
+        mainSize: 10,
+        mainBold: true,
+        mainGap: 0,          // 改為 0
+        subSize: 8,
+        subBold: true,
+        barcodeTextSize: 8,
+        barcodeTextBold: false,
+        barcodeHeight: 10,
+        barcodeWidth: 100,   // 改為 100
+        labelWidth: 40,
+        labelHeight: 26,     // 改為 26
+        labelPadding: 1,
+        textAlign: 'left',
+        fontFamily: 'Arial, 微軟正黑體, sans-serif',  // 更新字體
         logoSize: 30,
         logoX: 50,
         logoY: 50,
