@@ -1280,6 +1280,13 @@ javascript:(function(){
               </div>
               <input type="range" id="barcode-width-slider" min="50" max="100" value="75">
             </div>
+
+              <div class="control-label" style="margin-top: 20px;">
+                <span>條碼垂直位置</span>
+                <span class="value-badge" id="barcode-y-position">50%</span>
+              </div>
+              <input type="range" id="barcode-y-position-slider" min="0" max="100" value="50">
+              <div class="control-hint">0% = 最上方，50% = 置中，100% = 最下方</div>
             
             <!-- 間距設定 -->
             <div class="control-group">
