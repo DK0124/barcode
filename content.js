@@ -86,9 +86,10 @@ javascript:(function(){
       const bodyZoom = parseFloat(getOriginalStyle(document.body, 'zoom')) || 1;
       const pxToMm = (px) => Math.round(px * 25.4 / 96 / bodyZoom);
       
-      // 條碼圖片
-      const barcodeHeight = barcodeImg ? pxToMm(barcodeImg.offsetHeight) : cssDefaults.barcodeHeight;
-      const barcodeWidth = 100; // CSS 沒有特別限制寬度，預設 100%
+      // 計算條碼佔可用空間的百分比
+      const samplePadding = cssDefaults.labelPadding || 1;
+      const availableHeightMM = cssDefaults.labelHeight - (samplePadding * 2);
+      const barcodeHeightPercent = Math.round(cssDefaults.barcodeHeight * 100 / availableHeightMM);
       
       // 標籤尺寸 - 使用 CSS 預設值
       const labelWidth = cssDefaults.labelWidth;
@@ -109,8 +110,9 @@ javascript:(function(){
         subBold,
         barcodeTextSize,
         barcodeTextBold,
-        barcodeHeight,
-        barcodeWidth,
+        barcodeHeight: barcodeHeightPercent || 40,  // 轉換為百分比
+        barcodeWidth: 90,  // 預設 90% 寬度
+        barcodeYPosition: 50,  // 預設置中
         labelWidth,
         labelHeight,
         labelPadding,
@@ -1269,24 +1271,24 @@ javascript:(function(){
             <div class="control-group">
               <div class="control-group-title">條碼圖案設定</div>
               <div class="control-label">
-                <span>條碼高度</span>
-                <span class="value-badge" id="barcode-height">10mm</span>
+                <span>條碼圖片高度${shouldUseMobileLayout ? '' : '（相對可用高度）'}</span>
+                <span class="value-badge" id="barcode-height">40%</span>
               </div>
-              <input type="range" id="barcode-height-slider" min="6" max="15" value="10">
+              <input type="range" id="barcode-height-slider" min="20" max="80" value="40">
               
               <div class="control-label" style="margin-top: 20px;">
-                <span>條碼寬度${shouldUseMobileLayout ? '' : '（相對標籤寬度）'}</span>
-                <span class="value-badge" id="barcode-width">75%</span>
+                <span>條碼圖片寬度${shouldUseMobileLayout ? '' : '（相對可用寬度）'}</span>
+                <span class="value-badge" id="barcode-width">90%</span>
               </div>
-              <input type="range" id="barcode-width-slider" min="50" max="100" value="75">
-            </div>
-
+              <input type="range" id="barcode-width-slider" min="50" max="100" value="90">
+              
               <div class="control-label" style="margin-top: 20px;">
                 <span>條碼垂直位置</span>
                 <span class="value-badge" id="barcode-y-position">50%</span>
               </div>
               <input type="range" id="barcode-y-position-slider" min="0" max="100" value="50">
-              <div class="control-hint">0% = 最上方，50% = 置中，100% = 最下方</div>
+              <div class="control-hint">在可用空間內調整：0% = 最上方，100% = 最下方</div>
+            </div>
             
             <!-- 間距設定 -->
             <div class="control-group">
@@ -1560,24 +1562,25 @@ javascript:(function(){
       const labelPadding = document.getElementById('label-padding-slider');
       const textAlign = document.getElementById('text-align');
       const fontFamily = document.getElementById('font-family-select');
-    
+      
       /* 動態取得 BV SHOP 原始預設值 */
       const nativeSettings = getBVShopNativeSettings();
       const bvShopDefaults = nativeSettings || {
         mainSize: 10,
         mainBold: true,
-        mainGap: 0,          // 改為 0
+        mainGap: 0,
         subSize: 8,
         subBold: true,
         barcodeTextSize: 8,
         barcodeTextBold: false,
-        barcodeHeight: 10,
-        barcodeWidth: 100,   // 改為 100
+        barcodeHeight: 40,     // 百分比
+        barcodeWidth: 90,      // 百分比
+        barcodeYPosition: 50,  // 百分比
         labelWidth: 40,
-        labelHeight: 26,     // 改為 26
+        labelHeight: 26,
         labelPadding: 1,
         textAlign: 'left',
-        fontFamily: 'Arial, 微軟正黑體, sans-serif',  // 更新字體
+        fontFamily: 'Arial, 微軟正黑體, sans-serif',
         logoSize: 30,
         logoX: 50,
         logoY: 50,
@@ -1621,26 +1624,34 @@ javascript:(function(){
         const subFontWeight = subBoldBtn && subBoldBtn.classList.contains('active') ? 700 : 500;
         const barcodeTextFontWeight = barcodeTextBoldBtn && barcodeTextBoldBtn.classList.contains('active') ? 700 : 500;
         
+        /* 計算可用空間（扣除內距） */
+        const totalWidth = parseFloat(labelWidth.value);
+        const totalHeight = parseFloat(labelHeight.value);
+        const paddingValue = parseFloat(labelPadding.value);
+        const availableWidth = totalWidth - (paddingValue * 2);
+        const availableHeight = totalHeight - (paddingValue * 2);
+        
+        /* 計算條碼實際尺寸（基於可用空間的百分比） */
+        const barcodeActualHeight = (availableHeight * parseFloat(barcodeHeight.value) / 100).toFixed(1);
+        const barcodeActualWidth = (availableWidth * parseFloat(barcodeWidth.value) / 100).toFixed(1);
+        
+        /* 計算條碼Y軸位置 */
+        const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 50;
+        
         /* 更新顯示值 */
         document.getElementById('main-size').textContent = mainSize.value + 'px';
         document.getElementById('main-gap').textContent = mainGap.value + 'px';
         document.getElementById('sub-size').textContent = subSize.value + 'px';
         
         document.getElementById('barcode-text-size').textContent = barcodeTextSize.value + 'px';
-        document.getElementById('barcode-height').textContent = barcodeHeight.value + 'mm';
+        document.getElementById('barcode-height').textContent = barcodeHeight.value + '%';
         document.getElementById('barcode-width').textContent = barcodeWidth.value + '%';
+        if (document.getElementById('barcode-y-position')) {
+          document.getElementById('barcode-y-position').textContent = barcodeYPercent + '%';
+        }
         document.getElementById('label-width').textContent = labelWidth.value + 'mm';
         document.getElementById('label-height').textContent = labelHeight.value + 'mm';
-        document.getElementById('label-padding').textContent = labelPadding.value + 'mm';    
-       
-        /* 計算實際高度 */
-        const totalHeight = parseFloat(labelHeight.value);
-        const padding = parseFloat(labelPadding.value) * 2;
-        const availableHeight = totalHeight - padding;
-        
-        // 移除百分比計算，改用自動調整
-        const specInfoHeight = 'auto';
-        const specBarcodeHeight = 'auto';
+        document.getElementById('label-padding').textContent = labelPadding.value + 'mm';
         
         /* Logo 顯示值更新 */
         if (logoSizeSlider) {
@@ -1649,13 +1660,6 @@ javascript:(function(){
           document.getElementById('logo-y').textContent = logoYSlider.value + '%';
           document.getElementById('logo-opacity').textContent = logoOpacitySlider.value + '%';
         }
-        
-        /* 計算條碼實際寬度 - 考慮 padding */
-        const availableWidth = parseFloat(labelWidth.value) - (parseFloat(labelPadding.value) * 2);
-        const barcodeActualWidth = (availableWidth * parseFloat(barcodeWidth.value) / 100).toFixed(1);
-        
-        /* 如果計算出的寬度超過可用寬度，就使用百分比 */
-        const useMmWidth = parseFloat(barcodeActualWidth) <= availableWidth;
         
         /* 計算基於百分比的logo高度（相對於標籤高度） */
         const logoHeightMM = logoSizeSlider ? parseFloat(labelHeight.value) * parseFloat(logoSizeSlider.value) / 100 : 0;
@@ -1685,29 +1689,23 @@ javascript:(function(){
             display: block !important;
           }
           
-          /* 條碼區域 - 保持原本的自動高度 */
+          /* 條碼區域 - 使用 flexbox 來控制位置 */
           html .print_barcode_area .print_sample .spec_barcode,
           body .print_barcode_area .print_sample .spec_barcode {
             height: auto !important;
-            display: block !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
             text-align: center !important;
             overflow: visible !important;
             position: relative !important;
+            /* 根據 Y 位置調整對齊 */
+            justify-content: ${
+              barcodeYPercent <= 20 ? 'flex-start' :
+              barcodeYPercent >= 80 ? 'flex-end' : 'center'
+            } !important;
           }
           
-          /* 條碼圖片 - 只調整圖片本身 */
-          .print_barcode_area .print_sample .spec_barcode img {
-            height: ${barcodeHeight.value}mm !important;  /* 圖片高度，不是區域高度 */
-            width: ${barcodeWidth.value}% !important;
-            max-width: 100% !important;
-            object-fit: contain !important;
-            display: block !important;
-            margin: 0 auto !important;
-            position: relative !important;
-            /* 簡單的位置調整：0% = 往上移5mm，100% = 往下移5mm */
-            transform: translateY(${(parseFloat(barcodeYPosition.value) - 50) / 10}mm) !important;
-          }
-                    
           /* 確保整體使用 flexbox 佈局 */
           .print_barcode_area .print_sample {
             display: flex !important;
@@ -1767,17 +1765,20 @@ javascript:(function(){
             white-space: nowrap !important;
           }
           
-          /* 條碼圖片高度和寬度 */
+          /* 條碼圖片 - 使用計算後的實際尺寸 */
           .print_barcode_area .print_sample .spec_barcode img {
-            height: ${barcodeHeight.value}mm !important;
-            ${useMmWidth 
-              ? `width: ${barcodeActualWidth}mm !important;` 
-              : `width: ${barcodeWidth.value}% !important;`
-            }
+            height: ${barcodeActualHeight}mm !important;
+            width: ${barcodeActualWidth}mm !important;
             max-width: 100% !important;
+            max-height: 100% !important;
             object-fit: contain !important;
-            margin: 0 auto !important;
             display: block !important;
+            margin: 0 auto !important;
+            position: relative !important;
+            /* 微調 Y 軸位置 */
+            ${barcodeYPosition ? `
+              transform: translateY(${(barcodeYPercent - 50) * 0.1}mm) !important;
+            ` : ''}
           }
           
           /* 確保字體覆蓋所有可能的元素 */
@@ -1963,9 +1964,8 @@ javascript:(function(){
         
         barcodeHeight.value = settings.barcodeHeight || defaultSettings.barcodeHeight;
         barcodeWidth.value = settings.barcodeWidth || defaultSettings.barcodeWidth;
-
         if (barcodeYPosition) {
-          barcodeYPosition.value = settings.barcodeYPosition || 50;
+          barcodeYPosition.value = settings.barcodeYPosition || defaultSettings.barcodeYPosition || 50;
         }
         
         labelWidth.value = settings.labelWidth || defaultSettings.labelWidth;
