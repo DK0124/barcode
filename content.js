@@ -1695,21 +1695,19 @@ javascript:(function(){
             position: relative !important;
           }
           
-          /* 條碼圖片 - 調整圖片本身的高度和位置 */
+          /* 條碼圖片 - 只調整圖片本身 */
           .print_barcode_area .print_sample .spec_barcode img {
-            height: ${barcodeHeight.value}mm !important;  /* 這是圖片本身的高度 */
+            height: ${barcodeHeight.value}mm !important;  /* 圖片高度，不是區域高度 */
             width: ${barcodeWidth.value}% !important;
             max-width: 100% !important;
             object-fit: contain !important;
             display: block !important;
             margin: 0 auto !important;
             position: relative !important;
-            /* Y軸位置調整 */
-            ${barcodeYPosition ? `
-              transform: translateY(${(parseFloat(barcodeYPosition.value) - 50) * 0.4}mm) !important;
-            ` : ''}
+            /* 簡單的位置調整：0% = 往上移5mm，100% = 往下移5mm */
+            transform: translateY(${(parseFloat(barcodeYPosition.value) - 50) / 10}mm) !important;
           }
-          
+                    
           /* 確保整體使用 flexbox 佈局 */
           .print_barcode_area .print_sample {
             display: flex !important;
