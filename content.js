@@ -1847,8 +1847,15 @@ javascript:(function(){
               }
             }
             
-            /* 套用 BV SHOP 原始預設值 */
-            applySavedSettings(bvShopDefaults);
+            /* 重新抓取原生樣式 */
+            const currentNativeSettings = getBVShopNativeSettings();
+            if (currentNativeSettings) {
+              applySavedSettings(currentNativeSettings);
+              showNotification('已重置為 BV SHOP 原生樣式');
+            } else {
+              applySavedSettings(bvShopDefaults);
+              showNotification('已重置為預設值');
+            }
             
             /* 清除預設檔選擇 */
             const presetSelect = document.getElementById('preset-select');
