@@ -1553,6 +1553,7 @@ javascript:(function(){
       const barcodeTextBoldBtn = document.getElementById('barcode-text-bold-btn');
       const barcodeHeight = document.getElementById('barcode-height-slider');
       const barcodeWidth = document.getElementById('barcode-width-slider');
+      const barcodeYPosition = document.getElementById('barcode-y-position-slider');
       
       const labelWidth = document.getElementById('label-width-slider');
       const labelHeight = document.getElementById('label-height-slider');
@@ -1684,13 +1685,36 @@ javascript:(function(){
             display: block !important;
           }
           
-          /* 條碼區域高度 - 使用自動高度 */
+          /* 條碼區域高度 - 使用自動高度和定位 */
           html .print_barcode_area .print_sample .spec_barcode,
           body .print_barcode_area .print_sample .spec_barcode {
             height: auto !important;
-            display: block !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
             text-align: center !important;
             overflow: visible !important;
+            position: relative !important;
+            ${barcodeYPosition ? `
+              justify-content: ${
+                barcodeYPosition.value <= 25 ? 'flex-start' :
+                barcodeYPosition.value >= 75 ? 'flex-end' : 'center'
+              } !important;
+            ` : ''}
+          }
+          
+          /* 條碼圖片位置微調 */
+          .print_barcode_area .print_sample .spec_barcode img {
+            height: ${barcodeHeight.value}mm !important;
+            width: ${barcodeWidth.value}% !important;
+            max-width: 100% !important;
+            object-fit: contain !important;
+            margin: 0 auto !important;
+            display: block !important;
+            ${barcodeYPosition ? `
+              position: relative !important;
+              top: ${(parseFloat(barcodeYPosition.value) - 50) * 0.2}mm !important;
+            ` : ''}
           }
           
           /* 確保整體使用 flexbox 佈局 */
@@ -1815,7 +1839,7 @@ javascript:(function(){
       const controls = [
         mainSize, mainGap,
         subSize,
-        barcodeTextSize, barcodeHeight, barcodeWidth,
+        barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
         labelWidth, labelHeight, labelPadding, textAlign, fontFamily,
         logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
       ];
@@ -1911,6 +1935,7 @@ javascript:(function(){
           barcodeTextBold: barcodeTextBoldBtn ? barcodeTextBoldBtn.classList.contains('active') : false,
           barcodeHeight: barcodeHeight.value,
           barcodeWidth: barcodeWidth.value,
+          barcodeYPosition: barcodeYPosition ? barcodeYPosition.value : 50,
           labelWidth: labelWidth.value,
           labelHeight: labelHeight.value,
           labelPadding: labelPadding.value,
@@ -1947,6 +1972,10 @@ javascript:(function(){
         
         barcodeHeight.value = settings.barcodeHeight || defaultSettings.barcodeHeight;
         barcodeWidth.value = settings.barcodeWidth || defaultSettings.barcodeWidth;
+
+        if (barcodeYPosition) {
+          barcodeYPosition.value = settings.barcodeYPosition || 50;
+        }
         
         labelWidth.value = settings.labelWidth || defaultSettings.labelWidth;
         labelHeight.value = settings.labelHeight || defaultSettings.labelHeight;
