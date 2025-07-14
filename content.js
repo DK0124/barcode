@@ -1764,14 +1764,14 @@ javascript:(function(){
             color: inherit !important;
             white-space: nowrap !important;
           }
-          
-          /* 條碼圖片 - 使用計算後的實際尺寸 */
+                    
+          /* 條碼圖片 - 直接拉伸圖片尺寸 */
           .print_barcode_area .print_sample .spec_barcode img {
             height: ${barcodeActualHeight}mm !important;
             width: ${barcodeActualWidth}mm !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            object-fit: contain !important;
+            max-width: none !important;  /* 移除限制 */
+            max-height: none !important; /* 移除限制 */
+            object-fit: fill !important; /* 改為 fill，強制拉伸到指定尺寸 */
             display: block !important;
             margin: 0 auto !important;
             position: relative !important;
