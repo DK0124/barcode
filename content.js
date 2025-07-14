@@ -1642,8 +1642,12 @@ javascript:(function(){
           document.getElementById('logo-opacity').textContent = logoOpacitySlider.value + '%';
         }
         
-        /* 計算條碼實際寬度 */
-        const barcodeActualWidth = (parseFloat(labelWidth.value) * parseFloat(barcodeWidth.value) / 100).toFixed(1);
+        /* 計算條碼實際寬度 - 考慮 padding */
+        const availableWidth = parseFloat(labelWidth.value) - (parseFloat(labelPadding.value) * 2);
+        const barcodeActualWidth = (availableWidth * parseFloat(barcodeWidth.value) / 100).toFixed(1);
+        
+        /* 如果計算出的寬度超過可用寬度，就使用百分比 */
+        const useMmWidth = parseFloat(barcodeActualWidth) <= availableWidth;
         
         /* 計算基於百分比的logo高度（相對於標籤高度） */
         const logoHeightMM = logoSizeSlider ? parseFloat(labelHeight.value) * parseFloat(logoSizeSlider.value) / 100 : 0;
@@ -1744,10 +1748,12 @@ javascript:(function(){
           /* 條碼圖片高度和寬度 */
           .print_barcode_area .print_sample .spec_barcode img {
             height: ${barcodeHeight.value}mm !important;
-            width: auto !important;  /* 改為 auto，讓寬度自動調整 */
-            max-height: ${barcodeHeight.value}mm !important;
-            max-width: ${barcodeActualWidth}mm !important;
-            object-fit: fill !important;  /* 改為 fill 或 scale-down */
+            ${useMmWidth 
+              ? `width: ${barcodeActualWidth}mm !important;` 
+              : `width: ${barcodeWidth.value}% !important;`
+            }
+            max-width: 100% !important;
+            object-fit: contain !important;
             margin: 0 auto !important;
             display: block !important;
           }
