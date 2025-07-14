@@ -40,7 +40,6 @@ javascript:(function(){
       // 取得原始 CSS 檔案的樣式
       const getOriginalStyle = (element, property) => {
         if (!element) return null;
-        // 優先使用 getComputedStyle
         const computed = window.getComputedStyle(element);
         return computed[property];
       };
@@ -53,27 +52,28 @@ javascript:(function(){
       
       // 從 CSS 判斷實際尺寸
       const sampleRect = sample.getBoundingClientRect();
-      const infoRect = info?.getBoundingClientRect();
-      const barcodeAreaRect = sample.querySelector('.spec_barcode')?.getBoundingClientRect();
       
-      // 主文字 - 檢查 computed style
+      // 主文字 - 根據你提供的 HTML，實際預設值
       const mainSize = main ? parseInt(getOriginalStyle(main, 'fontSize')) : 13;
-      const mainWeight = main ? getOriginalStyle(main, 'fontWeight') : 'normal';
-      const mainBold = mainWeight === 'bold' || mainWeight === '700' || parseInt(mainWeight) >= 600;
+      const mainWeight = main ? getOriginalStyle(main, 'fontWeight') : '400';
+      const mainBold = ['bold', '700', '800', '900'].includes(mainWeight) || parseInt(mainWeight) >= 600;
       const mainGap = main ? (parseInt(getOriginalStyle(main, 'marginBottom')) || 0) : 0;
       
-      // 副標
+      // 副標 - 實際是 11px
       const subSize = sub ? parseInt(getOriginalStyle(sub, 'fontSize')) : 11;
-      const subWeight = sub ? getOriginalStyle(sub, 'fontWeight') : 'normal';
-      const subBold = subWeight === 'bold' || subWeight === '700' || parseInt(subWeight) >= 600;
+      const subWeight = sub ? getOriginalStyle(sub, 'fontWeight') : '400';
+      const subBold = ['bold', '700', '800', '900'].includes(subWeight) || parseInt(subWeight) >= 600;
       
-      // 條碼區域的文字（可能有價格）
+      // 條碼區域的文字 - 注意 <b> 標籤
+      const barcodeTextParent = barcodeText?.parentElement;
+      const hasBoldTag = barcodeTextParent?.tagName === 'B' || barcodeText?.querySelector('b');
       const barcodeTextSize = barcodeText ? parseInt(getOriginalStyle(barcodeText, 'fontSize')) : 11;
-      const barcodeTextWeight = barcodeText ? getOriginalStyle(barcodeText, 'fontWeight') : 'normal';
-      const barcodeTextBold = barcodeTextWeight === 'bold' || barcodeTextWeight === '700' || parseInt(barcodeTextWeight) >= 600;
+      const barcodeTextWeight = barcodeText ? getOriginalStyle(barcodeText, 'fontWeight') : '400';
+      const barcodeTextBold = hasBoldTag || ['bold', '700', '800', '900'].includes(barcodeTextWeight) || parseInt(barcodeTextWeight) >= 600;
       
-      // 從實際像素計算 mm
-      const pxToMm = (px) => Math.round(px * 25.4 / 96);
+      // 從實際像素計算 mm (考慮 zoom)
+      const bodyZoom = parseFloat(getOriginalStyle(document.body, 'zoom')) || 1;
+      const pxToMm = (px) => Math.round(px * 25.4 / 96 / bodyZoom);
       
       // 條碼圖片
       const barcodeHeight = barcodeImg ? pxToMm(barcodeImg.offsetHeight) : 13;
@@ -84,18 +84,23 @@ javascript:(function(){
       const labelWidth = pxToMm(sampleRect.width) || 40;
       const labelHeight = pxToMm(sampleRect.height) || 30;
       
-      // padding
+      // padding - BV SHOP 原生似乎沒有 padding
       const sampleStyle = getOriginalStyle(sample, 'padding');
       const paddingMatch = sampleStyle?.match(/(\d+(?:\.\d+)?)/);
       const labelPadding = paddingMatch ? pxToMm(parseFloat(paddingMatch[1])) : 0;
       
-      // 對齊
-      const textAlign = info ? getOriginalStyle(info, 'textAlign') || 'center' : 'center';
+      // 對齊 - 原生是置中
+      const textAlign = info ? (getOriginalStyle(info, 'textAlign') || 'center') : 'center';
       
       // 字體
       const fontFamily = getOriginalStyle(main || sub || sample, 'fontFamily') || 'Arial, sans-serif';
       
-      // 直接設定合理的預設值，不計算文字區域佔比
+      console.log('抓取到的原生樣式:', {
+        mainSize, mainBold, subSize, subBold, 
+        barcodeTextSize, barcodeTextBold,
+        labelWidth, labelHeight
+      });
+      
       return {
         mainSize,
         mainBold,
@@ -111,7 +116,6 @@ javascript:(function(){
         labelPadding,
         textAlign,
         fontFamily,
-        textAreaRatio: 50, // 固定預設值
         logoSize: 30,
         logoX: 50,
         logoY: 50,
@@ -1548,33 +1552,31 @@ javascript:(function(){
       const labelPadding = document.getElementById('label-padding-slider');
       const textAlign = document.getElementById('text-align');
       const fontFamily = document.getElementById('font-family-select');
-      
-      const textAreaRatio = document.getElementById('text-area-ratio-slider');
-      
+    
       /* 動態取得 BV SHOP 原始預設值 */
       const nativeSettings = getBVShopNativeSettings();
       const bvShopDefaults = nativeSettings || {
-        mainSize: 10,
-        mainBold: true,
-        mainGap: 1,
-        subSize: 8,
-        subBold: true,
-        barcodeTextSize: 8,
-        barcodeTextBold: false,
-        barcodeHeight: 10,
-        barcodeWidth: 75,
+        mainSize: 13,      // 實際是 13px
+        mainBold: false,   // 原生不是粗體
+        mainGap: 0,        // 沒有額外間距
+        subSize: 11,       // 實際是 11px  
+        subBold: false,    // 原生不是粗體
+        barcodeTextSize: 11,
+        barcodeTextBold: true,  // 有 <b> 標籤
+        barcodeHeight: 13,      // 50px ≈ 13mm
+        barcodeWidth: 100,      // 條碼佔滿寬度
         labelWidth: 40,
         labelHeight: 30,
-        labelPadding: 1,
-        textAlign: 'left',
-        fontFamily: fontOptions[0].value,
-        textAreaRatio: 60,
+        labelPadding: 0,        // 原生沒有 padding
+        textAlign: 'center',    // 原生是置中
+        fontFamily: 'Arial, sans-serif',
         logoSize: 30,
         logoX: 50,
         logoY: 50,
         logoOpacity: 20,
         logoAspectRatio: 1
       };
+      
       /* 預設值設置（與 BV SHOP 原始值相同） */
       const defaultSettings = { ...bvShopDefaults };
 
@@ -1621,14 +1623,8 @@ javascript:(function(){
         document.getElementById('barcode-width').textContent = barcodeWidth.value + '%';
         document.getElementById('label-width').textContent = labelWidth.value + 'mm';
         document.getElementById('label-height').textContent = labelHeight.value + 'mm';
-        document.getElementById('label-padding').textContent = labelPadding.value + 'mm';
-        
-        /* 進階版面設定顯示值更新 */
-        const textRatio = parseInt(textAreaRatio.value);
-        const barcodeRatio = 100 - textRatio;
-        document.getElementById('text-area-ratio').textContent = textRatio + '%';
-        document.getElementById('area-hint').textContent = `文字區：${textRatio}% / 條碼區：${barcodeRatio}%`;
-        
+        document.getElementById('label-padding').textContent = labelPadding.value + 'mm';    
+       
         /* 計算實際高度 */
         const totalHeight = parseFloat(labelHeight.value);
         const padding = parseFloat(labelPadding.value) * 2;
@@ -1806,7 +1802,6 @@ javascript:(function(){
         subSize,
         barcodeTextSize, barcodeHeight, barcodeWidth,
         labelWidth, labelHeight, labelPadding, textAlign, fontFamily,
-        textAreaRatio,
         logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
       ];
       
@@ -1944,8 +1939,6 @@ javascript:(function(){
         labelPadding.value = settings.labelPadding || defaultSettings.labelPadding;
         textAlign.value = settings.textAlign || defaultSettings.textAlign;
         fontFamily.value = settings.fontFamily || defaultSettings.fontFamily;
-        
-        textAreaRatio.value = settings.textAreaRatio || defaultSettings.textAreaRatio;
         
         /* 底圖設定 */
         if (settings.logoDataUrl) {
