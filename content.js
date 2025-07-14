@@ -1582,7 +1582,7 @@ javascript:(function(){
         barcodeWidth: 90,
         barcodeYPosition: 50,
         labelWidth: 40,
-        labelHeight: 26,
+        labelHeight: 30,
         labelPadding: 1,
         textAlign: 'left',
         fontFamily: 'Arial, sans-serif',
