@@ -1285,13 +1285,6 @@ javascript:(function(){
                 <span class="value-badge" id="main-gap">1px</span>
               </div>
               <input type="range" id="main-gap-slider" min="0" max="10" step="0.5" value="1">
-              
-              <div class="control-label" style="margin-top: 20px;">
-                <span>文字區域佔比</span>
-                <span class="value-badge" id="text-area-ratio">60%</span>
-              </div>
-              <input type="range" id="text-area-ratio-slider" min="30" max="80" value="60">
-              <div class="control-hint" id="area-hint">文字區：60% / 條碼區：40%</div>
             </div>
           </div>
         </div>
@@ -1640,8 +1633,10 @@ javascript:(function(){
         const totalHeight = parseFloat(labelHeight.value);
         const padding = parseFloat(labelPadding.value) * 2;
         const availableHeight = totalHeight - padding;
-        const specInfoHeight = (availableHeight * textRatio / 100).toFixed(1);
-        const specBarcodeHeight = (availableHeight * barcodeRatio / 100).toFixed(1);
+        
+        // 移除百分比計算，改用自動調整
+        const specInfoHeight = 'auto';
+        const specBarcodeHeight = 'auto';
         
         /* Logo 顯示值更新 */
         if (logoSizeSlider) {
@@ -1673,26 +1668,29 @@ javascript:(function(){
             box-sizing: border-box !important;
           }
           
-          /* 文字區域高度 - 使用計算的百分比高度 */
+          /* 文字區域高度 - 使用自動高度 */
           html .print_barcode_area .print_sample .spec_info,
           body .print_barcode_area .print_sample .spec_info {
-            height: ${specInfoHeight}mm !important;
+            height: auto !important;
             margin-bottom: 0 !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
+            overflow: visible !important;
+            display: block !important;
           }
           
-          /* 條碼區域高度 - 使用計算的百分比高度 */
+          /* 條碼區域高度 - 使用自動高度 */
           html .print_barcode_area .print_sample .spec_barcode,
           body .print_barcode_area .print_sample .spec_barcode {
-            height: ${specBarcodeHeight}mm !important;
+            height: auto !important;
+            display: block !important;
+            text-align: center !important;
+            overflow: visible !important;
+          }
+          
+          /* 確保整體使用 flexbox 佈局 */
+          .print_barcode_area .print_sample {
             display: flex !important;
             flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            overflow: hidden !important;
+            justify-content: space-between !important;
           }
           
           /* 確保字體套用到所有元素 */
