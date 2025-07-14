@@ -1685,35 +1685,28 @@ javascript:(function(){
             display: block !important;
           }
           
-          /* 條碼區域高度 - 使用自動高度和定位 */
+          /* 條碼區域 - 保持原本的自動高度 */
           html .print_barcode_area .print_sample .spec_barcode,
           body .print_barcode_area .print_sample .spec_barcode {
             height: auto !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
+            display: block !important;
             text-align: center !important;
             overflow: visible !important;
             position: relative !important;
-            ${barcodeYPosition ? `
-              justify-content: ${
-                barcodeYPosition.value <= 25 ? 'flex-start' :
-                barcodeYPosition.value >= 75 ? 'flex-end' : 'center'
-              } !important;
-            ` : ''}
           }
           
-          /* 條碼圖片位置微調 */
+          /* 條碼圖片 - 調整圖片本身的高度和位置 */
           .print_barcode_area .print_sample .spec_barcode img {
-            height: ${barcodeHeight.value}mm !important;
+            height: ${barcodeHeight.value}mm !important;  /* 這是圖片本身的高度 */
             width: ${barcodeWidth.value}% !important;
             max-width: 100% !important;
             object-fit: contain !important;
-            margin: 0 auto !important;
             display: block !important;
+            margin: 0 auto !important;
+            position: relative !important;
+            /* Y軸位置調整 */
             ${barcodeYPosition ? `
-              position: relative !important;
-              top: ${(parseFloat(barcodeYPosition.value) - 50) * 0.2}mm !important;
+              transform: translateY(${(parseFloat(barcodeYPosition.value) - 50) * 0.4}mm) !important;
             ` : ''}
           }
           
