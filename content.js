@@ -1901,7 +1901,6 @@ javascript:(function(){
           labelPadding: labelPadding.value,
           textAlign: textAlign.value,
           fontFamily: fontFamily.value,
-          textAreaRatio: textAreaRatio.value,
           logoDataUrl: logoDataUrl,
           logoSize: logoSizeSlider ? logoSizeSlider.value : 30,
           logoX: logoXSlider ? logoXSlider.value : 50,
