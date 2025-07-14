@@ -31,6 +31,86 @@ javascript:(function(){
     { name: '思源黑體', value: '"Noto Sans TC", sans-serif' }
   ];
 
+  /* 動態抓取 BV SHOP 原生樣式 */
+  function getBVShopNativeSettings() {
+    try {
+      const sample = document.querySelector('.print_sample');
+      if (!sample) return null;
+      
+      const info = sample.querySelector('.spec_info');
+      const main = info?.querySelector('.main');
+      const sub = info?.querySelector('.sub');
+      const barcodeImg = sample.querySelector('.spec_barcode img');
+      const barcodeText = sample.querySelector('.spec_barcode .sub');
+      
+      // 主文字
+      const mainStyle = main ? window.getComputedStyle(main) : {};
+      const mainSize = main ? parseInt(mainStyle.fontSize) : 10;
+      const mainBold = main ? (parseInt(mainStyle.fontWeight) >= 600) : true;
+      const mainGap = main ? parseInt(mainStyle.marginBottom) || 0 : 1;
+      
+      // 副標
+      const subStyle = sub ? window.getComputedStyle(sub) : {};
+      const subSize = sub ? parseInt(subStyle.fontSize) : 8;
+      const subBold = sub ? (parseInt(subStyle.fontWeight) >= 600) : true;
+      
+      // 條碼文字
+      const barcodeTextStyle = barcodeText ? window.getComputedStyle(barcodeText) : {};
+      const barcodeTextSize = barcodeText ? parseInt(barcodeTextStyle.fontSize) : 8;
+      const barcodeTextBold = barcodeText ? (parseInt(barcodeTextStyle.fontWeight) >= 600) : false;
+      
+      // 條碼圖片尺寸
+      const barcodeHeight = barcodeImg ? Math.round(barcodeImg.offsetHeight * 25.4 / 96) : 10; // px to mm
+      const labelWidthPx = sample.offsetWidth;
+      const barcodeWidthPx = barcodeImg ? barcodeImg.offsetWidth : (labelWidthPx * 0.75);
+      const barcodeWidth = Math.round(barcodeWidthPx * 100 / labelWidthPx); // 百分比
+      
+      // 標籤本體
+      const sampleStyle = window.getComputedStyle(sample);
+      const labelWidth = Math.round(sample.offsetWidth * 25.4 / 96); // px to mm
+      const labelHeight = Math.round(sample.offsetHeight * 25.4 / 96);
+      const labelPadding = Math.round(parseInt(sampleStyle.paddingLeft) * 25.4 / 96) || 1;
+      
+      // 對齊方式
+      const textAlign = info ? window.getComputedStyle(info).textAlign || 'left' : 'left';
+      
+      // 字體
+      const fontFamily = mainStyle.fontFamily || fontOptions[0].value;
+      
+      // 計算文字區域佔比
+      const infoHeight = info ? info.offsetHeight : 0;
+      const barcodeAreaHeight = sample.querySelector('.spec_barcode')?.offsetHeight || 0;
+      const totalContentHeight = infoHeight + barcodeAreaHeight;
+      const textAreaRatio = totalContentHeight > 0 ? Math.round(infoHeight * 100 / totalContentHeight) : 60;
+      
+      return {
+        mainSize,
+        mainBold,
+        mainGap,
+        subSize,
+        subBold,
+        barcodeTextSize,
+        barcodeTextBold,
+        barcodeHeight,
+        barcodeWidth,
+        labelWidth,
+        labelHeight,
+        labelPadding,
+        textAlign,
+        fontFamily,
+        textAreaRatio,
+        logoSize: 30,
+        logoX: 50,
+        logoY: 50,
+        logoOpacity: 20,
+        logoAspectRatio: 1
+      };
+    } catch (e) {
+      console.error('無法抓取原生樣式:', e);
+      return null;
+    }
+  }
+  
   /* 建立基本樣式 */
   const style = document.createElement('style');
   style.innerHTML = `
@@ -1465,8 +1545,9 @@ javascript:(function(){
       
       const textAreaRatio = document.getElementById('text-area-ratio-slider');
       
-      /* BV SHOP 原始預設值 */
-      const bvShopDefaults = {
+      /* 動態取得 BV SHOP 原始預設值 */
+      const nativeSettings = getBVShopNativeSettings();
+      const bvShopDefaults = nativeSettings || {
         mainSize: 10,
         mainBold: true,
         mainGap: 1,
@@ -1488,7 +1569,6 @@ javascript:(function(){
         logoOpacity: 20,
         logoAspectRatio: 1
       };
-      
       /* 預設值設置（與 BV SHOP 原始值相同） */
       const defaultSettings = { ...bvShopDefaults };
 
