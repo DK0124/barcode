@@ -37,7 +37,24 @@ javascript:(function(){
       const sample = document.querySelector('.print_sample');
       if (!sample) return null;
       
-      // 取得原始 CSS 檔案的樣式
+      // 根據 CSS 文件的實際預設值
+      const cssDefaults = {
+        mainSize: 10,        // .main { font-size: 10px }
+        mainLineHeight: 11,  // .main { line-height: 11px }
+        mainBold: true,      // font-weight: 700
+        subSize: 8,          // .sub { font-size: 8px }
+        subLineHeight: 9,    // .sub { line-height: 9px }
+        subBold: true,       // font-weight: 700
+        barcodeTextSize: 8,  // .spec_barcode .sub { font-size: 8px }
+        barcodeHeight: 10,   // spec_barcode img { height: 10mm }
+        labelWidth: 40,      // width: 40mm
+        labelHeight: 26,     // height: 26mm (實際標籤高度)
+        labelPadding: 1,     // padding: 1mm
+        specInfoHeight: 17,  // spec_info { height: 17mm }
+        specBarcodeHeight: 12, // spec_barcode { height: 12mm }
+        textAlign: 'left'    // text-align: left
+      };
+      
       const getOriginalStyle = (element, property) => {
         if (!element) return null;
         const computed = window.getComputedStyle(element);
@@ -50,56 +67,39 @@ javascript:(function(){
       const barcodeImg = sample.querySelector('.spec_barcode img');
       const barcodeText = sample.querySelector('.spec_barcode .sub');
       
-      // 從 CSS 判斷實際尺寸
-      const sampleRect = sample.getBoundingClientRect();
+      // 主文字
+      const mainSize = main ? parseInt(getOriginalStyle(main, 'fontSize')) : cssDefaults.mainSize;
+      const mainWeight = main ? getOriginalStyle(main, 'fontWeight') : '700';
+      const mainBold = parseInt(mainWeight) >= 600;
+      const mainGap = 0; // CSS 中沒有定義 margin-bottom
       
-      // 主文字 - 根據你提供的 HTML，實際預設值
-      const mainSize = main ? parseInt(getOriginalStyle(main, 'fontSize')) : 13;
-      const mainWeight = main ? getOriginalStyle(main, 'fontWeight') : '400';
-      const mainBold = ['bold', '700', '800', '900'].includes(mainWeight) || parseInt(mainWeight) >= 600;
-      const mainGap = main ? (parseInt(getOriginalStyle(main, 'marginBottom')) || 0) : 0;
+      // 副標
+      const subSize = sub ? parseInt(getOriginalStyle(sub, 'fontSize')) : cssDefaults.subSize;
+      const subWeight = sub ? getOriginalStyle(sub, 'fontWeight') : '700';
+      const subBold = parseInt(subWeight) >= 600;
       
-      // 副標 - 實際是 11px
-      const subSize = sub ? parseInt(getOriginalStyle(sub, 'fontSize')) : 11;
-      const subWeight = sub ? getOriginalStyle(sub, 'fontWeight') : '400';
-      const subBold = ['bold', '700', '800', '900'].includes(subWeight) || parseInt(subWeight) >= 600;
+      // 條碼文字
+      const barcodeTextSize = barcodeText ? parseInt(getOriginalStyle(barcodeText, 'fontSize')) : cssDefaults.barcodeTextSize;
+      const barcodeTextBold = false; // CSS 中條碼文字沒有指定粗體
       
-      // 條碼區域的文字 - 注意 <b> 標籤
-      const barcodeTextParent = barcodeText?.parentElement;
-      const hasBoldTag = barcodeTextParent?.tagName === 'B' || barcodeText?.querySelector('b');
-      const barcodeTextSize = barcodeText ? parseInt(getOriginalStyle(barcodeText, 'fontSize')) : 11;
-      const barcodeTextWeight = barcodeText ? getOriginalStyle(barcodeText, 'fontWeight') : '400';
-      const barcodeTextBold = hasBoldTag || ['bold', '700', '800', '900'].includes(barcodeTextWeight) || parseInt(barcodeTextWeight) >= 600;
-      
-      // 從實際像素計算 mm (考慮 zoom)
+      // 從實際像素計算 mm
       const bodyZoom = parseFloat(getOriginalStyle(document.body, 'zoom')) || 1;
       const pxToMm = (px) => Math.round(px * 25.4 / 96 / bodyZoom);
       
       // 條碼圖片
-      const barcodeHeight = barcodeImg ? pxToMm(barcodeImg.offsetHeight) : 13;
-      const barcodeWidth = barcodeImg && sampleRect.width > 0 ? 
-        Math.round(barcodeImg.offsetWidth * 100 / sampleRect.width) : 100;
+      const barcodeHeight = barcodeImg ? pxToMm(barcodeImg.offsetHeight) : cssDefaults.barcodeHeight;
+      const barcodeWidth = 100; // CSS 沒有特別限制寬度，預設 100%
       
-      // 標籤尺寸
-      const labelWidth = pxToMm(sampleRect.width) || 40;
-      const labelHeight = pxToMm(sampleRect.height) || 30;
+      // 標籤尺寸 - 使用 CSS 預設值
+      const labelWidth = cssDefaults.labelWidth;
+      const labelHeight = cssDefaults.labelHeight;
+      const labelPadding = cssDefaults.labelPadding;
       
-      // padding - BV SHOP 原生似乎沒有 padding
-      const sampleStyle = getOriginalStyle(sample, 'padding');
-      const paddingMatch = sampleStyle?.match(/(\d+(?:\.\d+)?)/);
-      const labelPadding = paddingMatch ? pxToMm(parseFloat(paddingMatch[1])) : 0;
-      
-      // 對齊 - 原生是置中
-      const textAlign = info ? (getOriginalStyle(info, 'textAlign') || 'center') : 'center';
+      // 對齊
+      const textAlign = info ? (getOriginalStyle(info, 'textAlign') || cssDefaults.textAlign) : cssDefaults.textAlign;
       
       // 字體
-      const fontFamily = getOriginalStyle(main || sub || sample, 'fontFamily') || 'Arial, sans-serif';
-      
-      console.log('抓取到的原生樣式:', {
-        mainSize, mainBold, subSize, subBold, 
-        barcodeTextSize, barcodeTextBold,
-        labelWidth, labelHeight
-      });
+      const fontFamily = 'Arial, 微軟正黑體, sans-serif'; // 根據 CSS: Arial,\5fae\8edf\6b63\9ed1\9ad4
       
       return {
         mainSize,
@@ -1553,23 +1553,21 @@ javascript:(function(){
       const textAlign = document.getElementById('text-align');
       const fontFamily = document.getElementById('font-family-select');
     
-      /* 動態取得 BV SHOP 原始預設值 */
-      const nativeSettings = getBVShopNativeSettings();
       const bvShopDefaults = nativeSettings || {
-        mainSize: 13,      // 實際是 13px
-        mainBold: false,   // 原生不是粗體
-        mainGap: 0,        // 沒有額外間距
-        subSize: 11,       // 實際是 11px  
-        subBold: false,    // 原生不是粗體
-        barcodeTextSize: 11,
-        barcodeTextBold: true,  // 有 <b> 標籤
-        barcodeHeight: 13,      // 50px ≈ 13mm
-        barcodeWidth: 100,      // 條碼佔滿寬度
-        labelWidth: 40,
-        labelHeight: 30,
-        labelPadding: 0,        // 原生沒有 padding
-        textAlign: 'center',    // 原生是置中
-        fontFamily: 'Arial, sans-serif',
+        mainSize: 10,       // 根據 CSS
+        mainBold: true,     // font-weight: 700
+        mainGap: 0,         // 沒有 margin-bottom
+        subSize: 8,         // 根據 CSS
+        subBold: true,      // font-weight: 700
+        barcodeTextSize: 8, // 根據 CSS
+        barcodeTextBold: false, // CSS 中沒有指定粗體
+        barcodeHeight: 10,  // 根據 CSS: 10mm
+        barcodeWidth: 100,  // 預設佔滿寬度
+        labelWidth: 40,     // 根據 CSS: 40mm
+        labelHeight: 26,    // 根據 CSS: 26mm (不是 30mm)
+        labelPadding: 1,    // 根據 CSS: 1mm
+        textAlign: 'left',  // 根據 CSS: text-align: left
+        fontFamily: 'Arial, 微軟正黑體, sans-serif',
         logoSize: 30,
         logoX: 50,
         logoY: 50,
