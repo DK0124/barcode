@@ -37,52 +37,65 @@ javascript:(function(){
       const sample = document.querySelector('.print_sample');
       if (!sample) return null;
       
+      // 取得原始 CSS 檔案的樣式
+      const getOriginalStyle = (element, property) => {
+        if (!element) return null;
+        // 優先使用 getComputedStyle
+        const computed = window.getComputedStyle(element);
+        return computed[property];
+      };
+      
       const info = sample.querySelector('.spec_info');
       const main = info?.querySelector('.main');
       const sub = info?.querySelector('.sub');
       const barcodeImg = sample.querySelector('.spec_barcode img');
       const barcodeText = sample.querySelector('.spec_barcode .sub');
       
-      // 主文字
-      const mainStyle = main ? window.getComputedStyle(main) : {};
-      const mainSize = main ? parseInt(mainStyle.fontSize) : 10;
-      const mainBold = main ? (parseInt(mainStyle.fontWeight) >= 600) : true;
-      const mainGap = main ? parseInt(mainStyle.marginBottom) || 0 : 1;
+      // 從 CSS 判斷實際尺寸
+      const sampleRect = sample.getBoundingClientRect();
+      const infoRect = info?.getBoundingClientRect();
+      const barcodeAreaRect = sample.querySelector('.spec_barcode')?.getBoundingClientRect();
+      
+      // 主文字 - 檢查 computed style
+      const mainSize = main ? parseInt(getOriginalStyle(main, 'fontSize')) : 13;
+      const mainWeight = main ? getOriginalStyle(main, 'fontWeight') : 'normal';
+      const mainBold = mainWeight === 'bold' || mainWeight === '700' || parseInt(mainWeight) >= 600;
+      const mainGap = main ? (parseInt(getOriginalStyle(main, 'marginBottom')) || 0) : 0;
       
       // 副標
-      const subStyle = sub ? window.getComputedStyle(sub) : {};
-      const subSize = sub ? parseInt(subStyle.fontSize) : 8;
-      const subBold = sub ? (parseInt(subStyle.fontWeight) >= 600) : true;
+      const subSize = sub ? parseInt(getOriginalStyle(sub, 'fontSize')) : 11;
+      const subWeight = sub ? getOriginalStyle(sub, 'fontWeight') : 'normal';
+      const subBold = subWeight === 'bold' || subWeight === '700' || parseInt(subWeight) >= 600;
       
-      // 條碼文字
-      const barcodeTextStyle = barcodeText ? window.getComputedStyle(barcodeText) : {};
-      const barcodeTextSize = barcodeText ? parseInt(barcodeTextStyle.fontSize) : 8;
-      const barcodeTextBold = barcodeText ? (parseInt(barcodeTextStyle.fontWeight) >= 600) : false;
+      // 條碼區域的文字（可能有價格）
+      const barcodeTextSize = barcodeText ? parseInt(getOriginalStyle(barcodeText, 'fontSize')) : 11;
+      const barcodeTextWeight = barcodeText ? getOriginalStyle(barcodeText, 'fontWeight') : 'normal';
+      const barcodeTextBold = barcodeTextWeight === 'bold' || barcodeTextWeight === '700' || parseInt(barcodeTextWeight) >= 600;
       
-      // 條碼圖片尺寸
-      const barcodeHeight = barcodeImg ? Math.round(barcodeImg.offsetHeight * 25.4 / 96) : 10; // px to mm
-      const labelWidthPx = sample.offsetWidth;
-      const barcodeWidthPx = barcodeImg ? barcodeImg.offsetWidth : (labelWidthPx * 0.75);
-      const barcodeWidth = Math.round(barcodeWidthPx * 100 / labelWidthPx); // 百分比
+      // 從實際像素計算 mm
+      const pxToMm = (px) => Math.round(px * 25.4 / 96);
       
-      // 標籤本體
-      const sampleStyle = window.getComputedStyle(sample);
-      const labelWidth = Math.round(sample.offsetWidth * 25.4 / 96); // px to mm
-      const labelHeight = Math.round(sample.offsetHeight * 25.4 / 96);
-      const labelPadding = Math.round(parseInt(sampleStyle.paddingLeft) * 25.4 / 96) || 1;
+      // 條碼圖片
+      const barcodeHeight = barcodeImg ? pxToMm(barcodeImg.offsetHeight) : 13;
+      const barcodeWidth = barcodeImg && sampleRect.width > 0 ? 
+        Math.round(barcodeImg.offsetWidth * 100 / sampleRect.width) : 100;
       
-      // 對齊方式
-      const textAlign = info ? window.getComputedStyle(info).textAlign || 'left' : 'left';
+      // 標籤尺寸
+      const labelWidth = pxToMm(sampleRect.width) || 40;
+      const labelHeight = pxToMm(sampleRect.height) || 30;
+      
+      // padding
+      const sampleStyle = getOriginalStyle(sample, 'padding');
+      const paddingMatch = sampleStyle?.match(/(\d+(?:\.\d+)?)/);
+      const labelPadding = paddingMatch ? pxToMm(parseFloat(paddingMatch[1])) : 0;
+      
+      // 對齊
+      const textAlign = info ? getOriginalStyle(info, 'textAlign') || 'center' : 'center';
       
       // 字體
-      const fontFamily = mainStyle.fontFamily || fontOptions[0].value;
+      const fontFamily = getOriginalStyle(main || sub || sample, 'fontFamily') || 'Arial, sans-serif';
       
-      // 計算文字區域佔比
-      const infoHeight = info ? info.offsetHeight : 0;
-      const barcodeAreaHeight = sample.querySelector('.spec_barcode')?.offsetHeight || 0;
-      const totalContentHeight = infoHeight + barcodeAreaHeight;
-      const textAreaRatio = totalContentHeight > 0 ? Math.round(infoHeight * 100 / totalContentHeight) : 60;
-      
+      // 直接設定合理的預設值，不計算文字區域佔比
       return {
         mainSize,
         mainBold,
@@ -98,7 +111,7 @@ javascript:(function(){
         labelPadding,
         textAlign,
         fontFamily,
-        textAreaRatio,
+        textAreaRatio: 50, // 固定預設值
         logoSize: 30,
         logoX: 50,
         logoY: 50,
