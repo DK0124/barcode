@@ -34,7 +34,7 @@ javascript:(function(){
   /* 初始頁面樣式儲存變數 */
   let initialPageSettings = null;
 
-  /* 動態抓取 BV SHOP 原生樣式 - 改進版本 */
+  /* 動態抓取 BV SHOP 原生樣式 - 簡化版本 */
   function getBVShopNativeSettings() {
     try {
       const sample = document.querySelector('.print_sample');
@@ -47,123 +47,129 @@ javascript:(function(){
         
         // 樣式八：純條碼（print_sample 有 flex 樣式）
         if (sample.style.display === 'flex' && sample.style.justifyContent === 'center') {
-          return 'barcode-only';
+          return 'style8';
         }
         
         // 樣式三、四：條碼在 spec_info 內
         if (specInfo && specInfo.querySelector('.spec_barcode')) {
-          return 'barcode-in-info';
+          // 區分樣式三和四：樣式三有特價，樣式四沒有
+          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+          return hasSpecialPrice ? 'style3' : 'style4';
+        }
+        
+        // 樣式六：特殊間距版本（有連續的 <br> 標籤）
+        if (specInfo && specInfo.innerHTML.includes('<br>\n                                        <br>')) {
+          return 'style6';
         }
         
         // 樣式五、七：價格在條碼區
         if (specBarcode && specBarcode.querySelector('span.sub b')) {
-          return 'price-in-barcode';
-        }
-        
-        // 樣式六：特殊間距版本
-        if (specInfo && specInfo.querySelector('br + br')) {
-          return 'extra-spacing';
+          // 區分樣式五和七：樣式七有商品編號(cat-888)
+          const hasProductCode = specInfo && specInfo.innerHTML.includes('cat-');
+          return hasProductCode ? 'style7' : 'style5';
         }
         
         // 樣式一、二：標準版
-        return 'standard';
+        // 區分樣式一和二：檢查是否有特價
+        if (specInfo) {
+          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+          return hasSpecialPrice ? 'style1' : 'style2';
+        }
+        
+        return 'style1'; // 預設
       };
       
       const layoutType = detectLayoutType();
       console.log('偵測到的樣式類型:', layoutType);
       
-      // BV SHOP 標準 CSS 預設值
-      const bvShopCSSDefaults = {
+      // 根據 CSS 的實際預設值
+      const bvShopDefaults = {
         containerWidth: 40,
         labelHeight: 26,
         labelPadding: 1,
-        specInfoHeight: 17,
-        specBarcodeHeight: 12,
-        barcodeImgHeight: 10,
         mainFontSize: 10,
-        mainLineHeight: 11,
         subFontSize: 8,
-        subLineHeight: 9,
-        barcodeFontSize: 8
+        barcodeFontSize: 8,
+        fontFamily: 'Arial, 微軟正黑體, sans-serif'
       };
       
-      // 根據不同樣式調整預設值
-      const layoutSpecificDefaults = {
-        'barcode-only': {
-          barcodeHeight: 60,  // 純條碼版本條碼較大
-          barcodeWidth: 95
-        },
-        'barcode-in-info': {
-          barcodeHeight: 35,  // 條碼在文字區內，較小
-          barcodeWidth: 85
-        },
-        'price-in-barcode': {
-          barcodeHeight: 40,
-          barcodeWidth: 90
-        },
-        'extra-spacing': {
-          barcodeHeight: 38,
-          barcodeWidth: 90
-        },
-        'standard': {
+      // 各樣式的專屬預設值
+      const stylePresets = {
+        'style1': { // 標準版有特價
           barcodeHeight: 42,
-          barcodeWidth: 90
+          barcodeWidth: 90,
+          barcodeYPosition: 50,
+          textAlign: 'left'
+        },
+        'style2': { // 標準版無特價
+          barcodeHeight: 42,
+          barcodeWidth: 90,
+          barcodeYPosition: 50,
+          textAlign: 'left'
+        },
+        'style3': { // 條碼在文字區內，有特價
+          barcodeHeight: 35,
+          barcodeWidth: 85,
+          barcodeYPosition: 50,
+          textAlign: 'left'
+        },
+        'style4': { // 條碼在文字區內，無特價
+          barcodeHeight: 35,
+          barcodeWidth: 85,
+          barcodeYPosition: 50,
+          textAlign: 'left'
+        },
+        'style5': { // 價格在條碼區
+          barcodeHeight: 40,
+          barcodeWidth: 90,
+          barcodeYPosition: 60,
+          textAlign: 'left'
+        },
+        'style6': { // 特殊間距版本
+          barcodeHeight: 38,
+          barcodeWidth: 90,
+          barcodeYPosition: 50,
+          textAlign: 'left'
+        },
+        'style7': { // 價格在條碼區，有商品編號
+          barcodeHeight: 40,
+          barcodeWidth: 90,
+          barcodeYPosition: 60,
+          textAlign: 'left'
+        },
+        'style8': { // 純條碼
+          barcodeHeight: 60,
+          barcodeWidth: 95,
+          barcodeYPosition: 50,
+          textAlign: 'center'
         }
       };
       
-      const layoutDefaults = layoutSpecificDefaults[layoutType] || layoutSpecificDefaults['standard'];
-      
-      // 抓取實際樣式
-      const getComputedValue = (element, property) => {
-        if (!element) return null;
-        return window.getComputedStyle(element)[property];
-      };
-      
-      const info = sample.querySelector('.spec_info');
-      const main = info?.querySelector('.main');
-      const sub = info?.querySelector('.sub');
-      const barcodeArea = sample.querySelector('.spec_barcode');
-      const barcodeImg = barcodeArea?.querySelector('img');
-      const barcodeText = barcodeArea?.querySelector('.sub') || barcodeArea?.querySelector('span.sub');
-      
-      // 計算實際使用的條碼高度百分比
-      let actualBarcodeHeight = layoutDefaults.barcodeHeight;
-      if (barcodeImg) {
-        // 嘗試從 style 屬性獲取高度
-        const imgStyle = barcodeImg.getAttribute('style');
-        if (imgStyle && imgStyle.includes('height')) {
-          const heightMatch = imgStyle.match(/height:\s*(\d+)mm/);
-          if (heightMatch) {
-            const heightMM = parseInt(heightMatch[1]);
-            const availableHeight = bvShopCSSDefaults.labelHeight - (bvShopCSSDefaults.labelPadding * 2);
-            actualBarcodeHeight = Math.round((heightMM / availableHeight) * 100);
-          }
-        }
-      }
+      const styleSettings = stylePresets[layoutType] || stylePresets['style1'];
       
       return {
         // 文字樣式
-        mainSize: main ? parseInt(getComputedValue(main, 'fontSize')) : bvShopCSSDefaults.mainFontSize,
-        mainBold: main ? parseInt(getComputedValue(main, 'fontWeight')) >= 600 : true,
+        mainSize: bvShopDefaults.mainFontSize,
+        mainBold: true,
         mainGap: 0,
-        subSize: sub ? parseInt(getComputedValue(sub, 'fontSize')) : bvShopCSSDefaults.subFontSize,
-        subBold: sub ? parseInt(getComputedValue(sub, 'fontWeight')) >= 600 : true,
-        barcodeTextSize: barcodeText ? parseInt(getComputedValue(barcodeText, 'fontSize')) : bvShopCSSDefaults.barcodeFontSize,
-        barcodeTextBold: barcodeText ? parseInt(getComputedValue(barcodeText, 'fontWeight')) >= 600 : false,
+        subSize: bvShopDefaults.subFontSize,
+        subBold: true,
+        barcodeTextSize: bvShopDefaults.barcodeFontSize,
+        barcodeTextBold: false,
         
         // 條碼尺寸
-        barcodeHeight: actualBarcodeHeight,
-        barcodeWidth: layoutDefaults.barcodeWidth,
-        barcodeYPosition: 50,
+        barcodeHeight: styleSettings.barcodeHeight,
+        barcodeWidth: styleSettings.barcodeWidth,
+        barcodeYPosition: styleSettings.barcodeYPosition,
         
         // 標籤尺寸
-        labelWidth: bvShopCSSDefaults.containerWidth,
-        labelHeight: bvShopCSSDefaults.labelHeight,
-        labelPadding: bvShopCSSDefaults.labelPadding,
+        labelWidth: bvShopDefaults.containerWidth,
+        labelHeight: bvShopDefaults.labelHeight,
+        labelPadding: bvShopDefaults.labelPadding,
         
         // 其他樣式
-        textAlign: info ? getComputedValue(info, 'textAlign') : 'left',
-        fontFamily: 'Arial, 微軟正黑體, sans-serif',
+        textAlign: styleSettings.textAlign,
+        fontFamily: bvShopDefaults.fontFamily,
         
         // Logo 預設值
         logoSize: 30,
