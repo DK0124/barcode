@@ -1741,13 +1741,15 @@ javascript:(function(){
             white-space: nowrap !important;
           }
           
-          /* 條碼圖片高度和寬度 - 使用百分比寬度 */
+          /* 條碼圖片高度和寬度 */
           .print_barcode_area .print_sample .spec_barcode img {
             height: ${barcodeHeight.value}mm !important;
-            width: ${barcodeActualWidth}mm !important;
-            max-width: 100% !important;
-            object-fit: contain !important;
+            width: auto !important;  /* 改為 auto，讓寬度自動調整 */
+            max-height: ${barcodeHeight.value}mm !important;
+            max-width: ${barcodeActualWidth}mm !important;
+            object-fit: fill !important;  /* 改為 fill 或 scale-down */
             margin: 0 auto !important;
+            display: block !important;
           }
           
           /* 確保字體覆蓋所有可能的元素 */
