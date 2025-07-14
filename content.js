@@ -34,7 +34,7 @@ javascript:(function(){
   /* 初始頁面樣式儲存變數 */
   let initialPageSettings = null;
 
-  /* 動態抓取 BV SHOP 原生樣式 - 根據實際 CSS 修正版 */
+  /* 動態抓取 BV SHOP 原生樣式 - 修正版 */
   function getBVShopNativeSettings() {
     try {
       const sample = document.querySelector('.print_sample');
@@ -50,152 +50,141 @@ javascript:(function(){
           return 'style8';
         }
         
-        // 樣式三、四：條碼在 spec_info 內
-        if (specInfo && specInfo.querySelector('.spec_barcode')) {
-          // 區分樣式三和四：樣式三有特價，樣式四沒有
+        // 樣式三、四：條碼在 spec_info 內的 ul 裡面
+        if (specInfo && specInfo.querySelector('ul .spec_barcode')) {
           const hasSpecialPrice = specInfo.innerHTML.includes('特價');
           return hasSpecialPrice ? 'style3' : 'style4';
         }
         
-        // 樣式六：特殊間距版本（有連續的 <br> 標籤）
-        if (specInfo && specInfo.innerHTML.includes('<br>\n                                        <br>')) {
+        // 樣式六：條碼在 spec_info 內，但有 <br> 標籤
+        if (specInfo && specInfo.querySelector('.spec_barcode') && specInfo.innerHTML.includes('<br>')) {
           return 'style6';
         }
         
         // 樣式五、七：價格在條碼區
         if (specBarcode && specBarcode.querySelector('span.sub b')) {
-          // 區分樣式五和七：樣式七有商品編號(cat-888)
-          const hasProductCode = specInfo && specInfo.innerHTML.includes('cat-');
+          const hasProductCode = specInfo && (specInfo.innerHTML.includes('cat-') || specInfo.querySelector('.sub:last-child')?.textContent?.includes('-'));
           return hasProductCode ? 'style7' : 'style5';
         }
         
         // 樣式一、二：標準版
-        // 區分樣式一和二：檢查是否有特價
         if (specInfo) {
           const hasSpecialPrice = specInfo.innerHTML.includes('特價');
           return hasSpecialPrice ? 'style1' : 'style2';
         }
         
-        return 'style1'; // 預設
+        return 'style1';
       };
       
       const layoutType = detectLayoutType();
       console.log('偵測到的樣式類型:', layoutType);
       
-      // 根據 CSS 的實際預設值
+      // CSS 實際預設值
       const cssDefaults = {
-        // 從 CSS 取得的實際預設值
-        containerWidth: 40,        // .print_barcode_area { width: 40mm }
-        labelHeight: 26,          // .print_sample { height: 26mm }
-        labelPadding: 1,          // .print_sample { padding: 1mm }
-        mainFontSize: 10,         // .main { font-size: 10px }
-        mainLineHeight: 11,       // .main { line-height: 11px }
-        subFontSize: 8,           // .sub { font-size: 8px }
-        subLineHeight: 9,         // .sub { line-height: 9px }
-        barcodeFontSize: 8,       // .spec_barcode .sub { font-size: 8px }
-        specInfoHeight: 17,       // .spec_info { height: 17mm }
-        specBarcodeHeight: 12,    // .spec_barcode { height: 12mm } 
-        barcodeImgHeight: 10,     // .spec_barcode img { height: 10mm }
+        containerWidth: 40,
+        labelHeight: 26,
+        labelPadding: 1,
+        mainFontSize: 10,
+        mainLineHeight: 11,
+        subFontSize: 8,
+        subLineHeight: 9,
+        barcodeFontSize: 8,
+        specInfoHeight: 17,
+        specBarcodeHeight: 12,
         fontFamily: 'Arial, 微軟正黑體, sans-serif',
-        fontWeight: 700,          // .main, .sub { font-weight: 700 }
-        layoutJustify: 'space-between' // .print_sample { justify-content: space-between }
+        fontWeight: 700,
+        layoutJustify: 'space-between'
       };
       
-      // 計算條碼相對尺寸（百分比）
-      // 條碼圖片高度 10mm，條碼區域高度 12mm = 83.33%
-      const barcodeHeightPercent = Math.round((cssDefaults.barcodeImgHeight / cssDefaults.specBarcodeHeight) * 100);
-      
-      // 各樣式的特殊設定
-      const styleSpecificSettings = {
-        'style1': { // 標準版有特價
-          textAlign: 'left',
-          barcodeYPosition: 50
-        },
-        'style2': { // 標準版無特價
-          textAlign: 'left',
-          barcodeYPosition: 50
-        },
-        'style3': { // 條碼在文字區內，有特價
-          textAlign: 'left',
-          barcodeYPosition: 50,
-          // 條碼在 spec_info 內，需要特殊處理
-          specInfoHeight: 26, // 使用全高
-          specBarcodeHeight: 0 // 不使用獨立條碼區
-        },
-        'style4': { // 條碼在文字區內，無特價
-          textAlign: 'left',
-          barcodeYPosition: 50,
-          specInfoHeight: 26,
-          specBarcodeHeight: 0
-        },
-        'style5': { // 價格在條碼區
-          textAlign: 'left',
-          barcodeYPosition: 60 // 稍微偏下，因為價格在上方
-        },
-        'style6': { // 特殊間距版本
-          textAlign: 'left',
-          barcodeYPosition: 50,
-          specInfoHeight: 26,
-          specBarcodeHeight: 0
-        },
-        'style7': { // 價格在條碼區，有商品編號
-          textAlign: 'left',
-          barcodeYPosition: 60
-        },
-        'style8': { // 純條碼
-          textAlign: 'center',
-          barcodeYPosition: 50,
-          specInfoHeight: 0, // 沒有文字區
-          specBarcodeHeight: 26, // 使用全高
-          barcodeHeightPercent: 60 // 條碼可以更大
-        }
-      };
-      
-      const styleSettings = styleSpecificSettings[layoutType] || styleSpecificSettings['style1'];
-      
-      return {
-        // 文字樣式
+      // 根據不同樣式設定預設值
+      let presetValues = {
+        // 基本文字設定
         mainSize: cssDefaults.mainFontSize,
-        mainBold: true, // CSS 預設 font-weight: 700
+        mainBold: true,
         mainGap: 0,
         mainLineHeight: cssDefaults.mainLineHeight,
-        
         subSize: cssDefaults.subFontSize,
-        subBold: true, // CSS 預設 font-weight: 700
+        subBold: true,
         subLineHeight: cssDefaults.subLineHeight,
-        
         barcodeTextSize: cssDefaults.barcodeFontSize,
-        barcodeTextBold: false, // 條碼數字通常不加粗
-        
-        // 條碼尺寸（百分比）
-        barcodeHeight: styleSettings.barcodeHeightPercent || barcodeHeightPercent,
-        barcodeWidth: 90, // 預設 90% 寬度
-        barcodeYPosition: styleSettings.barcodeYPosition,
+        barcodeTextBold: false,
         
         // 標籤尺寸
         labelWidth: cssDefaults.containerWidth,
         labelHeight: cssDefaults.labelHeight,
         labelPadding: cssDefaults.labelPadding,
         
-        // 區域高度
-        specInfoHeight: styleSettings.specInfoHeight !== undefined ? styleSettings.specInfoHeight : cssDefaults.specInfoHeight,
-        specBarcodeHeight: styleSettings.specBarcodeHeight !== undefined ? styleSettings.specBarcodeHeight : cssDefaults.specBarcodeHeight,
-        layoutJustify: cssDefaults.layoutJustify,
-        
-        // 其他樣式
-        textAlign: styleSettings.textAlign,
+        // 預設值
+        textAlign: 'left',
         fontFamily: cssDefaults.fontFamily,
+        layoutJustify: cssDefaults.layoutJustify,
         
         // Logo 預設值
         logoSize: 30,
         logoX: 50,
         logoY: 50,
         logoOpacity: 20,
-        logoAspectRatio: 1,
-        
-        // 記錄樣式類型
-        layoutType: layoutType
+        logoAspectRatio: 1
       };
+      
+      // 根據樣式調整特定設定
+      switch(layoutType) {
+        case 'style1': // 標準版有特價
+        case 'style2': // 標準版無特價
+          presetValues.specInfoHeight = 17;
+          presetValues.specBarcodeHeight = 12;
+          presetValues.barcodeHeight = 83; // 10mm/12mm ≈ 83%
+          presetValues.barcodeWidth = 90;
+          presetValues.barcodeYPosition = 50;
+          break;
+          
+        case 'style3': // 條碼在文字區內，有特價
+        case 'style4': // 條碼在文字區內，無特價
+          presetValues.specInfoHeight = 26; // 使用全高
+          presetValues.specBarcodeHeight = 0; // 無獨立條碼區
+          presetValues.barcodeHeight = 40; // 條碼在文字區內，相對較小
+          presetValues.barcodeWidth = 85;
+          presetValues.barcodeYPosition = 50;
+          break;
+          
+        case 'style5': // 價格在條碼區
+          presetValues.specInfoHeight = 17;
+          presetValues.specBarcodeHeight = 12;
+          presetValues.barcodeHeight = 70; // 稍小，因為上方有價格
+          presetValues.barcodeWidth = 90;
+          presetValues.barcodeYPosition = 60; // 偏下
+          break;
+          
+        case 'style6': // 特殊間距版本
+          presetValues.specInfoHeight = 26; // 使用全高
+          presetValues.specBarcodeHeight = 0;
+          presetValues.barcodeHeight = 35; // 較小
+          presetValues.barcodeWidth = 90;
+          presetValues.barcodeYPosition = 50;
+          break;
+          
+        case 'style7': // 價格在條碼區，有商品編號
+          presetValues.specInfoHeight = 17;
+          presetValues.specBarcodeHeight = 12;
+          presetValues.barcodeHeight = 70;
+          presetValues.barcodeWidth = 90;
+          presetValues.barcodeYPosition = 60;
+          break;
+          
+        case 'style8': // 純條碼
+          presetValues.specInfoHeight = 0; // 無文字區
+          presetValues.specBarcodeHeight = 26; // 使用全高
+          presetValues.barcodeHeight = 60; // 較大的條碼
+          presetValues.barcodeWidth = 95;
+          presetValues.barcodeYPosition = 50;
+          presetValues.textAlign = 'center';
+          break;
+      }
+      
+      // 記錄樣式類型
+      presetValues.layoutType = layoutType;
+      
+      return presetValues;
     } catch (e) {
       console.error('無法抓取原生樣式:', e);
       return null;
