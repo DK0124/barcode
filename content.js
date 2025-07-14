@@ -34,7 +34,7 @@ javascript:(function(){
   /* 初始頁面樣式儲存變數 */
   let initialPageSettings = null;
 
-  /* 動態抓取 BV SHOP 原生樣式 - 簡化版本 */
+  /* 動態抓取 BV SHOP 原生樣式 - 根據實際 CSS 修正版 */
   function getBVShopNativeSettings() {
     try {
       const sample = document.querySelector('.print_sample');
@@ -83,107 +83,108 @@ javascript:(function(){
       console.log('偵測到的樣式類型:', layoutType);
       
       // 根據 CSS 的實際預設值
-      const bvShopDefaults = {
-        containerWidth: 40,
-        labelHeight: 26,
-        labelPadding: 1,
-        mainFontSize: 10,
-        subFontSize: 8,
-        barcodeFontSize: 8,
+      const cssDefaults = {
+        // 從 CSS 取得的實際預設值
+        containerWidth: 40,        // .print_barcode_area { width: 40mm }
+        labelHeight: 26,          // .print_sample { height: 26mm }
+        labelPadding: 1,          // .print_sample { padding: 1mm }
+        mainFontSize: 10,         // .main { font-size: 10px }
+        mainLineHeight: 11,       // .main { line-height: 11px }
+        subFontSize: 8,           // .sub { font-size: 8px }
+        subLineHeight: 9,         // .sub { line-height: 9px }
+        barcodeFontSize: 8,       // .spec_barcode .sub { font-size: 8px }
+        specInfoHeight: 17,       // .spec_info { height: 17mm }
+        specBarcodeHeight: 12,    // .spec_barcode { height: 12mm } 
+        barcodeImgHeight: 10,     // .spec_barcode img { height: 10mm }
         fontFamily: 'Arial, 微軟正黑體, sans-serif',
-        specInfoHeight: 17,
-        specBarcodeHeight: 12,
-        layoutJustify: 'space-between',
-        mainLineHeight: 11,
-        subLineHeight: 9
+        fontWeight: 700,          // .main, .sub { font-weight: 700 }
+        layoutJustify: 'space-between' // .print_sample { justify-content: space-between }
       };
       
-      // 各樣式的專屬預設值
-      const stylePresets = {
+      // 計算條碼相對尺寸（百分比）
+      // 條碼圖片高度 10mm，條碼區域高度 12mm = 83.33%
+      const barcodeHeightPercent = Math.round((cssDefaults.barcodeImgHeight / cssDefaults.specBarcodeHeight) * 100);
+      
+      // 各樣式的特殊設定
+      const styleSpecificSettings = {
         'style1': { // 標準版有特價
-          barcodeHeight: 42,
-          barcodeWidth: 90,
-          barcodeYPosition: 50,
-          textAlign: 'left'
+          textAlign: 'left',
+          barcodeYPosition: 50
         },
         'style2': { // 標準版無特價
-          barcodeHeight: 42,
-          barcodeWidth: 90,
-          barcodeYPosition: 50,
-          textAlign: 'left'
+          textAlign: 'left',
+          barcodeYPosition: 50
         },
         'style3': { // 條碼在文字區內，有特價
-          barcodeHeight: 35,
-          barcodeWidth: 85,
+          textAlign: 'left',
           barcodeYPosition: 50,
-          textAlign: 'left'
+          // 條碼在 spec_info 內，需要特殊處理
+          specInfoHeight: 26, // 使用全高
+          specBarcodeHeight: 0 // 不使用獨立條碼區
         },
         'style4': { // 條碼在文字區內，無特價
-          barcodeHeight: 35,
-          barcodeWidth: 85,
+          textAlign: 'left',
           barcodeYPosition: 50,
-          textAlign: 'left'
+          specInfoHeight: 26,
+          specBarcodeHeight: 0
         },
         'style5': { // 價格在條碼區
-          barcodeHeight: 40,
-          barcodeWidth: 90,
-          barcodeYPosition: 60,
-          textAlign: 'left'
+          textAlign: 'left',
+          barcodeYPosition: 60 // 稍微偏下，因為價格在上方
         },
         'style6': { // 特殊間距版本
-          barcodeHeight: 38,
-          barcodeWidth: 90,
+          textAlign: 'left',
           barcodeYPosition: 50,
-          textAlign: 'left'
+          specInfoHeight: 26,
+          specBarcodeHeight: 0
         },
         'style7': { // 價格在條碼區，有商品編號
-          barcodeHeight: 40,
-          barcodeWidth: 90,
-          barcodeYPosition: 60,
-          textAlign: 'left'
+          textAlign: 'left',
+          barcodeYPosition: 60
         },
         'style8': { // 純條碼
-          barcodeHeight: 60,
-          barcodeWidth: 95,
+          textAlign: 'center',
           barcodeYPosition: 50,
-          textAlign: 'center'
+          specInfoHeight: 0, // 沒有文字區
+          specBarcodeHeight: 26, // 使用全高
+          barcodeHeightPercent: 60 // 條碼可以更大
         }
       };
       
-      const styleSettings = stylePresets[layoutType] || stylePresets['style1'];
+      const styleSettings = styleSpecificSettings[layoutType] || styleSpecificSettings['style1'];
       
       return {
         // 文字樣式
-        mainSize: bvShopDefaults.mainFontSize,
-        mainBold: true,
+        mainSize: cssDefaults.mainFontSize,
+        mainBold: true, // CSS 預設 font-weight: 700
         mainGap: 0,
-        subSize: bvShopDefaults.subFontSize,
-        subBold: true,
-        barcodeTextSize: bvShopDefaults.barcodeFontSize,
-        barcodeTextBold: false,
+        mainLineHeight: cssDefaults.mainLineHeight,
         
-        // 條碼尺寸
-        barcodeHeight: styleSettings.barcodeHeight,
-        barcodeWidth: styleSettings.barcodeWidth,
+        subSize: cssDefaults.subFontSize,
+        subBold: true, // CSS 預設 font-weight: 700
+        subLineHeight: cssDefaults.subLineHeight,
+        
+        barcodeTextSize: cssDefaults.barcodeFontSize,
+        barcodeTextBold: false, // 條碼數字通常不加粗
+        
+        // 條碼尺寸（百分比）
+        barcodeHeight: styleSettings.barcodeHeightPercent || barcodeHeightPercent,
+        barcodeWidth: 90, // 預設 90% 寬度
         barcodeYPosition: styleSettings.barcodeYPosition,
         
         // 標籤尺寸
-        labelWidth: bvShopDefaults.containerWidth,
-        labelHeight: bvShopDefaults.labelHeight,
-        labelPadding: bvShopDefaults.labelPadding,
+        labelWidth: cssDefaults.containerWidth,
+        labelHeight: cssDefaults.labelHeight,
+        labelPadding: cssDefaults.labelPadding,
         
-        // 區域高度和佈局
-        specInfoHeight: bvShopDefaults.specInfoHeight,
-        specBarcodeHeight: bvShopDefaults.specBarcodeHeight,
-        layoutJustify: bvShopDefaults.layoutJustify,
-        
-        // 行高設定
-        mainLineHeight: bvShopDefaults.mainLineHeight,
-        subLineHeight: bvShopDefaults.subLineHeight,
+        // 區域高度
+        specInfoHeight: styleSettings.specInfoHeight !== undefined ? styleSettings.specInfoHeight : cssDefaults.specInfoHeight,
+        specBarcodeHeight: styleSettings.specBarcodeHeight !== undefined ? styleSettings.specBarcodeHeight : cssDefaults.specBarcodeHeight,
+        layoutJustify: cssDefaults.layoutJustify,
         
         // 其他樣式
         textAlign: styleSettings.textAlign,
-        fontFamily: bvShopDefaults.fontFamily,
+        fontFamily: cssDefaults.fontFamily,
         
         // Logo 預設值
         logoSize: 30,
