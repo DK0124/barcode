@@ -246,24 +246,27 @@ javascript:(function(){
       box-shadow: none !important;
     }
     
-    /* 響應式預設顯示 - 只放大預覽區域 */
-    body {
-      zoom: ${isMobile ? 1 : 2};
-      -moz-transform: scale(${isMobile ? 1 : 2});
-      -moz-transform-origin: 0 0;
-      background: #f8f9fa;
+    /* 預覽區域容器 - 只放大這個區域 */
+    .bv-preview-container {
+      transform: scale(${isMobile ? 1 : 2});
+      transform-origin: top left;
+      width: ${isMobile ? '100%' : '50%'};
       margin: 0;
-      padding: ${isMobile ? '60px 10px 20px 10px' : '40px 20px 20px 20px'};
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    
+    /* body 保持原始大小 */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f8f9fa;
+      overflow-x: ${isMobile ? 'hidden' : 'auto'};
     }
     
     /* 隱藏原本的列印按鈕 */
     body > button.no-print {
       display: none !important;
-    }
-    
-    /* 移除中間層包裝，直接設定標籤樣式 */
-    .print_barcode_area {
-      margin-top: 20px;
     }
     
     /* 為每個標籤添加效果 */
@@ -287,15 +290,15 @@ javascript:(function(){
     }
     
     @media print {
-      body {
-        zoom: 1 !important;
-        -moz-transform: scale(1) !important;
-        background: white !important;
+      .bv-preview-container {
+        transform: scale(1) !important;
+        width: 100% !important;
         padding: 0 !important;
+        background: white !important;
       }
       
-      .print_barcode_area {
-        margin-top: 0 !important;
+      body {
+        background: white !important;
       }
       
       .print_sample {
@@ -329,10 +332,6 @@ javascript:(function(){
       z-index: 10000;
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans TC', sans-serif;
       transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      /* 重要：讓面板保持原始大小 */
-      zoom: ${isMobile ? 1 : 0.5} !important;
-      -moz-transform: scale(${isMobile ? 1 : 0.5}) !important;
-      -moz-transform-origin: top right !important;
     }
     
     ${shouldUseMobileLayout ? `
@@ -343,8 +342,6 @@ javascript:(function(){
         top: auto;
         width: 100%;
         max-height: 80vh;
-        zoom: 1 !important;
-        -moz-transform: scale(1) !important;
       }
     ` : ''}
     
@@ -993,7 +990,7 @@ javascript:(function(){
       background-clip: padding-box;
     }
     
-    /* 通知 */
+    /* 通知 - 保持原始大小 */
     .bv-notification {
       position: fixed;
       top: 28px;
@@ -1180,6 +1177,15 @@ javascript:(function(){
   `;
   document.head.appendChild(style);
 
+  /* 包裝預覽區域 */
+  const printBarcodeArea = document.querySelector('.print_barcode_area');
+  if (printBarcodeArea) {
+    const previewContainer = document.createElement('div');
+    previewContainer.className = 'bv-preview-container';
+    printBarcodeArea.parentNode.insertBefore(previewContainer, printBarcodeArea);
+    previewContainer.appendChild(printBarcodeArea);
+  }
+
   /* 建立控制面板 - 延遲執行確保 DOM 載入完成 */
   setTimeout(() => {
     const panel = document.createElement('div');
@@ -1190,7 +1196,7 @@ javascript:(function(){
         <div class="bv-panel-header">
           <div class="bv-header-content">
             <div class="bv-icon-wrapper">
-              <span class="material-icons">qr_code_2</span>
+              <span class="material-icons">data_matrix</span>
             </div>
             <div class="bv-title-group">
               <h3 class="bv-panel-title">BV SHOP 條碼列印</h3>
