@@ -1725,16 +1725,23 @@ javascript:(function(){
             // 自動調整行高（但允許使用者覆蓋）
             if (!mainLineHeightSlider.dataset.userModified) {
               mainLineHeightSlider.value = suggestedLineHeight;
+              // 重要：更新行高滑桿的進度條
+              updateRangeProgress(mainLineHeightSlider);
             }
             
             // 更新最小值
             const minLineHeight = Math.ceil(this.value * 1.1);
             mainLineHeightSlider.min = minLineHeight;
+            // 如果當前值小於最小值，調整並更新進度條
+            if (parseInt(mainLineHeightSlider.value) < minLineHeight) {
+              mainLineHeightSlider.value = minLineHeight;
+              updateRangeProgress(mainLineHeightSlider);
+            }
           }
           updateStyles();
         });
       }
-
+      
       if (subSize) {
         subSize.addEventListener('input', function() {
           if (subLineHeightSlider) {
@@ -1743,31 +1750,23 @@ javascript:(function(){
             // 自動調整行高（但允許使用者覆蓋）
             if (!subLineHeightSlider.dataset.userModified) {
               subLineHeightSlider.value = suggestedLineHeight;
+              // 重要：更新行高滑桿的進度條
+              updateRangeProgress(subLineHeightSlider);
             }
             
             // 更新最小值
             const minLineHeight = Math.ceil(this.value * 1.1);
             subLineHeightSlider.min = minLineHeight;
+            // 如果當前值小於最小值，調整並更新進度條
+            if (parseInt(subLineHeightSlider.value) < minLineHeight) {
+              subLineHeightSlider.value = minLineHeight;
+              updateRangeProgress(subLineHeightSlider);
+            }
           }
           updateStyles();
         });
       }
-
-      // 標記使用者手動調整過行高
-      if (mainLineHeightSlider) {
-        mainLineHeightSlider.addEventListener('input', function() {
-          this.dataset.userModified = 'true';
-          updateStyles();
-        });
-      }
-
-      if (subLineHeightSlider) {
-        subLineHeightSlider.addEventListener('input', function() {
-          this.dataset.userModified = 'true';
-          updateStyles();
-        });
-      }
-
+      
       // 重置行高按鈕
       document.querySelectorAll('.reset-line-height-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -1777,12 +1776,16 @@ javascript:(function(){
             const suggested = calculateSuggestedLineHeight(mainSize.value);
             mainLineHeightSlider.value = suggested;
             mainLineHeightSlider.dataset.userModified = 'false';
+            // 更新進度條
+            updateRangeProgress(mainLineHeightSlider);
             updateStyles();
             showNotification('已重置主要文字行高');
           } else if (target === 'sub' && subSize && subLineHeightSlider) {
             const suggested = calculateSuggestedLineHeight(subSize.value);
             subLineHeightSlider.value = suggested;
             subLineHeightSlider.dataset.userModified = 'false';
+            // 更新進度條
+            updateRangeProgress(subLineHeightSlider);
             updateStyles();
             showNotification('已重置次要文字行高');
           }
@@ -1860,6 +1863,16 @@ javascript:(function(){
           document.getElementById('logo-y').textContent = logoYSlider.value + '%';
           document.getElementById('logo-opacity').textContent = logoOpacitySlider.value + '%';
         }
+        
+        /* 更新所有滑桿的進度條（確保同步） */
+          [mainSize, mainGap, mainLineHeightSlider, subSize, subLineHeightSlider, 
+           barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
+           labelWidth, labelHeight, labelPadding,
+           logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider].forEach(control => {
+            if (control && control.type === 'range') {
+              updateRangeProgress(control);
+            }
+          });
         
         /* 計算基於百分比的logo高度（相對於標籤高度） */
         const logoHeightMM = logoSizeSlider ? parseFloat(labelHeight.value) * parseFloat(logoSizeSlider.value) / 100 : 0;
