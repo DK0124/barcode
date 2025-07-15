@@ -1610,13 +1610,291 @@ javascript:(function(){
         });
       }
       
-      /* 轉換按鈕 - 現在不做轉換，只更新樣式 */
+      /* 轉換按鈕 - 根據標籤尺寸最佳化排版 */
       const transformBtn = document.getElementById('bv-transform-btn');
       if (transformBtn) {
         transformBtn.addEventListener('click', function() {
-          showNotification('已最佳化條碼標籤版面配置');
+          optimizeLayoutForLabelSize();
         });
       }
+      
+      /* 根據標籤尺寸最佳化排版 */
+      function optimizeLayoutForLabelSize() {
+        const labelWidthMM = parseFloat(labelWidth.value);
+        const labelHeightMM = parseFloat(labelHeight.value);
+        const paddingMM = parseFloat(labelPadding.value);
+        
+        // 可用空間
+        const availableWidth = labelWidthMM - (paddingMM * 2);
+        const availableHeight = labelHeightMM - (paddingMM * 2);
+        
+        // 根據標籤尺寸計算最佳設定
+        let optimizedSettings = {};
+        
+        // 小標籤 (30-35mm 寬)
+        if (labelWidthMM <= 35) {
+          optimizedSettings = {
+            mainSize: 8,
+            mainLineHeight: 10,
+            mainGap: 0,
+            subSize: 6,
+            subLineHeight: 8,
+            barcodeTextSize: 6,
+            barcodeHeight: 75,
+            barcodeWidth: 95,
+            textAlign: 'center'
+          };
+        }
+        // 標準標籤 (36-45mm 寬)
+        else if (labelWidthMM <= 45) {
+          optimizedSettings = {
+            mainSize: 10,
+            mainLineHeight: 13,
+            mainGap: 0.5,
+            subSize: 8,
+            subLineHeight: 10,
+            barcodeTextSize: 8,
+            barcodeHeight: 83,
+            barcodeWidth: 90,
+            textAlign: 'left'
+          };
+        }
+        // 大標籤 (46mm 以上)
+        else {
+          optimizedSettings = {
+            mainSize: 12,
+            mainLineHeight: 15,
+            mainGap: 1,
+            subSize: 10,
+            subLineHeight: 12,
+            barcodeTextSize: 10,
+            barcodeHeight: 85,
+            barcodeWidth: 85,
+            textAlign: 'left'
+          };
+        }
+        
+        // 根據高度調整
+        if (labelHeightMM <= 25) {
+          // 矮標籤：減小字體和條碼高度
+          optimizedSettings.mainSize = Math.max(optimizedSettings.mainSize - 1, 8);
+          optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 1, 6);
+          optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight - 10, 70);
+          optimizedSettings.mainGap = 0;
+        } else if (labelHeightMM >= 35) {
+          // 高標籤：可以增加間距
+          optimizedSettings.mainGap = Math.min(optimizedSettings.mainGap + 1, 2);
+          optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight + 5, 90);
+        }
+        
+        // 計算文字區域和條碼區域的比例
+        const totalContentHeight = availableHeight;
+        const estimatedTextHeight = 
+          (optimizedSettings.mainLineHeight * 2 + // 假設商品名稱最多2行
+           optimizedSettings.mainGap + 
+           optimizedSettings.subLineHeight * 2) / 3.78; // 轉換為mm
+        
+        const barcodeAreaHeight = totalContentHeight - estimatedTextHeight;
+        
+        // 如果條碼區域太小，調整設定
+        if (barcodeAreaHeight < 8) {
+          optimizedSettings.mainSize = Math.max(optimizedSettings.mainSize - 1, 8);
+          optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 1, 6);
+          optimizedSettings.mainLineHeight = calculateSuggestedLineHeight(optimizedSettings.mainSize);
+          optimizedSettings.subLineHeight = calculateSuggestedLineHeight(optimizedSettings.subSize);
+        }
+        
+        // 套用最佳化設定
+        applyOptimizedSettings(optimizedSettings);
+        
+        // 顯示通知
+        showNotification(`已針對 ${labelWidthMM}×${labelHeightMM}mm 標籤最佳化排版`);
+      }
+      
+      /* 套用最佳化設定 */
+      function applyOptimizedSettings(settings) {
+        // 套用文字大小
+        if (mainSize && settings.mainSize !== undefined) {
+          mainSize.value = settings.mainSize;
+          updateRangeProgress(mainSize);
+        }
+        
+        if (mainLineHeightSlider && settings.mainLineHeight !== undefined) {
+          mainLineHeightSlider.value = settings.mainLineHeight;
+          mainLineHeightSlider.dataset.userModified = 'false';
+          updateRangeProgress(mainLineHeightSlider);
+        }
+        
+        if (mainGap && settings.mainGap !== undefined) {
+          mainGap.value = settings.mainGap;
+          updateRangeProgress(mainGap);
+        }
+        
+        if (subSize && settings.subSize !== undefined) {
+          subSize.value = settings.subSize;
+          updateRangeProgress(subSize);
+        }
+        
+        if (subLineHeightSlider && settings.subLineHeight !== undefined) {
+          subLineHeightSlider.value = settings.subLineHeight;
+          subLineHeightSlider.dataset.userModified = 'false';
+          updateRangeProgress(subLineHeightSlider);
+        }
+        
+        if (barcodeTextSize && settings.barcodeTextSize !== undefined) {
+          barcodeTextSize.value = settings.barcodeTextSize;
+          updateRangeProgress(barcodeTextSize);
+        }
+        
+        if (barcodeHeight && settings.barcodeHeight !== undefined) {
+          barcodeHeight.value = settings.barcodeHeight;
+          updateRangeProgress(barcodeHeight);
+        }
+        
+        if (barcodeWidth && settings.barcodeWidth !== undefined) {
+          barcodeWidth.value = settings.barcodeWidth;
+          updateRangeProgress(barcodeWidth);
+        }
+        
+        if (textAlign && settings.textAlign !== undefined) {
+          textAlign.value = settings.textAlign;
+        }
+        
+        // 更新樣式
+        updateStyles();
+      }
+      
+      /* 修改 updateStyles 函數，確保內容不重疊 */
+      function updateStyles() {
+        if (!mainSize || !subSize) return;
+        
+        const mainLineHeight = mainLineHeightSlider ? mainLineHeightSlider.value : 11;
+        const subLineHeight = subLineHeightSlider ? subLineHeightSlider.value : 9;
+        const justifyContent = 'space-between';
+        
+        // 動態計算文字區域所需高度
+        const mainFontSizePx = parseFloat(mainSize.value);
+        const mainLineHeightPx = parseFloat(mainLineHeight);
+        const mainGapPx = parseFloat(mainGap.value);
+        const subLineHeightPx = parseFloat(subLineHeight);
+        
+        // 計算實際需要的文字區域高度
+        const layoutType = initialPageSettings?.layoutType || 'style1';
+        const showSpecInfo = layoutType !== 'style8';
+        
+        // 根據不同樣式計算行數
+        let mainTextLines = 2; // 預設2行
+        let subTextLines = 2;  // 預設2行
+        
+        // 特殊樣式調整
+        if (layoutType === 'style3' || layoutType === 'style4' || layoutType === 'style6') {
+          // 這些樣式條碼在文字區內，需要更多空間
+          mainTextLines = 1;
+          subTextLines = 1;
+        }
+        
+        // 計算文字區域高度 (px to mm)
+        const pxToMm = 0.264583; // 1px = 0.264583mm
+        const mainTextHeightMm = (mainLineHeightPx * mainTextLines) * pxToMm;
+        const gapMm = mainGapPx * pxToMm;
+        const subTextHeightMm = (subLineHeightPx * subTextLines) * pxToMm;
+        
+        // 總文字區域高度，加上一些餘量
+        const infoHeight = Math.ceil(mainTextHeightMm + gapMm + subTextHeightMm + 2);
+        
+        // 計算可用高度和條碼區域高度
+        const totalHeight = parseFloat(labelHeight.value);
+        const paddingValue = parseFloat(labelPadding.value);
+        const availableHeight = totalHeight - (paddingValue * 2);
+        const barcodeAreaHeight = Math.max(availableHeight - infoHeight, 5); // 至少5mm
+        
+        // 如果空間不足，調整文字區域高度
+        const finalInfoHeight = availableHeight > infoHeight + 5 ? infoHeight : availableHeight * 0.5;
+        const finalBarcodeHeight = availableHeight - finalInfoHeight;
+        
+        // ... 其他變數計算保持不變 ...
+        
+        /* 套用樣式 */
+        dynamicStyle.innerHTML = `
+          /* 調整條碼標籤整體尺寸 */
+          .print_barcode_area {
+            width: ${labelWidth.value}mm !important;
+          }
+          
+          /* 調整單個標籤的尺寸 */
+          html .print_barcode_area .print_sample,
+          body .print_barcode_area .print_sample {
+            height: ${labelHeight.value}mm !important;
+            padding: ${labelPadding.value}mm !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: ${justifyContent} !important;
+            overflow: hidden !important;
+          }
+          
+          /* 文字區域 - 固定高度 */
+          ${showSpecInfo ? `
+          .print_barcode_area .print_sample .spec_info {
+            flex: 0 0 ${finalInfoHeight}mm !important;
+            height: ${finalInfoHeight}mm !important;
+            margin-bottom: 0 !important;
+            overflow: hidden !important;
+            display: block !important;
+          }` : `
+          .print_barcode_area .print_sample .spec_info {
+            display: none !important;
+          }`}
+          
+          /* 條碼區域 - 使用剩餘空間 */
+          .print_barcode_area .print_sample > .spec_barcode {
+            flex: 1 1 auto !important;
+            height: ${finalBarcodeHeight}mm !important;
+            min-height: 5mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            overflow: hidden !important;
+            position: relative !important;
+            justify-content: ${
+              barcodeYPercent <= 20 ? 'flex-start' :
+              barcodeYPercent >= 80 ? 'flex-end' : 'center'
+            } !important;
+          }
+          
+          /* 商品名稱樣式 - 自適應行數 */
+          .print_barcode_area .print_sample .spec_info .main {
+            font-size: ${mainSize.value}px !important;
+            line-height: ${validatedMainLineHeight}px !important;
+            font-weight: ${mainFontWeight} !important;
+            margin-bottom: ${mainGap.value}px !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            hyphens: auto !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: ${mainTextLines} !important;
+            -webkit-box-orient: vertical !important;
+          }
+          
+          /* 條碼圖片 - 確保在區域內 */
+          .print_barcode_area .print_sample .spec_barcode img {
+            max-height: calc(${finalBarcodeHeight}mm * ${barcodeHeight.value / 100}) !important;
+            width: ${barcodeActualWidth}mm !important;
+            max-width: calc(100% * ${barcodeWidth.value / 100}) !important;
+            height: auto !important;
+            object-fit: contain !important;
+            display: block !important;
+            margin: 0 auto !important;
+            position: relative !important;
+            ${barcodeYPosition ? `
+              transform: translateY(${(barcodeYPercent - 50) * 0.1}mm) !important;
+            ` : ''}
+          }
       
       /* 初始化拖曳功能 */
       initDragFunction();
