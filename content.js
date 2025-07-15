@@ -25,10 +25,10 @@ javascript:(function(){
 
   /* 字體選項 */
   const fontOptions = [
+    { name: '思源黑體', value: '"Noto Sans TC", sans-serif' },
     { name: '系統預設', value: 'Arial, sans-serif' },
     { name: '微軟正黑體', value: 'Microsoft JhengHei, 微軟正黑體, sans-serif' },
-    { name: '蘋方體', value: 'PingFang TC, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif' },
-    { name: '思源黑體', value: '"Noto Sans TC", sans-serif' }
+    { name: '蘋方體', value: 'PingFang TC, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif' }
   ];
 
   /* 初始頁面樣式儲存變數 */
@@ -37,174 +37,182 @@ javascript:(function(){
 
   /* 完整的預設值物件 - 確保內容在畫面內 */
   const completeDefaultSettings = {
-    mainSize: 9,          // 縮小主要文字
+    mainSize: 10,
     mainBold: true,
     mainGap: 0,
-    mainLineHeight: 11,   // 適當的行高
-    subSize: 7,           // 縮小次要文字
+    mainLineHeight: 13,   // 確保有足夠行高
+    subSize: 8,
     subBold: true,
-    subLineHeight: 9,
-    barcodeTextSize: 7,
+    subLineHeight: 10,
+    barcodeTextSize: 8,
     barcodeTextBold: false,
-    barcodeHeight: 70,    // 縮小條碼高度避免溢出
-    barcodeWidth: 85,     // 稍微縮小寬度
+    barcodeHeight: 70,
+    barcodeWidth: 90,
     barcodeYPosition: 50,
     labelWidth: 40,
     labelHeight: 26,
     labelPadding: 1,
-    textAlign: 'left',
-    fontFamily: 'Arial, sans-serif',
+    fontFamily: '"Noto Sans TC", sans-serif',  // 預設思源黑體
     logoSize: 30,
     logoX: 50,
     logoY: 50,
     logoOpacity: 20
   };
 
-  /* 動態抓取 BV SHOP 原生樣式 */
-  function getBVShopNativeSettings() {
-    try {
-      const sample = document.querySelector('.print_sample');
-      if (!sample) return null;
-      
-      // 偵測樣式類型
-      const detectLayoutType = () => {
-        const specInfo = sample.querySelector('.spec_info');
-        const specBarcode = sample.querySelector('.spec_barcode');
-        
-        // 樣式八：純條碼（print_sample 有 flex 樣式）
-        if (sample.style.display === 'flex' && sample.style.justifyContent === 'center') {
-          return 'style8';
-        }
-        
-        // 樣式三、四：條碼在 spec_info 內的 ul 裡面
-        if (specInfo && specInfo.querySelector('ul .spec_barcode')) {
-          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
-          return hasSpecialPrice ? 'style3' : 'style4';
-        }
-        
-        // 樣式六：條碼在 spec_info 內，但有 <br> 標籤
-        if (specInfo && specInfo.querySelector('.spec_barcode') && specInfo.innerHTML.includes('<br>')) {
-          return 'style6';
-        }
-        
-        // 樣式五、七：價格在條碼區
-        if (specBarcode && specBarcode.querySelector('span.sub b')) {
-          const hasProductCode = specInfo && (specInfo.innerHTML.includes('cat-') || specInfo.querySelector('.sub:last-child')?.textContent?.includes('-'));
-          return hasProductCode ? 'style7' : 'style5';
-        }
-        
-        // 樣式一、二：標準版
-        if (specInfo) {
-          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
-          return hasSpecialPrice ? 'style1' : 'style2';
-        }
-        
-        return 'style1';
-      };
-      
-      const layoutType = detectLayoutType();
-      console.log('偵測到的樣式類型:', layoutType);
-      
-      // CSS 實際預設值
-      const cssDefaults = {
-        containerWidth: 40,
-        labelHeight: 26,
-        labelPadding: 1,
-        mainFontSize: 10,
-        mainLineHeight: 11,
-        subFontSize: 8,
-        subLineHeight: 9,
-        barcodeFontSize: 8,
-        fontFamily: 'Arial, 微軟正黑體, sans-serif',
-        fontWeight: 700
-      };
-      
-      // 根據不同樣式設定預設值 - 確保適合顯示
-      let presetValues = {
-        // 基本文字設定
-        mainSize: cssDefaults.mainFontSize - 1,  // 稍微縮小確保不溢出
-        mainBold: true,
-        mainGap: 0,
-        mainLineHeight: cssDefaults.mainLineHeight,
-        subSize: cssDefaults.subFontSize - 1,
-        subBold: true,
-        subLineHeight: cssDefaults.subLineHeight,
-        barcodeTextSize: cssDefaults.barcodeFontSize - 1,
-        barcodeTextBold: false,
-        
-        // 標籤尺寸
-        labelWidth: cssDefaults.containerWidth,
-        labelHeight: cssDefaults.labelHeight,
-        labelPadding: cssDefaults.labelPadding,
-        
-        // 預設值
-        textAlign: 'left',
-        fontFamily: cssDefaults.fontFamily,
-        
-        // Logo 預設值
-        logoSize: 30,
-        logoX: 50,
-        logoY: 50,
-        logoOpacity: 20,
-        logoAspectRatio: 1
-      };
-      
-      // 根據樣式調整特定設定 - 確保內容不溢出
-      switch(layoutType) {
-        case 'style1':
-        case 'style2':
-          presetValues.barcodeHeight = 70;  // 降低高度
-          presetValues.barcodeWidth = 85;
-          presetValues.barcodeYPosition = 50;
-          break;
-          
-        case 'style3':
-        case 'style4':
-          presetValues.barcodeHeight = 35;  // 條碼在文字區內，需要更小
-          presetValues.barcodeWidth = 80;
-          presetValues.barcodeYPosition = 50;
-          break;
-          
-        case 'style5':
-        case 'style7':
-          presetValues.barcodeHeight = 60;  // 價格在條碼區，適度縮小
-          presetValues.barcodeWidth = 85;
-          presetValues.barcodeYPosition = 55;
-          break;
-          
-        case 'style6':
-          presetValues.barcodeHeight = 30;  // 特殊間距版本，更小的條碼
-          presetValues.barcodeWidth = 85;
-          presetValues.barcodeYPosition = 50;
-          break;
-          
-        case 'style8':
-          presetValues.barcodeHeight = 55;  // 純條碼也要避免太大
-          presetValues.barcodeWidth = 90;
-          presetValues.barcodeYPosition = 50;
-          presetValues.textAlign = 'center';
-          break;
-          
-        default:
-          presetValues.barcodeHeight = 70;
-          presetValues.barcodeWidth = 85;
-          presetValues.barcodeYPosition = 50;
-          break;
+  /* 等待 DOM 完全載入 */
+  function waitForElement(selector, callback, maxRetries = 20) {
+    let retries = 0;
+    const check = () => {
+      const element = document.querySelector(selector);
+      if (element) {
+        callback(element);
+      } else if (retries < maxRetries) {
+        retries++;
+        setTimeout(check, 100);
       }
-      
-      // 記錄樣式類型
-      presetValues.layoutType = layoutType;
-      
-      return presetValues;
-    } catch (e) {
-      console.error('無法抓取原生樣式:', e);
-      return null;
-    }
+    };
+    check();
+  }
+
+  /* 動態抓取 BV SHOP 原生樣式 - 等待載入完成 */
+  function getBVShopNativeSettings(callback) {
+    waitForElement('.print_sample', (sample) => {
+      try {
+        // 偵測樣式類型
+        const detectLayoutType = () => {
+          const specInfo = sample.querySelector('.spec_info');
+          const specBarcode = sample.querySelector('.spec_barcode');
+          
+          // 樣式八：純條碼（print_sample 有 flex 樣式）
+          if (sample.style.display === 'flex' && sample.style.justifyContent === 'center') {
+            return 'style8';
+          }
+          
+          // 樣式三、四：條碼在 spec_info 內的 ul 裡面
+          if (specInfo && specInfo.querySelector('ul .spec_barcode')) {
+            const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+            return hasSpecialPrice ? 'style3' : 'style4';
+          }
+          
+          // 樣式六：條碼在 spec_info 內，但有 <br> 標籤
+          if (specInfo && specInfo.querySelector('.spec_barcode') && specInfo.innerHTML.includes('<br>')) {
+            return 'style6';
+          }
+          
+          // 樣式五、七：價格在條碼區
+          if (specBarcode && specBarcode.querySelector('span.sub b')) {
+            const hasProductCode = specInfo && (specInfo.innerHTML.includes('cat-') || specInfo.querySelector('.sub:last-child')?.textContent?.includes('-'));
+            return hasProductCode ? 'style7' : 'style5';
+          }
+          
+          // 樣式一、二：標準版
+          if (specInfo) {
+            const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+            return hasSpecialPrice ? 'style1' : 'style2';
+          }
+          
+          return 'style1';
+        };
+        
+        const layoutType = detectLayoutType();
+        console.log('偵測到的樣式類型:', layoutType);
+        
+        // 實際測量現有樣式
+        const specInfo = sample.querySelector('.spec_info');
+        const mainElement = specInfo?.querySelector('.main');
+        const subElement = specInfo?.querySelector('.sub');
+        const barcodeText = sample.querySelector('.spec_barcode .sub');
+        
+        // 獲取計算樣式
+        const mainStyle = mainElement ? window.getComputedStyle(mainElement) : null;
+        const subStyle = subElement ? window.getComputedStyle(subElement) : null;
+        const barcodeTextStyle = barcodeText ? window.getComputedStyle(barcodeText) : null;
+        
+        // 真實的預設值
+        const presetValues = {
+          // 從實際元素取得字體大小
+          mainSize: mainStyle ? parseInt(mainStyle.fontSize) : 10,
+          mainBold: mainStyle ? mainStyle.fontWeight >= 700 : true,
+          mainGap: 0,
+          mainLineHeight: mainStyle ? parseInt(mainStyle.lineHeight) : 13,
+          subSize: subStyle ? parseInt(subStyle.fontSize) : 8,
+          subBold: subStyle ? subStyle.fontWeight >= 700 : true,
+          subLineHeight: subStyle ? parseInt(subStyle.lineHeight) : 10,
+          barcodeTextSize: barcodeTextStyle ? parseInt(barcodeTextStyle.fontSize) : 8,
+          barcodeTextBold: barcodeTextStyle ? barcodeTextStyle.fontWeight >= 700 : false,
+          
+          // 標籤尺寸
+          labelWidth: 40,
+          labelHeight: 26,
+          labelPadding: 1,
+          
+          // 預設值
+          fontFamily: '"Noto Sans TC", sans-serif',
+          
+          // Logo 預設值
+          logoSize: 30,
+          logoX: 50,
+          logoY: 50,
+          logoOpacity: 20,
+          logoAspectRatio: 1
+        };
+        
+        // 根據樣式調整特定設定
+        switch(layoutType) {
+          case 'style1':
+          case 'style2':
+            presetValues.barcodeHeight = 83;
+            presetValues.barcodeWidth = 90;
+            presetValues.barcodeYPosition = 50;
+            break;
+            
+          case 'style3':
+          case 'style4':
+            presetValues.barcodeHeight = 40;
+            presetValues.barcodeWidth = 85;
+            presetValues.barcodeYPosition = 50;
+            break;
+            
+          case 'style5':
+          case 'style7':
+            presetValues.barcodeHeight = 70;
+            presetValues.barcodeWidth = 90;
+            presetValues.barcodeYPosition = 60;
+            break;
+            
+          case 'style6':
+            presetValues.barcodeHeight = 35;
+            presetValues.barcodeWidth = 90;
+            presetValues.barcodeYPosition = 50;
+            break;
+            
+          case 'style8':
+            presetValues.barcodeHeight = 60;
+            presetValues.barcodeWidth = 95;
+            presetValues.barcodeYPosition = 50;
+            break;
+            
+          default:
+            presetValues.barcodeHeight = 83;
+            presetValues.barcodeWidth = 90;
+            presetValues.barcodeYPosition = 50;
+            break;
+        }
+        
+        // 記錄樣式類型
+        presetValues.layoutType = layoutType;
+        
+        callback(presetValues);
+      } catch (e) {
+        console.error('無法抓取原生樣式:', e);
+        callback(null);
+      }
+    });
   }
   
   /* 驗證行高合理性 */
   function validateLineHeight(fontSize, lineHeight) {
-    const minLineHeight = Math.ceil(fontSize * 1.1);
+    const minLineHeight = Math.ceil(fontSize * 1.2); // 至少 1.2 倍
     return Math.max(parseInt(lineHeight), minLineHeight);
   }
   
@@ -213,11 +221,11 @@ javascript:(function(){
     const size = parseInt(fontSize);
     let ratio;
     if (size <= 10) {
-      ratio = 1.25;  // 小字體用較小的行高比例
+      ratio = 1.3;  // 小字體需要較大的行高比例
     } else if (size <= 14) {
-      ratio = 1.2;
+      ratio = 1.25;
     } else {
-      ratio = 1.15;
+      ratio = 1.2;
     }
     return Math.round(size * ratio);
   }
@@ -1182,7 +1190,7 @@ javascript:(function(){
         <div class="bv-panel-header">
           <div class="bv-header-content">
             <div class="bv-icon-wrapper">
-              <span class="material-icons">barcode</span>
+              <span class="material-icons">qr_code_2</span>
             </div>
             <div class="bv-title-group">
               <h3 class="bv-panel-title">BV SHOP 條碼列印</h3>
@@ -1289,15 +1297,6 @@ javascript:(function(){
                 </div>
                 <select id="font-family-select" class="bv-glass-select">
                   ${fontOptions.map(font => `<option value="${font.value}">${font.name}</option>`).join('')}
-                </select>
-                
-                <div class="bv-setting-item" style="margin-top: 15px; padding-bottom: 10px;">
-                  <span class="bv-setting-label">對齊方式</span>
-                </div>
-                <select id="text-align" class="bv-glass-select">
-                  <option value="left">靠左對齊</option>
-                  <option value="center">置中對齊</option>
-                  <option value="right">靠右對齊</option>
                 </select>
               </div>
             </div>
@@ -1519,1155 +1518,1169 @@ javascript:(function(){
     
     /* 延遲初始化所有控制項 */
     setTimeout(() => {
-      /* 先抓取並儲存初始頁面樣式 */
-      initialPageSettings = getBVShopNativeSettings();
-      console.log('初始頁面樣式已儲存:', initialPageSettings);
-      
-      /* Logo 上傳功能 */
-      const logoUploadArea = document.getElementById('logo-upload-area');
-      const logoInput = document.getElementById('logo-input');
-      const logoPreview = document.getElementById('logo-preview');
-      const uploadPrompt = document.getElementById('upload-prompt');
-      const logoControls = document.getElementById('logo-controls');
-      const removeLogoBtn = document.getElementById('remove-logo-btn');
-      
-      /* Logo 控制項 */
-      const logoSizeSlider = document.getElementById('logo-size-slider');
-      const logoXSlider = document.getElementById('logo-x-slider');
-      const logoYSlider = document.getElementById('logo-y-slider');
-      const logoOpacitySlider = document.getElementById('logo-opacity-slider');
-      
-      /* Logo 上傳事件 */
-      if (logoUploadArea) {
-        logoUploadArea.addEventListener('click', function() {
-          logoInput.click();
-        });
-      }
-      
-      if (logoInput) {
-        logoInput.addEventListener('change', function(e) {
-          const file = e.target.files[0];
-          if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-              logoDataUrl = event.target.result;
-              
-              const img = new Image();
-              img.onload = function() {
-                logoAspectRatio = img.width / img.height;
-                
-                logoPreview.src = logoDataUrl;
-                logoPreview.style.display = 'block';
-                uploadPrompt.style.display = 'none';
-                logoUploadArea.classList.add('has-logo');
-                logoControls.classList.add('active');
-                updateStyles();
-              };
-              img.src = logoDataUrl;
-            };
-            reader.readAsDataURL(file);
-          } else {
-            showNotification('請上傳 PNG 或 JPG 格式的圖片', 'warning');
-          }
-        });
-      }
-      
-      /* 移除 Logo */
-      if (removeLogoBtn) {
-        removeLogoBtn.addEventListener('click', function() {
-          logoDataUrl = null;
-          logoAspectRatio = 1;
-          logoPreview.style.display = 'none';
-          uploadPrompt.style.display = 'block';
-          logoUploadArea.classList.remove('has-logo');
-          logoControls.classList.remove('active');
-          logoInput.value = '';
-          updateStyles();
-        });
-      }
-      
-      /* 最小化按鈕 */
-      const minimizeBtn = document.getElementById('bv-minimize-btn');
-      if (minimizeBtn) {
-        minimizeBtn.addEventListener('click', function() {
-          const panel = document.getElementById('bv-barcode-control-panel');
-          const icon = this.querySelector('.material-icons');
-          
-          if (isPanelMinimized) {
-            panel.classList.remove('minimized');
-            icon.textContent = 'remove';
-            isPanelMinimized = false;
-          } else {
-            panel.classList.add('minimized');
-            icon.textContent = 'add';
-            isPanelMinimized = true;
-          }
-          
-          chrome.storage.local.set({ bvPanelMinimized: isPanelMinimized });
-        });
-      }
-      
-      /* 浮動列印按鈕 */
-      const floatingPrint = document.getElementById('bv-floating-print');
-      if (floatingPrint) {
-        floatingPrint.addEventListener('click', function() {
-          window.allowPrint = true;
-          window.print();
-        });
-      }
-      
-      /* 智能最佳化按鈕 */
-      const transformBtn = document.getElementById('bv-transform-btn');
-      if (transformBtn) {
-        transformBtn.addEventListener('click', function() {
-          optimizeLayoutForLabelSize();
-        });
-      }
-      
-      /* 初始化拖曳功能 */
-      initDragFunction();
-      
-      /* 獲取所有需要的控制項元素 */
-      const mainSize = document.getElementById('main-slider');
-      const mainBoldBtn = document.getElementById('main-bold-btn');
-      const mainGap = document.getElementById('main-gap-slider');
-      const mainLineHeightSlider = document.getElementById('main-line-height-slider');
-      
-      const subSize = document.getElementById('sub-slider');
-      const subBoldBtn = document.getElementById('sub-bold-btn');
-      const subLineHeightSlider = document.getElementById('sub-line-height-slider');
-      
-      const barcodeTextSize = document.getElementById('barcode-text-slider');
-      const barcodeTextBoldBtn = document.getElementById('barcode-text-bold-btn');
-      const barcodeHeight = document.getElementById('barcode-height-slider');
-      const barcodeWidth = document.getElementById('barcode-width-slider');
-      const barcodeYPosition = document.getElementById('barcode-y-position-slider');
-      
-      const labelWidth = document.getElementById('label-width-slider');
-      const labelHeight = document.getElementById('label-height-slider');
-      const labelPadding = document.getElementById('label-padding-slider');
-      const textAlign = document.getElementById('text-align');
-      const fontFamily = document.getElementById('font-family-select');
-      
-      /* 備用預設值 */
-      const defaultSettings = initialPageSettings || completeDefaultSettings;
-      
-      /* 粗體按鈕點擊事件 */
-      function setupBoldButton(button, updateCallback) {
-        if (button) {
-          button.addEventListener('click', function() {
-            this.classList.toggle('active');
-            updateCallback();
+      /* 先抓取並儲存初始頁面樣式 - 等待載入完成 */
+      getBVShopNativeSettings((settings) => {
+        initialPageSettings = settings;
+        console.log('初始頁面樣式已儲存:', initialPageSettings);
+        
+        /* Logo 上傳功能 */
+        const logoUploadArea = document.getElementById('logo-upload-area');
+        const logoInput = document.getElementById('logo-input');
+        const logoPreview = document.getElementById('logo-preview');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const logoControls = document.getElementById('logo-controls');
+        const removeLogoBtn = document.getElementById('remove-logo-btn');
+        
+        /* Logo 控制項 */
+        const logoSizeSlider = document.getElementById('logo-size-slider');
+        const logoXSlider = document.getElementById('logo-x-slider');
+        const logoYSlider = document.getElementById('logo-y-slider');
+        const logoOpacitySlider = document.getElementById('logo-opacity-slider');
+        
+        /* Logo 上傳事件 */
+        if (logoUploadArea) {
+          logoUploadArea.addEventListener('click', function() {
+            logoInput.click();
           });
         }
-      }
-
-      setupBoldButton(mainBoldBtn, updateStyles);
-      setupBoldButton(subBoldBtn, updateStyles);
-      setupBoldButton(barcodeTextBoldBtn, updateStyles);
-
-      /* 字體大小改變時，自動調整行高 */
-      if (mainSize) {
-        mainSize.addEventListener('input', function() {
-          if (mainLineHeightSlider) {
-            const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
+        
+        if (logoInput) {
+          logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+              const reader = new FileReader();
+              reader.onload = function(event) {
+                logoDataUrl = event.target.result;
+                
+                const img = new Image();
+                img.onload = function() {
+                  logoAspectRatio = img.width / img.height;
+                  
+                  logoPreview.src = logoDataUrl;
+                  logoPreview.style.display = 'block';
+                  uploadPrompt.style.display = 'none';
+                  logoUploadArea.classList.add('has-logo');
+                  logoControls.classList.add('active');
+                  updateStyles();
+                };
+                img.src = logoDataUrl;
+              };
+              reader.readAsDataURL(file);
+            } else {
+              showNotification('請上傳 PNG 或 JPG 格式的圖片', 'warning');
+            }
+          });
+        }
+        
+        /* 移除 Logo */
+        if (removeLogoBtn) {
+          removeLogoBtn.addEventListener('click', function() {
+            logoDataUrl = null;
+            logoAspectRatio = 1;
+            logoPreview.style.display = 'none';
+            uploadPrompt.style.display = 'block';
+            logoUploadArea.classList.remove('has-logo');
+            logoControls.classList.remove('active');
+            logoInput.value = '';
+            updateStyles();
+          });
+        }
+        
+        /* 最小化按鈕 */
+        const minimizeBtn = document.getElementById('bv-minimize-btn');
+        if (minimizeBtn) {
+          minimizeBtn.addEventListener('click', function() {
+            const panel = document.getElementById('bv-barcode-control-panel');
+            const icon = this.querySelector('.material-icons');
             
-            if (!mainLineHeightSlider.dataset.userModified) {
-              mainLineHeightSlider.value = suggestedLineHeight;
-              updateRangeProgress(mainLineHeightSlider);
+            if (isPanelMinimized) {
+              panel.classList.remove('minimized');
+              icon.textContent = 'remove';
+              isPanelMinimized = false;
+            } else {
+              panel.classList.add('minimized');
+              icon.textContent = 'add';
+              isPanelMinimized = true;
             }
             
-            const minLineHeight = Math.ceil(this.value * 1.1);
-            mainLineHeightSlider.min = minLineHeight;
-            if (parseInt(mainLineHeightSlider.value) < minLineHeight) {
-              mainLineHeightSlider.value = minLineHeight;
-              updateRangeProgress(mainLineHeightSlider);
-            }
+            chrome.storage.local.set({ bvPanelMinimized: isPanelMinimized });
+          });
+        }
+        
+        /* 浮動列印按鈕 */
+        const floatingPrint = document.getElementById('bv-floating-print');
+        if (floatingPrint) {
+          floatingPrint.addEventListener('click', function() {
+            window.allowPrint = true;
+            window.print();
+          });
+        }
+        
+        /* 智能最佳化按鈕 */
+        const transformBtn = document.getElementById('bv-transform-btn');
+        if (transformBtn) {
+          transformBtn.addEventListener('click', function() {
+            optimizeLayoutForLabelSize();
+          });
+        }
+        
+        /* 初始化拖曳功能 */
+        initDragFunction();
+        
+        /* 獲取所有需要的控制項元素 */
+        const mainSize = document.getElementById('main-slider');
+        const mainBoldBtn = document.getElementById('main-bold-btn');
+        const mainGap = document.getElementById('main-gap-slider');
+        const mainLineHeightSlider = document.getElementById('main-line-height-slider');
+        
+        const subSize = document.getElementById('sub-slider');
+        const subBoldBtn = document.getElementById('sub-bold-btn');
+        const subLineHeightSlider = document.getElementById('sub-line-height-slider');
+        
+        const barcodeTextSize = document.getElementById('barcode-text-slider');
+        const barcodeTextBoldBtn = document.getElementById('barcode-text-bold-btn');
+        const barcodeHeight = document.getElementById('barcode-height-slider');
+        const barcodeWidth = document.getElementById('barcode-width-slider');
+        const barcodeYPosition = document.getElementById('barcode-y-position-slider');
+        
+        const labelWidth = document.getElementById('label-width-slider');
+        const labelHeight = document.getElementById('label-height-slider');
+        const labelPadding = document.getElementById('label-padding-slider');
+        const fontFamily = document.getElementById('font-family-select');
+        
+        /* 備用預設值 */
+        const defaultSettings = initialPageSettings || completeDefaultSettings;
+        
+        /* 粗體按鈕點擊事件 */
+        function setupBoldButton(button, updateCallback) {
+          if (button) {
+            button.addEventListener('click', function() {
+              this.classList.toggle('active');
+              updateCallback();
+            });
           }
-          updateStyles();
-        });
-      }
+        }
 
-      if (subSize) {
-        subSize.addEventListener('input', function() {
-          if (subLineHeightSlider) {
-            const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
+        setupBoldButton(mainBoldBtn, updateStyles);
+        setupBoldButton(subBoldBtn, updateStyles);
+        setupBoldButton(barcodeTextBoldBtn, updateStyles);
+
+        /* 字體大小改變時，自動調整行高 */
+        if (mainSize) {
+          mainSize.addEventListener('input', function() {
+            if (mainLineHeightSlider) {
+              const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
+              
+              if (!mainLineHeightSlider.dataset.userModified) {
+                mainLineHeightSlider.value = suggestedLineHeight;
+                updateRangeProgress(mainLineHeightSlider);
+              }
+              
+              const minLineHeight = Math.ceil(this.value * 1.2);
+              mainLineHeightSlider.min = minLineHeight;
+              if (parseInt(mainLineHeightSlider.value) < minLineHeight) {
+                mainLineHeightSlider.value = minLineHeight;
+                updateRangeProgress(mainLineHeightSlider);
+              }
+            }
+            updateStyles();
+          });
+        }
+
+        if (subSize) {
+          subSize.addEventListener('input', function() {
+            if (subLineHeightSlider) {
+              const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
+              
+              if (!subLineHeightSlider.dataset.userModified) {
+                subLineHeightSlider.value = suggestedLineHeight;
+                updateRangeProgress(subLineHeightSlider);
+              }
+              
+              const minLineHeight = Math.ceil(this.value * 1.2);
+              subLineHeightSlider.min = minLineHeight;
+              if (parseInt(subLineHeightSlider.value) < minLineHeight) {
+                subLineHeightSlider.value = minLineHeight;
+                updateRangeProgress(subLineHeightSlider);
+              }
+            }
+            updateStyles();
+          });
+        }
+
+        // 標記使用者手動調整過行高
+        if (mainLineHeightSlider) {
+          mainLineHeightSlider.addEventListener('input', function() {
+            this.dataset.userModified = 'true';
+            updateStyles();
+          });
+        }
+
+        if (subLineHeightSlider) {
+          subLineHeightSlider.addEventListener('input', function() {
+            this.dataset.userModified = 'true';
+            updateStyles();
+          });
+        }
+
+        /* 智能最佳化函數 - 更精準的計算邏輯 */
+        function optimizeLayoutForLabelSize() {
+          const labelWidthMM = parseFloat(labelWidth.value);
+          const labelHeightMM = parseFloat(labelHeight.value);
+          const paddingMM = parseFloat(labelPadding.value);
+          
+          // 可用空間
+          const availableWidth = labelWidthMM - (paddingMM * 2);
+          const availableHeight = labelHeightMM - (paddingMM * 2);
+          
+          // 計算寬高比
+          const aspectRatio = labelWidthMM / labelHeightMM;
+          
+          // 根據標籤尺寸計算最佳設定
+          let optimizedSettings = {};
+          
+          // 智能計算最佳字體大小
+          // 基於黃金比例和可讀性研究
+          const baseFontSize = Math.min(availableWidth / 4, availableHeight / 2.5);
+          
+          // 根據寬度分類並套用美學比例
+          if (labelWidthMM <= 30) {
+            // 超小標籤 - 緊湊但清晰
+            optimizedSettings = {
+              mainSize: Math.round(baseFontSize * 0.8),
+              mainLineHeight: Math.round(baseFontSize * 0.8 * 1.3),
+              mainGap: 0,
+              subSize: Math.round(baseFontSize * 0.65),
+              subLineHeight: Math.round(baseFontSize * 0.65 * 1.25),
+              barcodeTextSize: Math.round(baseFontSize * 0.6),
+              barcodeHeight: 65,
+              barcodeWidth: 92,
+              barcodeYPosition: 50,
+              labelPadding: Math.min(paddingMM, 0.5)
+            };
+          } else if (labelWidthMM <= 35) {
+            // 小標籤 - 平衡美觀
+            optimizedSettings = {
+              mainSize: Math.round(baseFontSize * 0.85),
+              mainLineHeight: Math.round(baseFontSize * 0.85 * 1.3),
+              mainGap: 0.5,
+              subSize: Math.round(baseFontSize * 0.7),
+              subLineHeight: Math.round(baseFontSize * 0.7 * 1.25),
+              barcodeTextSize: Math.round(baseFontSize * 0.65),
+              barcodeHeight: 68,
+              barcodeWidth: 90,
+              barcodeYPosition: 50,
+              labelPadding: Math.min(paddingMM, 0.8)
+            };
+          } else if (labelWidthMM <= 45) {
+            // 標準標籤 - 黃金比例
+            optimizedSettings = {
+              mainSize: Math.round(baseFontSize * 0.9),
+              mainLineHeight: Math.round(baseFontSize * 0.9 * 1.35),
+              mainGap: 1,
+              subSize: Math.round(baseFontSize * 0.75),
+              subLineHeight: Math.round(baseFontSize * 0.75 * 1.3),
+              barcodeTextSize: Math.round(baseFontSize * 0.7),
+              barcodeHeight: 70,
+              barcodeWidth: 88,
+              barcodeYPosition: 50,
+              labelPadding: paddingMM
+            };
+          } else if (labelWidthMM <= 55) {
+            // 中型標籤 - 舒適閱讀
+            optimizedSettings = {
+              mainSize: Math.round(baseFontSize * 0.95),
+              mainLineHeight: Math.round(baseFontSize * 0.95 * 1.4),
+              mainGap: 1.5,
+              subSize: Math.round(baseFontSize * 0.8),
+              subLineHeight: Math.round(baseFontSize * 0.8 * 1.35),
+              barcodeTextSize: Math.round(baseFontSize * 0.75),
+              barcodeHeight: 72,
+              barcodeWidth: 85,
+              barcodeYPosition: 50,
+              labelPadding: paddingMM
+            };
+          } else {
+            // 大標籤 - 展示美感
+            optimizedSettings = {
+              mainSize: Math.round(baseFontSize),
+              mainLineHeight: Math.round(baseFontSize * 1.45),
+              mainGap: 2,
+              subSize: Math.round(baseFontSize * 0.85),
+              subLineHeight: Math.round(baseFontSize * 0.85 * 1.4),
+              barcodeTextSize: Math.round(baseFontSize * 0.8),
+              barcodeHeight: 75,
+              barcodeWidth: 82,
+              barcodeYPosition: 50,
+              labelPadding: paddingMM
+            };
+          }
+          
+          // 根據高度微調以確保不溢出
+          const pxToMm = 0.264583;
+          
+          // 計算預期文字高度（考慮多行）
+          const maxMainLines = 3; // 商品名稱最多3行
+          const maxSubLines = 2;  // 副文字最多2行
+          
+          const estimatedTextHeight = 
+            (optimizedSettings.mainLineHeight * maxMainLines * pxToMm) +
+            (optimizedSettings.mainGap * pxToMm) +
+            (optimizedSettings.subLineHeight * maxSubLines * pxToMm);
+          
+          // 確保有足夠空間
+          const minimumBarcodeHeight = 5; // 至少5mm給條碼
+          const totalNeededHeight = estimatedTextHeight + minimumBarcodeHeight;
+          
+          if (totalNeededHeight > availableHeight) {
+            // 需要縮小以適應
+            const scaleFactor = availableHeight / totalNeededHeight * 0.9; // 留10%餘量
             
-            if (!subLineHeightSlider.dataset.userModified) {
-              subLineHeightSlider.value = suggestedLineHeight;
-              updateRangeProgress(subLineHeightSlider);
+            optimizedSettings.mainSize = Math.max(6, Math.round(optimizedSettings.mainSize * scaleFactor));
+            optimizedSettings.subSize = Math.max(5, Math.round(optimizedSettings.subSize * scaleFactor));
+            optimizedSettings.mainLineHeight = Math.round(optimizedSettings.mainSize * 1.3);
+            optimizedSettings.subLineHeight = Math.round(optimizedSettings.subSize * 1.25);
+            optimizedSettings.mainGap = Math.min(optimizedSettings.mainGap, 0.5);
+            optimizedSettings.barcodeHeight = Math.max(50, optimizedSettings.barcodeHeight - 10);
+          }
+          
+          // 特殊高度調整
+          if (labelHeightMM <= 20) {
+            // 超矮標籤
+            optimizedSettings.barcodeHeight = Math.max(optimizedSettings.barcodeHeight - 15, 50);
+            optimizedSettings.mainGap = 0;
+          } else if (labelHeightMM >= 35) {
+            // 高標籤可以更寬鬆
+            optimizedSettings.mainGap = Math.min(optimizedSettings.mainGap + 0.5, 2.5);
+            optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight + 5, 80);
+          }
+          
+          // 根據寬高比進一步美化
+          if (aspectRatio < 1.2) {
+            // 接近正方形 - 緊湊佈局
+            optimizedSettings.barcodeWidth = Math.min(optimizedSettings.barcodeWidth, 85);
+            optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight, 70);
+          } else if (aspectRatio > 2.5) {
+            // 特別寬 - 水平展開
+            optimizedSettings.barcodeWidth = Math.max(optimizedSettings.barcodeWidth - 10, 70);
+            optimizedSettings.mainGap = Math.max(optimizedSettings.mainGap - 0.5, 0);
+          }
+          
+          // 確保最小值
+          optimizedSettings.mainSize = Math.max(6, optimizedSettings.mainSize);
+          optimizedSettings.subSize = Math.max(5, optimizedSettings.subSize);
+          optimizedSettings.barcodeTextSize = Math.max(5, optimizedSettings.barcodeTextSize);
+          
+          // 套用最佳化設定
+          applyOptimizedSettings(optimizedSettings);
+          
+          // 顯示詳細通知
+          const layoutType = initialPageSettings?.layoutType || 'style1';
+          showNotification(
+            `已針對 ${labelWidthMM}×${labelHeightMM}mm 標籤智能優化排版`
+          );
+        }
+
+        /* 套用最佳化設定 */
+        function applyOptimizedSettings(settings) {
+          // 套用標籤內距（如果有設定）
+          if (labelPadding && settings.labelPadding !== undefined) {
+            labelPadding.value = settings.labelPadding;
+            updateRangeProgress(labelPadding);
+          }
+          
+          // 套用文字大小
+          if (mainSize && settings.mainSize !== undefined) {
+            mainSize.value = settings.mainSize;
+            updateRangeProgress(mainSize);
+          }
+          
+          if (mainLineHeightSlider && settings.mainLineHeight !== undefined) {
+            mainLineHeightSlider.value = settings.mainLineHeight;
+            mainLineHeightSlider.dataset.userModified = 'false';
+            updateRangeProgress(mainLineHeightSlider);
+          }
+          
+          if (mainGap && settings.mainGap !== undefined) {
+            mainGap.value = settings.mainGap;
+            updateRangeProgress(mainGap);
+          }
+          
+          if (subSize && settings.subSize !== undefined) {
+            subSize.value = settings.subSize;
+            updateRangeProgress(subSize);
+          }
+          
+          if (subLineHeightSlider && settings.subLineHeight !== undefined) {
+            subLineHeightSlider.value = settings.subLineHeight;
+            subLineHeightSlider.dataset.userModified = 'false';
+            updateRangeProgress(subLineHeightSlider);
+          }
+          
+          if (barcodeTextSize && settings.barcodeTextSize !== undefined) {
+            barcodeTextSize.value = settings.barcodeTextSize;
+            updateRangeProgress(barcodeTextSize);
+          }
+          
+          if (barcodeHeight && settings.barcodeHeight !== undefined) {
+            barcodeHeight.value = settings.barcodeHeight;
+            updateRangeProgress(barcodeHeight);
+          }
+          
+          if (barcodeWidth && settings.barcodeWidth !== undefined) {
+            barcodeWidth.value = settings.barcodeWidth;
+            updateRangeProgress(barcodeWidth);
+          }
+          
+          if (barcodeYPosition && settings.barcodeYPosition !== undefined) {
+            barcodeYPosition.value = settings.barcodeYPosition;
+            updateRangeProgress(barcodeYPosition);
+          }
+          
+          // 立即更新樣式
+          updateStyles();
+        }
+
+        /* 更新樣式函數 - 確保內容不溢出 */
+        function updateStyles() {
+          if (!mainSize || !subSize) return;
+          
+          const mainLineHeight = mainLineHeightSlider ? mainLineHeightSlider.value : 13;
+          const subLineHeight = subLineHeightSlider ? subLineHeightSlider.value : 10;
+          const justifyContent = 'space-between';
+          
+          // 動態計算文字區域所需高度
+          const mainFontSizePx = parseFloat(mainSize.value);
+          const mainLineHeightPx = parseFloat(mainLineHeight);
+          const mainGapPx = parseFloat(mainGap.value);
+          const subLineHeightPx = parseFloat(subLineHeight);
+          
+          // 計算實際需要的文字區域高度
+          const layoutType = initialPageSettings?.layoutType || 'style1';
+          const showSpecInfo = layoutType !== 'style8';
+          
+          // 根據不同樣式計算最大行數
+          let maxMainLines = 3; // 商品名稱最多3行
+          let maxSubLines = 2;  // 副文字最多2行
+          
+          // 特殊樣式調整
+          if (layoutType === 'style3' || layoutType === 'style4' || layoutType === 'style6') {
+            // 這些樣式條碼在文字區內，需要調整
+            maxMainLines = 2;
+            maxSubLines = 1;
+          }
+          
+          // 計算文字區域高度 (px to mm)
+          const pxToMm = 0.264583;
+          const mainTextHeightMm = (mainLineHeightPx * maxMainLines) * pxToMm;
+          const gapMm = mainGapPx * pxToMm;
+          const subTextHeightMm = (subLineHeightPx * maxSubLines) * pxToMm;
+          
+          // 總文字區域高度
+          const infoHeight = Math.ceil(mainTextHeightMm + gapMm + subTextHeightMm + 1);
+          
+          // 計算可用高度和條碼區域高度
+          const totalHeight = parseFloat(labelHeight.value);
+          const paddingValue = parseFloat(labelPadding.value);
+          const availableHeight = totalHeight - (paddingValue * 2);
+          
+          // 動態分配高度，確保不溢出
+          let finalInfoHeight, finalBarcodeHeight;
+          
+          if (showSpecInfo) {
+            const minimumBarcodeHeight = 5; // 條碼至少需要5mm
+            if (infoHeight + minimumBarcodeHeight <= availableHeight) {
+              finalInfoHeight = infoHeight;
+              finalBarcodeHeight = availableHeight - infoHeight;
+            } else {
+              // 空間不足，按比例分配
+              finalInfoHeight = availableHeight * 0.55; // 文字佔55%
+              finalBarcodeHeight = availableHeight * 0.45; // 條碼佔45%
+            }
+          } else {
+            // 樣式8：純條碼
+            finalInfoHeight = 0;
+            finalBarcodeHeight = availableHeight;
+          }
+          
+          const validatedMainLineHeight = validateLineHeight(mainSize.value, mainLineHeight);
+          const validatedSubLineHeight = validateLineHeight(subSize.value, subLineHeight);
+          
+          const mainFontWeight = mainBoldBtn && mainBoldBtn.classList.contains('active') ? 700 : 500;
+          const subFontWeight = subBoldBtn && subBoldBtn.classList.contains('active') ? 700 : 500;
+          const barcodeTextFontWeight = barcodeTextBoldBtn && barcodeTextBoldBtn.classList.contains('active') ? 700 : 500;
+          
+          const totalWidth = parseFloat(labelWidth.value);
+          const availableWidth = totalWidth - (paddingValue * 2);
+          
+          const barcodeActualHeight = (finalBarcodeHeight * parseFloat(barcodeHeight.value) / 100).toFixed(1);
+          const barcodeActualWidth = (availableWidth * parseFloat(barcodeWidth.value) / 100).toFixed(1);
+          
+          const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 50;
+          
+          /* 更新顯示值 */
+          document.getElementById('main-size').textContent = mainSize.value + 'px';
+          document.getElementById('main-gap').textContent = mainGap.value + 'px';
+          document.getElementById('sub-size').textContent = subSize.value + 'px';
+          
+          document.getElementById('barcode-text-size').textContent = barcodeTextSize.value + 'px';
+          document.getElementById('barcode-height').textContent = barcodeHeight.value + '%';
+          document.getElementById('barcode-width').textContent = barcodeWidth.value + '%';
+          if (document.getElementById('barcode-y-position')) {
+            document.getElementById('barcode-y-position').textContent = barcodeYPercent + '%';
+          }
+          document.getElementById('label-width').textContent = labelWidth.value + 'mm';
+          document.getElementById('label-height').textContent = labelHeight.value + 'mm';
+          document.getElementById('label-padding').textContent = labelPadding.value + 'mm';
+          
+          if (document.getElementById('main-line-height')) {
+            document.getElementById('main-line-height').textContent = validatedMainLineHeight + 'px';
+          }
+          if (document.getElementById('sub-line-height')) {
+            document.getElementById('sub-line-height').textContent = validatedSubLineHeight + 'px';
+          }
+          
+          if (logoSizeSlider) {
+            document.getElementById('logo-size').textContent = logoSizeSlider.value + '%';
+            document.getElementById('logo-x').textContent = logoXSlider.value + '%';
+            document.getElementById('logo-y').textContent = logoYSlider.value + '%';
+            document.getElementById('logo-opacity').textContent = logoOpacitySlider.value + '%';
+          }
+          
+          const logoHeightMM = logoSizeSlider ? parseFloat(labelHeight.value) * parseFloat(logoSizeSlider.value) / 100 : 0;
+          const logoWidthMM = logoHeightMM * logoAspectRatio;
+          
+          /* 更新所有滑桿的進度條 */
+          [mainSize, mainGap, mainLineHeightSlider, subSize, subLineHeightSlider, 
+           barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
+           labelWidth, labelHeight, labelPadding,
+           logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider].forEach(control => {
+            if (control && control.type === 'range') {
+              updateRangeProgress(control);
+            }
+          });
+          
+          /* 套用樣式 - 確保內容不溢出 */
+          dynamicStyle.innerHTML = `
+            /* 調整條碼標籤整體尺寸 */
+            .print_barcode_area {
+              width: ${labelWidth.value}mm !important;
             }
             
-            const minLineHeight = Math.ceil(this.value * 1.1);
-            subLineHeightSlider.min = minLineHeight;
-            if (parseInt(subLineHeightSlider.value) < minLineHeight) {
-              subLineHeightSlider.value = minLineHeight;
-              updateRangeProgress(subLineHeightSlider);
+            /* 調整單個標籤的尺寸 */
+            html .print_barcode_area .print_sample,
+            body .print_barcode_area .print_sample {
+              height: ${labelHeight.value}mm !important;
+              padding: ${labelPadding.value}mm !important;
+              box-sizing: border-box !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: ${justifyContent} !important;
+              overflow: hidden !important;
             }
-          }
-          updateStyles();
-        });
-      }
-
-      // 標記使用者手動調整過行高
-      if (mainLineHeightSlider) {
-        mainLineHeightSlider.addEventListener('input', function() {
-          this.dataset.userModified = 'true';
-          updateStyles();
-        });
-      }
-
-      if (subLineHeightSlider) {
-        subLineHeightSlider.addEventListener('input', function() {
-          this.dataset.userModified = 'true';
-          updateStyles();
-        });
-      }
-
-      /* 智能最佳化函數 */
-      function optimizeLayoutForLabelSize() {
-        const labelWidthMM = parseFloat(labelWidth.value);
-        const labelHeightMM = parseFloat(labelHeight.value);
-        const paddingMM = parseFloat(labelPadding.value);
-        
-        // 可用空間
-        const availableWidth = labelWidthMM - (paddingMM * 2);
-        const availableHeight = labelHeightMM - (paddingMM * 2);
-        
-        // 計算寬高比
-        const aspectRatio = labelWidthMM / labelHeightMM;
-        
-        // 根據標籤尺寸計算最佳設定
-        let optimizedSettings = {};
-        
-        // 根據寬度分類
-        if (labelWidthMM <= 30) {
-          // 超小標籤
-          optimizedSettings = {
-            mainSize: 7,
-            mainLineHeight: 9,
-            mainGap: 0,
-            subSize: 6,
-            subLineHeight: 7,
-            barcodeTextSize: 6,
-            barcodeHeight: 65,
-            barcodeWidth: 90,
-            barcodeYPosition: 50,
-            textAlign: 'center',
-            labelPadding: Math.min(paddingMM, 0.5)
-          };
-        } else if (labelWidthMM <= 35) {
-          // 小標籤
-          optimizedSettings = {
-            mainSize: 8,
-            mainLineHeight: 10,
-            mainGap: 0,
-            subSize: 7,
-            subLineHeight: 8,
-            barcodeTextSize: 6,
-            barcodeHeight: 68,
-            barcodeWidth: 88,
-            barcodeYPosition: 50,
-            textAlign: 'center',
-            labelPadding: Math.min(paddingMM, 0.8)
-          };
-        } else if (labelWidthMM <= 40) {
-          // 標準標籤
-          optimizedSettings = {
-            mainSize: 9,
-            mainLineHeight: 11,
-            mainGap: 0.5,
-            subSize: 7,
-            subLineHeight: 9,
-            barcodeTextSize: 7,
-            barcodeHeight: 70,
-            barcodeWidth: 85,
-            barcodeYPosition: 50,
-            textAlign: 'left',
-            labelPadding: paddingMM
-          };
-        } else if (labelWidthMM <= 50) {
-          // 中型標籤
-          optimizedSettings = {
-            mainSize: 10,
-            mainLineHeight: 12,
-            mainGap: 1,
-            subSize: 8,
-            subLineHeight: 10,
-            barcodeTextSize: 8,
-            barcodeHeight: 72,
-            barcodeWidth: 85,
-            barcodeYPosition: 50,
-            textAlign: 'left',
-            labelPadding: paddingMM
-          };
-        } else {
-          // 大標籤
-          optimizedSettings = {
-            mainSize: 11,
-            mainLineHeight: 14,
-            mainGap: 1.5,
-            subSize: 9,
-            subLineHeight: 11,
-            barcodeTextSize: 9,
-            barcodeHeight: 75,
-            barcodeWidth: 82,
-            barcodeYPosition: 50,
-            textAlign: 'left',
-            labelPadding: paddingMM
-          };
-        }
-        
-        // 根據高度微調
-        if (labelHeightMM <= 20) {
-          // 超矮標籤
-          optimizedSettings.mainSize = Math.max(optimizedSettings.mainSize - 2, 6);
-          optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 2, 5);
-          optimizedSettings.barcodeHeight = Math.max(optimizedSettings.barcodeHeight - 15, 50);
-          optimizedSettings.mainGap = 0;
-          optimizedSettings.mainLineHeight = Math.ceil(optimizedSettings.mainSize * 1.2);
-          optimizedSettings.subLineHeight = Math.ceil(optimizedSettings.subSize * 1.2);
-        } else if (labelHeightMM <= 25) {
-          // 矮標籤
-          optimizedSettings.mainSize = Math.max(optimizedSettings.mainSize - 1, 7);
-          optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 1, 6);
-          optimizedSettings.barcodeHeight = Math.max(optimizedSettings.barcodeHeight - 5, 60);
-          optimizedSettings.mainGap = Math.min(optimizedSettings.mainGap, 0.5);
-        } else if (labelHeightMM >= 35) {
-          // 高標籤
-          optimizedSettings.mainGap = Math.min(optimizedSettings.mainGap + 0.5, 2);
-          optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight + 5, 80);
-        }
-        
-        // 根據寬高比進一步調整
-        if (aspectRatio < 1.2) {
-          // 接近正方形的標籤
-          optimizedSettings.textAlign = 'center';
-          optimizedSettings.barcodeWidth = Math.min(optimizedSettings.barcodeWidth, 80);
-        } else if (aspectRatio > 2) {
-          // 特別寬的標籤
-          optimizedSettings.barcodeWidth = Math.max(optimizedSettings.barcodeWidth - 10, 70);
-        }
-        
-        // 計算預期的文字高度
-        const pxToMm = 0.264583;
-        const estimatedTextHeight = (
-          (optimizedSettings.mainLineHeight * 2 + optimizedSettings.mainGap) * pxToMm +
-          (optimizedSettings.subLineHeight * 2) * pxToMm
-        );
-        
-        // 確保有足夠空間給條碼
-        const minimumBarcodeHeight = 6; // 最少需要 6mm 給條碼
-        if (availableHeight - estimatedTextHeight < minimumBarcodeHeight) {
-          // 空間不足，進一步縮小文字
-          const scaleFactor = 0.8;
-          optimizedSettings.mainSize = Math.round(optimizedSettings.mainSize * scaleFactor);
-          optimizedSettings.subSize = Math.round(optimizedSettings.subSize * scaleFactor);
-          optimizedSettings.mainLineHeight = Math.ceil(optimizedSettings.mainSize * 1.2);
-          optimizedSettings.subLineHeight = Math.ceil(optimizedSettings.subSize * 1.2);
-          optimizedSettings.mainGap = 0;
-        }
-        
-        // 套用最佳化設定
-        applyOptimizedSettings(optimizedSettings);
-        
-        // 顯示詳細通知
-        const layoutType = initialPageSettings?.layoutType || 'style1';
-        showNotification(
-          `已針對 ${labelWidthMM}×${labelHeightMM}mm 標籤最佳化 (樣式${layoutType.replace('style', '')})`
-        );
-      }
-
-      /* 套用最佳化設定 */
-      function applyOptimizedSettings(settings) {
-        // 套用標籤內距（如果有設定）
-        if (labelPadding && settings.labelPadding !== undefined) {
-          labelPadding.value = settings.labelPadding;
-          updateRangeProgress(labelPadding);
-        }
-        
-        // 套用文字大小
-        if (mainSize && settings.mainSize !== undefined) {
-          mainSize.value = settings.mainSize;
-          updateRangeProgress(mainSize);
-        }
-        
-        if (mainLineHeightSlider && settings.mainLineHeight !== undefined) {
-          mainLineHeightSlider.value = settings.mainLineHeight;
-          mainLineHeightSlider.dataset.userModified = 'false';
-          updateRangeProgress(mainLineHeightSlider);
-        }
-        
-        if (mainGap && settings.mainGap !== undefined) {
-          mainGap.value = settings.mainGap;
-          updateRangeProgress(mainGap);
-        }
-        
-        if (subSize && settings.subSize !== undefined) {
-          subSize.value = settings.subSize;
-          updateRangeProgress(subSize);
-        }
-        
-        if (subLineHeightSlider && settings.subLineHeight !== undefined) {
-          subLineHeightSlider.value = settings.subLineHeight;
-          subLineHeightSlider.dataset.userModified = 'false';
-          updateRangeProgress(subLineHeightSlider);
-        }
-        
-        if (barcodeTextSize && settings.barcodeTextSize !== undefined) {
-          barcodeTextSize.value = settings.barcodeTextSize;
-          updateRangeProgress(barcodeTextSize);
-        }
-        
-        if (barcodeHeight && settings.barcodeHeight !== undefined) {
-          barcodeHeight.value = settings.barcodeHeight;
-          updateRangeProgress(barcodeHeight);
-        }
-        
-        if (barcodeWidth && settings.barcodeWidth !== undefined) {
-          barcodeWidth.value = settings.barcodeWidth;
-          updateRangeProgress(barcodeWidth);
-        }
-        
-        if (barcodeYPosition && settings.barcodeYPosition !== undefined) {
-          barcodeYPosition.value = settings.barcodeYPosition;
-          updateRangeProgress(barcodeYPosition);
-        }
-        
-        if (textAlign && settings.textAlign !== undefined) {
-          textAlign.value = settings.textAlign;
-        }
-        
-        // 立即更新樣式
-        updateStyles();
-      }
-
-      /* 更新樣式函數 - 確保內容不溢出 */
-      function updateStyles() {
-        if (!mainSize || !subSize) return;
-        
-        const mainLineHeight = mainLineHeightSlider ? mainLineHeightSlider.value : 11;
-        const subLineHeight = subLineHeightSlider ? subLineHeightSlider.value : 9;
-        const justifyContent = 'space-between';
-        
-        // 動態計算文字區域所需高度
-        const mainFontSizePx = parseFloat(mainSize.value);
-        const mainLineHeightPx = parseFloat(mainLineHeight);
-        const mainGapPx = parseFloat(mainGap.value);
-        const subLineHeightPx = parseFloat(subLineHeight);
-        
-        // 計算實際需要的文字區域高度
-        const layoutType = initialPageSettings?.layoutType || 'style1';
-        const showSpecInfo = layoutType !== 'style8';
-        
-        // 根據不同樣式計算行數
-        let mainTextLines = 2; // 預設2行
-        let subTextLines = 2;  // 預設2行
-        
-        // 特殊樣式調整
-        if (layoutType === 'style3' || layoutType === 'style4' || layoutType === 'style6') {
-          // 這些樣式條碼在文字區內，需要更多空間
-          mainTextLines = 1;
-          subTextLines = 1;
-        }
-        
-        // 計算文字區域高度 (px to mm)
-        const pxToMm = 0.264583;
-        const mainTextHeightMm = (mainLineHeightPx * mainTextLines) * pxToMm;
-        const gapMm = mainGapPx * pxToMm;
-        const subTextHeightMm = (subLineHeightPx * subTextLines) * pxToMm;
-        
-        // 總文字區域高度，加上一些餘量
-        const infoHeight = Math.ceil(mainTextHeightMm + gapMm + subTextHeightMm + 2);
-        
-        // 計算可用高度和條碼區域高度
-        const totalHeight = parseFloat(labelHeight.value);
-        const paddingValue = parseFloat(labelPadding.value);
-        const availableHeight = totalHeight - (paddingValue * 2);
-        const barcodeAreaHeight = Math.max(availableHeight - infoHeight, 5); // 至少5mm
-        
-        // 如果空間不足，調整文字區域高度
-        const finalInfoHeight = availableHeight > infoHeight + 5 ? infoHeight : availableHeight * 0.5;
-        const finalBarcodeHeight = availableHeight - finalInfoHeight;
-        
-        const validatedMainLineHeight = validateLineHeight(mainSize.value, mainLineHeight);
-        const validatedSubLineHeight = validateLineHeight(subSize.value, subLineHeight);
-        
-        const mainFontWeight = mainBoldBtn && mainBoldBtn.classList.contains('active') ? 700 : 500;
-        const subFontWeight = subBoldBtn && subBoldBtn.classList.contains('active') ? 700 : 500;
-        const barcodeTextFontWeight = barcodeTextBoldBtn && barcodeTextBoldBtn.classList.contains('active') ? 700 : 500;
-        
-        const totalWidth = parseFloat(labelWidth.value);
-        const availableWidth = totalWidth - (paddingValue * 2);
-        
-        const barcodeActualHeight = (finalBarcodeHeight * parseFloat(barcodeHeight.value) / 100).toFixed(1);
-        const barcodeActualWidth = (availableWidth * parseFloat(barcodeWidth.value) / 100).toFixed(1);
-        
-        const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 50;
-        
-        /* 更新顯示值 */
-        document.getElementById('main-size').textContent = mainSize.value + 'px';
-        document.getElementById('main-gap').textContent = mainGap.value + 'px';
-        document.getElementById('sub-size').textContent = subSize.value + 'px';
-        
-        document.getElementById('barcode-text-size').textContent = barcodeTextSize.value + 'px';
-        document.getElementById('barcode-height').textContent = barcodeHeight.value + '%';
-        document.getElementById('barcode-width').textContent = barcodeWidth.value + '%';
-        if (document.getElementById('barcode-y-position')) {
-          document.getElementById('barcode-y-position').textContent = barcodeYPercent + '%';
-        }
-        document.getElementById('label-width').textContent = labelWidth.value + 'mm';
-        document.getElementById('label-height').textContent = labelHeight.value + 'mm';
-        document.getElementById('label-padding').textContent = labelPadding.value + 'mm';
-        
-        if (document.getElementById('main-line-height')) {
-          document.getElementById('main-line-height').textContent = validatedMainLineHeight + 'px';
-        }
-        if (document.getElementById('sub-line-height')) {
-          document.getElementById('sub-line-height').textContent = validatedSubLineHeight + 'px';
-        }
-        
-        if (logoSizeSlider) {
-          document.getElementById('logo-size').textContent = logoSizeSlider.value + '%';
-          document.getElementById('logo-x').textContent = logoXSlider.value + '%';
-          document.getElementById('logo-y').textContent = logoYSlider.value + '%';
-          document.getElementById('logo-opacity').textContent = logoOpacitySlider.value + '%';
-        }
-        
-        const logoHeightMM = logoSizeSlider ? parseFloat(labelHeight.value) * parseFloat(logoSizeSlider.value) / 100 : 0;
-        const logoWidthMM = logoHeightMM * logoAspectRatio;
-        
-        /* 更新所有滑桿的進度條 */
-        [mainSize, mainGap, mainLineHeightSlider, subSize, subLineHeightSlider, 
-         barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
-         labelWidth, labelHeight, labelPadding,
-         logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider].forEach(control => {
-          if (control && control.type === 'range') {
-            updateRangeProgress(control);
-          }
-        });
-        
-        /* 套用樣式 - 確保內容不溢出 */
-        dynamicStyle.innerHTML = `
-          /* 調整條碼標籤整體尺寸 */
-          .print_barcode_area {
-            width: ${labelWidth.value}mm !important;
-          }
-          
-          /* 調整單個標籤的尺寸 */
-          html .print_barcode_area .print_sample,
-          body .print_barcode_area .print_sample {
-            height: ${labelHeight.value}mm !important;
-            padding: ${labelPadding.value}mm !important;
-            box-sizing: border-box !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: ${justifyContent} !important;
-            overflow: hidden !important;
-          }
-          
-          /* 文字區域 - 固定高度 */
-          ${showSpecInfo ? `
-          .print_barcode_area .print_sample .spec_info {
-            flex: 0 0 ${finalInfoHeight}mm !important;
-            height: ${finalInfoHeight}mm !important;
-            margin-bottom: 0 !important;
-            overflow: hidden !important;
-            display: block !important;
-          }` : `
-          .print_barcode_area .print_sample .spec_info {
-            display: none !important;
-          }`}
-          
-          /* 條碼區域 - 使用剩餘空間 */
-          .print_barcode_area .print_sample > .spec_barcode {
-            flex: 1 1 auto !important;
-            height: ${finalBarcodeHeight}mm !important;
-            min-height: 5mm !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-            overflow: hidden !important;
-            position: relative !important;
-            justify-content: ${
-              barcodeYPercent <= 20 ? 'flex-start' :
-              barcodeYPercent >= 80 ? 'flex-end' : 'center'
-            } !important;
-          }
-          
-          /* 樣式八特殊處理 */
-          ${layoutType === 'style8' ? `
-          .print_barcode_area .print_sample {
-            justify-content: center !important;
-            align-items: center !important;
-          }
-          .print_barcode_area .print_sample > .spec_barcode {
-            height: auto !important;
-          }
-          ` : ''}
-          
-          /* 確保字體套用到所有元素 */
-          .print_barcode_area .print_sample,
-          .print_barcode_area .print_sample .spec_info,
-          .print_barcode_area .print_sample .spec_info ul,
-          .print_barcode_area .print_sample .spec_info li,
-          .print_barcode_area .print_sample .spec_barcode {
-            font-family: ${fontFamily.value} !important;
-          }
-          
-          /* 商品資訊對齊方式 */
-          .print_barcode_area .print_sample .spec_info {
-            text-align: ${textAlign.value} !important;
-          }
-          
-          /* 商品名稱樣式 - 自適應行數 */
-          .print_barcode_area .print_sample .spec_info .main {
-            font-size: ${mainSize.value}px !important;
-            line-height: ${validatedMainLineHeight}px !important;
-            font-weight: ${mainFontWeight} !important;
-            margin-bottom: ${mainGap.value}px !important;
-            white-space: normal !important;
-            word-break: break-word !important;
-            word-wrap: break-word !important;
-            overflow-wrap: break-word !important;
-            hyphens: auto !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            display: -webkit-box !important;
-            -webkit-line-clamp: ${mainTextLines} !important;
-            -webkit-box-orient: vertical !important;
-          }
-          
-          /* 規格/編號/價格樣式 - 包含行高 */
-          .print_barcode_area .print_sample .spec_info .sub {
-            font-size: ${subSize.value}px !important;
-            line-height: ${validatedSubLineHeight}px !important;
-            font-weight: ${subFontWeight} !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-          }
-          
-          /* 條碼下方數字樣式 */
-          .print_barcode_area .print_sample .spec_barcode .sub {
-            font-size: ${barcodeTextSize.value}px !important;
-            font-weight: ${barcodeTextFontWeight} !important;
-            pointer-events: none !important;
-            -webkit-touch-callout: none !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            text-decoration: none !important;
-            color: inherit !important;
-            white-space: nowrap !important;
-          }
-          
-          /* 條碼圖片 - 確保在區域內 */
-          .print_barcode_area .print_sample .spec_barcode img {
-            max-height: calc(${finalBarcodeHeight}mm * ${barcodeHeight.value / 100}) !important;
-            width: ${barcodeActualWidth}mm !important;
-            max-width: calc(100% * ${barcodeWidth.value / 100}) !important;
-            height: auto !important;
-            object-fit: contain !important;
-            display: block !important;
-            margin: 0 auto !important;
-            position: relative !important;
-            ${barcodeYPosition ? `
-              transform: translateY(${(barcodeYPercent - 50) * 0.1}mm) !important;
+            
+            /* 文字區域 - 固定高度 */
+            ${showSpecInfo ? `
+            .print_barcode_area .print_sample .spec_info {
+              flex: 0 0 ${finalInfoHeight}mm !important;
+              height: ${finalInfoHeight}mm !important;
+              margin-bottom: 0 !important;
+              overflow: hidden !important;
+              display: block !important;
+            }` : `
+            .print_barcode_area .print_sample .spec_info {
+              display: none !important;
+            }`}
+            
+            /* 條碼區域 - 使用剩餘空間 */
+            .print_barcode_area .print_sample > .spec_barcode {
+              flex: 1 1 auto !important;
+              height: ${finalBarcodeHeight}mm !important;
+              min-height: 5mm !important;
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: center !important;
+              text-align: center !important;
+              overflow: hidden !important;
+              position: relative !important;
+              justify-content: ${
+                barcodeYPercent <= 20 ? 'flex-start' :
+                barcodeYPercent >= 80 ? 'flex-end' : 'center'
+              } !important;
+            }
+            
+            /* 樣式八特殊處理 */
+            ${layoutType === 'style8' ? `
+            .print_barcode_area .print_sample {
+              justify-content: center !important;
+              align-items: center !important;
+            }
+            .print_barcode_area .print_sample > .spec_barcode {
+              height: auto !important;
+              flex: 0 0 auto !important;
+            }
             ` : ''}
-          }
+            
+            /* 確保字體套用到所有元素 */
+            .print_barcode_area .print_sample,
+            .print_barcode_area .print_sample .spec_info,
+            .print_barcode_area .print_sample .spec_info ul,
+            .print_barcode_area .print_sample .spec_info li,
+            .print_barcode_area .print_sample .spec_barcode {
+              font-family: ${fontFamily.value} !important;
+            }
+            
+            /* 商品資訊對齊方式 - 全部靠左 */
+            .print_barcode_area .print_sample .spec_info {
+              text-align: left !important;
+            }
+            
+            /* 商品名稱樣式 - 支援多行 */
+            .print_barcode_area .print_sample .spec_info .main {
+              font-size: ${mainSize.value}px !important;
+              line-height: ${validatedMainLineHeight}px !important;
+              font-weight: ${mainFontWeight} !important;
+              margin-bottom: ${mainGap.value}px !important;
+              white-space: normal !important;
+              word-break: break-word !important;
+              word-wrap: break-word !important;
+              overflow-wrap: break-word !important;
+              hyphens: auto !important;
+              overflow: hidden !important;
+              display: block !important;
+              /* 確保多行顯示正確 */
+              max-height: ${mainLineHeightPx * maxMainLines}px !important;
+            }
+            
+            /* 規格/編號/價格樣式 - 包含行高 */
+            .print_barcode_area .print_sample .spec_info .sub {
+              font-size: ${subSize.value}px !important;
+              line-height: ${validatedSubLineHeight}px !important;
+              font-weight: ${subFontWeight} !important;
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
+            }
+            
+            /* 條碼下方數字樣式 */
+            .print_barcode_area .print_sample .spec_barcode .sub {
+              font-size: ${barcodeTextSize.value}px !important;
+              font-weight: ${barcodeTextFontWeight} !important;
+              pointer-events: none !important;
+              -webkit-touch-callout: none !important;
+              -webkit-user-select: none !important;
+              user-select: none !important;
+              text-decoration: none !important;
+              color: inherit !important;
+              white-space: nowrap !important;
+            }
+            
+            /* 條碼圖片 - 確保在區域內 */
+            .print_barcode_area .print_sample .spec_barcode img {
+              max-height: calc(${finalBarcodeHeight}mm * ${barcodeHeight.value / 100}) !important;
+              width: ${barcodeActualWidth}mm !important;
+              max-width: calc(100% * ${barcodeWidth.value / 100}) !important;
+              height: auto !important;
+              object-fit: contain !important;
+              display: block !important;
+              margin: 0 auto !important;
+              position: relative !important;
+              ${barcodeYPosition ? `
+                transform: translateY(${(barcodeYPercent - 50) * 0.1}mm) !important;
+              ` : ''}
+            }
+            
+            /* 特殊樣式處理：條碼在 spec_info 內 */
+            .print_barcode_area .print_sample .spec_info .spec_barcode {
+              height: auto !important;
+              margin: 3px 0 !important;
+            }
+            
+            .print_barcode_area .print_sample .spec_info .spec_barcode img {
+              height: ${Math.min(parseFloat(barcodeActualHeight), 8)}mm !important;
+              width: ${Math.min(parseFloat(barcodeActualWidth), 30)}mm !important;
+            }
+            
+            /* 確保字體覆蓋所有可能的元素 */
+            .print_barcode_area * {
+              font-family: ${fontFamily.value};
+            }
+            
+            /* 底圖樣式 - 保持原始寬高比 */
+            .label-background-logo {
+              width: ${logoWidthMM}mm !important;
+              height: ${logoHeightMM}mm !important;
+              left: ${logoXSlider ? logoXSlider.value : 50}% !important;
+              top: ${logoYSlider ? logoYSlider.value : 50}% !important;
+              transform: translate(-50%, -50%) !important;
+              opacity: ${logoOpacitySlider ? (100 - logoOpacitySlider.value) / 100 : 0.8} !important;
+            }
+            
+            /* 防止任何連結樣式 */
+            .print_barcode_area a {
+              text-decoration: none !important;
+              color: inherit !important;
+              pointer-events: none !important;
+            }
+          `;
           
-          /* 特殊樣式處理：條碼在 spec_info 內 */
-          .print_barcode_area .print_sample .spec_info .spec_barcode {
-            height: auto !important;
-            margin: 5px 0 !important;
-          }
+          /* 更新所有標籤的底圖 */
+          updateLogos();
           
-          .print_barcode_area .print_sample .spec_info .spec_barcode img {
-            height: ${Math.min(parseFloat(barcodeActualHeight), 8)}mm !important;
-            width: ${Math.min(parseFloat(barcodeActualWidth), 30)}mm !important;
-          }
-          
-          /* 確保字體覆蓋所有可能的元素 */
-          .print_barcode_area * {
-            font-family: ${fontFamily.value};
-          }
-          
-          /* 底圖樣式 - 保持原始寬高比 */
-          .label-background-logo {
-            width: ${logoWidthMM}mm !important;
-            height: ${logoHeightMM}mm !important;
-            left: ${logoXSlider ? logoXSlider.value : 50}% !important;
-            top: ${logoYSlider ? logoYSlider.value : 50}% !important;
-            transform: translate(-50%, -50%) !important;
-            opacity: ${logoOpacitySlider ? (100 - logoOpacitySlider.value) / 100 : 0.8} !important;
-          }
-          
-          /* 防止任何連結樣式 */
-          .print_barcode_area a {
-            text-decoration: none !important;
-            color: inherit !important;
-            pointer-events: none !important;
-          }
-        `;
+          /* 自動保存當前設定為臨時設定 */
+          saveSettingsToLocal('_current_temp_settings', saveCurrentSettings());
+        }
         
         /* 更新所有標籤的底圖 */
-        updateLogos();
-        
-        /* 自動保存當前設定為臨時設定 */
-        saveSettingsToLocal('_current_temp_settings', saveCurrentSettings());
-      }
-      
-      /* 更新所有標籤的底圖 */
-      function updateLogos() {
-        document.querySelectorAll('.label-background-logo').forEach(logo => logo.remove());
-        
-        if (logoDataUrl) {
-          document.querySelectorAll('.print_sample').forEach(sample => {
-            const logo = document.createElement('img');
-            logo.className = 'label-background-logo';
-            logo.src = logoDataUrl;
-            sample.insertBefore(logo, sample.firstChild);
-          });
-        }
-      }
-      
-      /* 添加事件監聽器 */
-      const controls = [
-        mainSize, mainGap, mainLineHeightSlider,
-        subSize, subLineHeightSlider,
-        barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
-        labelWidth, labelHeight, labelPadding, textAlign, fontFamily,
-        logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
-      ];
-      
-      controls.forEach(control => {
-        if(control) {
-          control.addEventListener('input', updateStyles);
-          control.addEventListener('change', updateStyles);
+        function updateLogos() {
+          document.querySelectorAll('.label-background-logo').forEach(logo => logo.remove());
           
-          if(control.type === 'range') {
-            updateRangeProgress(control);
-            control.addEventListener('input', () => updateRangeProgress(control));
+          if (logoDataUrl) {
+            document.querySelectorAll('.print_sample').forEach(sample => {
+              const logo = document.createElement('img');
+              logo.className = 'label-background-logo';
+              logo.src = logoDataUrl;
+              sample.insertBefore(logo, sample.firstChild);
+            });
           }
         }
-      });
-      
-      /* 列印按鈕功能 */
-      const applyPrintBtn = document.getElementById('bv-apply-print');
-      if (applyPrintBtn) {
-        applyPrintBtn.addEventListener('click', function() {
-          window.allowPrint = true;
-          window.print();
-        });
-      }
-      
-      /* 清除格式按鈕功能 */
-      const resetFormatBtn = document.getElementById('bv-reset-format');
-      if (resetFormatBtn) {
-        resetFormatBtn.addEventListener('click', function() {
-          if (confirm('確定要將所有設定還原到預設值嗎？\n\n此操作無法復原。')) {
-            if (logoDataUrl) {
-              logoDataUrl = null;
-              logoAspectRatio = 1;
-              if (logoPreview) logoPreview.style.display = 'none';
-              if (uploadPrompt) uploadPrompt.style.display = 'block';
-              if (logoUploadArea) logoUploadArea.classList.remove('has-logo');
-              if (logoControls) logoControls.classList.remove('active');
-              if (logoInput) logoInput.value = '';
-            }
+        
+        /* 添加事件監聽器 */
+        const controls = [
+          mainSize, mainGap, mainLineHeightSlider,
+          subSize, subLineHeightSlider,
+          barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
+          labelWidth, labelHeight, labelPadding, fontFamily,
+          logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
+        ];
+        
+        controls.forEach(control => {
+          if(control) {
+            control.addEventListener('input', updateStyles);
+            control.addEventListener('change', updateStyles);
             
-            if (mainLineHeightSlider) mainLineHeightSlider.dataset.userModified = 'false';
-            if (subLineHeightSlider) subLineHeightSlider.dataset.userModified = 'false';
-            
-            const resetSettings = initialPageSettings || completeDefaultSettings;
-            
-            if (!initialPageSettings) {
-              resetSettings.mainLineHeight = calculateSuggestedLineHeight(resetSettings.mainSize);
-              resetSettings.subLineHeight = calculateSuggestedLineHeight(resetSettings.subSize);
-            }
-            
-            applySavedSettings(resetSettings);
-            
-            const presetSelect = document.getElementById('bv-preset-select');
-            if (presetSelect) presetSelect.value = '';
-            
-            try {
-              localStorage.removeItem('bvShopBarcode_lastSelectedPreset');
-              localStorage.removeItem('bvShopBarcode__current_temp_settings');
-            } catch (e) {
-              console.warn('無法清除記錄');
-            }
-            
-            showNotification('已還原到預設值');
-          }
-        });
-      }
-      
-      /* 儲存設定功能 */
-      function saveCurrentSettings() {
-        if (!mainSize || !subSize) return {};
-        
-        const settings = {
-          mainSize: mainSize.value,
-          mainBold: mainBoldBtn ? mainBoldBtn.classList.contains('active') : true,
-          mainGap: mainGap.value,
-          mainLineHeight: mainLineHeightSlider ? mainLineHeightSlider.value : 11,
-          subSize: subSize.value,
-          subBold: subBoldBtn ? subBoldBtn.classList.contains('active') : true,
-          subLineHeight: subLineHeightSlider ? subLineHeightSlider.value : 9,
-          barcodeTextSize: barcodeTextSize.value,
-          barcodeTextBold: barcodeTextBoldBtn ? barcodeTextBoldBtn.classList.contains('active') : false,
-          barcodeHeight: barcodeHeight.value,
-          barcodeWidth: barcodeWidth.value,
-          barcodeYPosition: barcodeYPosition ? barcodeYPosition.value : 50,
-          labelWidth: labelWidth.value,
-          labelHeight: labelHeight.value,
-          labelPadding: labelPadding.value,
-          textAlign: textAlign.value,
-          fontFamily: fontFamily.value,
-          logoDataUrl: logoDataUrl,
-          logoSize: logoSizeSlider ? logoSizeSlider.value : 30,
-          logoX: logoXSlider ? logoXSlider.value : 50,
-          logoY: logoYSlider ? logoYSlider.value : 50,
-          logoOpacity: logoOpacitySlider ? logoOpacitySlider.value : 20,
-          logoAspectRatio: logoAspectRatio
-        };
-        return settings;
-      }
-      
-      function applySavedSettings(settings) {
-        if (!settings || !mainSize || !subSize) return;
-        
-        mainSize.value = settings.mainSize !== undefined ? settings.mainSize : completeDefaultSettings.mainSize;
-        if (mainBoldBtn) {
-          mainBoldBtn.classList.toggle('active', settings.mainBold !== undefined ? settings.mainBold : completeDefaultSettings.mainBold);
-        }
-        mainGap.value = settings.mainGap !== undefined ? settings.mainGap : completeDefaultSettings.mainGap;
-        if (mainLineHeightSlider) {
-          mainLineHeightSlider.value = settings.mainLineHeight !== undefined ? settings.mainLineHeight : completeDefaultSettings.mainLineHeight;
-        }
-        
-        subSize.value = settings.subSize !== undefined ? settings.subSize : completeDefaultSettings.subSize;
-        if (subBoldBtn) {
-          subBoldBtn.classList.toggle('active', settings.subBold !== undefined ? settings.subBold : completeDefaultSettings.subBold);
-        }
-        if (subLineHeightSlider) {
-          subLineHeightSlider.value = settings.subLineHeight !== undefined ? settings.subLineHeight : completeDefaultSettings.subLineHeight;
-        }
-        
-        barcodeTextSize.value = settings.barcodeTextSize !== undefined ? settings.barcodeTextSize : completeDefaultSettings.barcodeTextSize;
-        if (barcodeTextBoldBtn) {
-          barcodeTextBoldBtn.classList.toggle('active', settings.barcodeTextBold !== undefined ? settings.barcodeTextBold : completeDefaultSettings.barcodeTextBold);
-        }
-        
-        barcodeHeight.value = settings.barcodeHeight !== undefined ? settings.barcodeHeight : completeDefaultSettings.barcodeHeight;
-        barcodeWidth.value = settings.barcodeWidth !== undefined ? settings.barcodeWidth : completeDefaultSettings.barcodeWidth;
-        if (barcodeYPosition) {
-          barcodeYPosition.value = settings.barcodeYPosition !== undefined ? settings.barcodeYPosition : completeDefaultSettings.barcodeYPosition;
-        }
-        
-        labelWidth.value = settings.labelWidth !== undefined ? settings.labelWidth : completeDefaultSettings.labelWidth;
-        labelHeight.value = settings.labelHeight !== undefined ? settings.labelHeight : completeDefaultSettings.labelHeight;
-        labelPadding.value = settings.labelPadding !== undefined ? settings.labelPadding : completeDefaultSettings.labelPadding;
-        
-        textAlign.value = settings.textAlign || completeDefaultSettings.textAlign;
-        fontFamily.value = settings.fontFamily || completeDefaultSettings.fontFamily;
-        
-        if (settings.logoDataUrl) {
-          logoDataUrl = settings.logoDataUrl;
-          logoAspectRatio = settings.logoAspectRatio || 1;
-          if (logoPreview) {
-            logoPreview.src = logoDataUrl;
-            logoPreview.style.display = 'block';
-          }
-          if (uploadPrompt) {
-            uploadPrompt.style.display = 'none';
-          }
-          if (logoUploadArea) {
-            logoUploadArea.classList.add('has-logo');
-          }
-          if (logoControls) {
-            logoControls.classList.add('active');
-          }
-        }
-        
-        if (logoSizeSlider) {
-          logoSizeSlider.value = settings.logoSize !== undefined ? settings.logoSize : completeDefaultSettings.logoSize;
-        }
-        if (logoXSlider) {
-          logoXSlider.value = settings.logoX !== undefined ? settings.logoX : completeDefaultSettings.logoX;
-        }
-        if (logoYSlider) {
-          logoYSlider.value = settings.logoY !== undefined ? settings.logoY : completeDefaultSettings.logoY;
-        }
-        if (logoOpacitySlider) {
-          logoOpacitySlider.value = settings.logoOpacity !== undefined ? settings.logoOpacity : completeDefaultSettings.logoOpacity;
-        }
-        
-        document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
-        
-        updateStyles();
-      }
-      
-      /* 儲存/讀取設定相關函數 */
-      function saveSettingsToLocal(name, settings) {
-        try {
-          localStorage.setItem('bvShopBarcode_' + name, JSON.stringify(settings));
-        } catch (e) {
-          console.error('無法儲存設定：', e);
-          try {
-            sessionStorage.setItem('bvShopBarcode_' + name, JSON.stringify(settings));
-          } catch (e2) {
-            console.error('sessionStorage 也無法使用');
-          }
-        }
-      }
-      
-      function getSettingsFromLocal(name) {
-        try {
-          let settingsStr = localStorage.getItem('bvShopBarcode_' + name);
-          if (!settingsStr) {
-            settingsStr = sessionStorage.getItem('bvShopBarcode_' + name);
-          }
-          return settingsStr ? JSON.parse(settingsStr) : null;
-        } catch (e) {
-          console.error('無法讀取設定：', e);
-          return null;
-        }
-      }
-      
-      /* 載入設定檔清單 */
-      function loadPresetList() {
-        const presetSelect = document.getElementById('bv-preset-select');
-        if (!presetSelect) return;
-        
-        const allPresets = getSettingsFromLocal('presetList') || [];
-        const lastSelected = getSettingsFromLocal('lastSelectedPreset');
-        
-        while (presetSelect.options.length > 1) {
-          presetSelect.remove(1);
-        }
-        
-        allPresets.forEach(presetName => {
-          const option = document.createElement('option');
-          option.value = presetName;
-          option.textContent = presetName;
-          presetSelect.appendChild(option);
-          
-          if (presetName === lastSelected) {
-            option.selected = true;
-          }
-        });
-      }
-      
-      /* 初始化設定檔系統 */
-      function initPresetSystem() {
-        const presetSelect = document.getElementById('bv-preset-select');
-        const savePresetBtn = document.getElementById('bv-save-preset');
-        const deletePresetBtn = document.getElementById('bv-delete-preset');
-        const savePresetRow = document.getElementById('bv-save-preset-row');
-        const newPresetName = document.getElementById('bv-new-preset-name');
-        const confirmSaveBtn = document.getElementById('bv-confirm-save');
-        const cancelSaveBtn = document.getElementById('bv-cancel-save');
-        
-        if (!presetSelect) return;
-        
-        loadPresetList();
-        
-        presetSelect.addEventListener('change', function() {
-          const selectedPreset = presetSelect.value;
-          if (selectedPreset) {
-            const settings = getSettingsFromLocal('preset_' + selectedPreset);
-            if (settings) {
-              applySavedSettings(settings);
-              saveSettingsToLocal('lastSelectedPreset', selectedPreset);
-              showNotification(`已載入預設「${selectedPreset}」`);
+            if(control.type === 'range') {
+              updateRangeProgress(control);
+              control.addEventListener('input', () => updateRangeProgress(control));
             }
           }
         });
         
-        if (savePresetBtn) {
-          savePresetBtn.addEventListener('click', function() {
-            if (savePresetRow) {
-              savePresetRow.style.display = 'flex';
-            }
-            if (newPresetName) {
-              newPresetName.value = presetSelect.value || '';
-              newPresetName.focus();
-            }
+        /* 列印按鈕功能 */
+        const applyPrintBtn = document.getElementById('bv-apply-print');
+        if (applyPrintBtn) {
+          applyPrintBtn.addEventListener('click', function() {
+            window.allowPrint = true;
+            window.print();
           });
         }
         
-        if (confirmSaveBtn) {
-          confirmSaveBtn.addEventListener('click', function() {
-            if (!newPresetName) return;
-            
-            const presetName = newPresetName.value.trim();
-            if (!presetName) {
-              showNotification('請輸入設定檔名稱', 'warning');
-              return;
-            }
-            
-            const settings = saveCurrentSettings();
-            saveSettingsToLocal('preset_' + presetName, settings);
-            
-            const allPresets = getSettingsFromLocal('presetList') || [];
-            if (!allPresets.includes(presetName)) {
-              allPresets.push(presetName);
-              saveSettingsToLocal('presetList', allPresets);
-            }
-            
-            saveSettingsToLocal('lastSelectedPreset', presetName);
-            
-            loadPresetList();
-            if (savePresetRow) {
-              savePresetRow.style.display = 'none';
-            }
-            
-            showNotification(`預設「${presetName}」已儲存`);
-          });
-        }
-        
-        if (cancelSaveBtn) {
-          cancelSaveBtn.addEventListener('click', function() {
-            if (savePresetRow) {
-              savePresetRow.style.display = 'none';
-            }
-          });
-        }
-        
-        if (deletePresetBtn) {
-          deletePresetBtn.addEventListener('click', function() {
-            const selectedPreset = presetSelect.value;
-            if (!selectedPreset) {
-              showNotification('請先選擇一個預設', 'warning');
-              return;
-            }
-            
-            if (confirm(`確定要刪除預設「${selectedPreset}」嗎？`)) {
-              const allPresets = getSettingsFromLocal('presetList') || [];
-              const updatedPresets = allPresets.filter(name => name !== selectedPreset);
-              saveSettingsToLocal('presetList', updatedPresets);
+        /* 清除格式按鈕功能 */
+        const resetFormatBtn = document.getElementById('bv-reset-format');
+        if (resetFormatBtn) {
+          resetFormatBtn.addEventListener('click', function() {
+            if (confirm('確定要將所有設定還原到預設值嗎？\n\n此操作無法復原。')) {
+              if (logoDataUrl) {
+                logoDataUrl = null;
+                logoAspectRatio = 1;
+                if (logoPreview) logoPreview.style.display = 'none';
+                if (uploadPrompt) uploadPrompt.style.display = 'block';
+                if (logoUploadArea) logoUploadArea.classList.remove('has-logo');
+                if (logoControls) logoControls.classList.remove('active');
+                if (logoInput) logoInput.value = '';
+              }
+              
+              if (mainLineHeightSlider) mainLineHeightSlider.dataset.userModified = 'false';
+              if (subLineHeightSlider) subLineHeightSlider.dataset.userModified = 'false';
+              
+              const resetSettings = initialPageSettings || completeDefaultSettings;
+              
+              if (!initialPageSettings) {
+                resetSettings.mainLineHeight = calculateSuggestedLineHeight(resetSettings.mainSize);
+                resetSettings.subLineHeight = calculateSuggestedLineHeight(resetSettings.subSize);
+              }
+              
+              applySavedSettings(resetSettings);
+              
+              const presetSelect = document.getElementById('bv-preset-select');
+              if (presetSelect) presetSelect.value = '';
               
               try {
-                localStorage.removeItem('bvShopBarcode_preset_' + selectedPreset);
-                sessionStorage.removeItem('bvShopBarcode_preset_' + selectedPreset);
+                localStorage.removeItem('bvShopBarcode_lastSelectedPreset');
+                localStorage.removeItem('bvShopBarcode__current_temp_settings');
               } catch (e) {
-                console.error('刪除設定時發生錯誤');
+                console.warn('無法清除記錄');
               }
               
-              if (getSettingsFromLocal('lastSelectedPreset') === selectedPreset) {
-                try {
-                  localStorage.removeItem('bvShopBarcode_lastSelectedPreset');
-                  sessionStorage.removeItem('bvShopBarcode_lastSelectedPreset');
-                } catch (e) {
-                  console.error('清除記錄時發生錯誤');
-                }
+              showNotification('已還原到預設值');
+            }
+          });
+        }
+        
+        /* 儲存設定功能 */
+        function saveCurrentSettings() {
+          if (!mainSize || !subSize) return {};
+          
+          const settings = {
+            mainSize: mainSize.value,
+            mainBold: mainBoldBtn ? mainBoldBtn.classList.contains('active') : true,
+            mainGap: mainGap.value,
+            mainLineHeight: mainLineHeightSlider ? mainLineHeightSlider.value : 13,
+            subSize: subSize.value,
+            subBold: subBoldBtn ? subBoldBtn.classList.contains('active') : true,
+            subLineHeight: subLineHeightSlider ? subLineHeightSlider.value : 10,
+            barcodeTextSize: barcodeTextSize.value,
+            barcodeTextBold: barcodeTextBoldBtn ? barcodeTextBoldBtn.classList.contains('active') : false,
+            barcodeHeight: barcodeHeight.value,
+            barcodeWidth: barcodeWidth.value,
+            barcodeYPosition: barcodeYPosition ? barcodeYPosition.value : 50,
+            labelWidth: labelWidth.value,
+            labelHeight: labelHeight.value,
+            labelPadding: labelPadding.value,
+            fontFamily: fontFamily.value,
+            logoDataUrl: logoDataUrl,
+            logoSize: logoSizeSlider ? logoSizeSlider.value : 30,
+            logoX: logoXSlider ? logoXSlider.value : 50,
+            logoY: logoYSlider ? logoYSlider.value : 50,
+            logoOpacity: logoOpacitySlider ? logoOpacitySlider.value : 20,
+            logoAspectRatio: logoAspectRatio
+          };
+          return settings;
+        }
+        
+        function applySavedSettings(settings) {
+          if (!settings || !mainSize || !subSize) return;
+          
+          mainSize.value = settings.mainSize !== undefined ? settings.mainSize : completeDefaultSettings.mainSize;
+          if (mainBoldBtn) {
+            mainBoldBtn.classList.toggle('active', settings.mainBold !== undefined ? settings.mainBold : completeDefaultSettings.mainBold);
+          }
+          mainGap.value = settings.mainGap !== undefined ? settings.mainGap : completeDefaultSettings.mainGap;
+          if (mainLineHeightSlider) {
+            mainLineHeightSlider.value = settings.mainLineHeight !== undefined ? settings.mainLineHeight : completeDefaultSettings.mainLineHeight;
+          }
+          
+          subSize.value = settings.subSize !== undefined ? settings.subSize : completeDefaultSettings.subSize;
+          if (subBoldBtn) {
+            subBoldBtn.classList.toggle('active', settings.subBold !== undefined ? settings.subBold : completeDefaultSettings.subBold);
+          }
+          if (subLineHeightSlider) {
+            subLineHeightSlider.value = settings.subLineHeight !== undefined ? settings.subLineHeight : completeDefaultSettings.subLineHeight;
+          }
+          
+          barcodeTextSize.value = settings.barcodeTextSize !== undefined ? settings.barcodeTextSize : completeDefaultSettings.barcodeTextSize;
+          if (barcodeTextBoldBtn) {
+            barcodeTextBoldBtn.classList.toggle('active', settings.barcodeTextBold !== undefined ? settings.barcodeTextBold : completeDefaultSettings.barcodeTextBold);
+          }
+          
+          barcodeHeight.value = settings.barcodeHeight !== undefined ? settings.barcodeHeight : completeDefaultSettings.barcodeHeight;
+          barcodeWidth.value = settings.barcodeWidth !== undefined ? settings.barcodeWidth : completeDefaultSettings.barcodeWidth;
+          if (barcodeYPosition) {
+            barcodeYPosition.value = settings.barcodeYPosition !== undefined ? settings.barcodeYPosition : completeDefaultSettings.barcodeYPosition;
+          }
+          
+          labelWidth.value = settings.labelWidth !== undefined ? settings.labelWidth : completeDefaultSettings.labelWidth;
+          labelHeight.value = settings.labelHeight !== undefined ? settings.labelHeight : completeDefaultSettings.labelHeight;
+          labelPadding.value = settings.labelPadding !== undefined ? settings.labelPadding : completeDefaultSettings.labelPadding;
+          
+          fontFamily.value = settings.fontFamily || completeDefaultSettings.fontFamily;
+          
+          if (settings.logoDataUrl) {
+            logoDataUrl = settings.logoDataUrl;
+            logoAspectRatio = settings.logoAspectRatio || 1;
+            if (logoPreview) {
+              logoPreview.src = logoDataUrl;
+              logoPreview.style.display = 'block';
+            }
+            if (uploadPrompt) {
+              uploadPrompt.style.display = 'none';
+            }
+            if (logoUploadArea) {
+              logoUploadArea.classList.add('has-logo');
+            }
+            if (logoControls) {
+              logoControls.classList.add('active');
+            }
+          }
+          
+          if (logoSizeSlider) {
+            logoSizeSlider.value = settings.logoSize !== undefined ? settings.logoSize : completeDefaultSettings.logoSize;
+          }
+          if (logoXSlider) {
+            logoXSlider.value = settings.logoX !== undefined ? settings.logoX : completeDefaultSettings.logoX;
+          }
+          if (logoYSlider) {
+            logoYSlider.value = settings.logoY !== undefined ? settings.logoY : completeDefaultSettings.logoY;
+          }
+          if (logoOpacitySlider) {
+            logoOpacitySlider.value = settings.logoOpacity !== undefined ? settings.logoOpacity : completeDefaultSettings.logoOpacity;
+          }
+          
+          document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
+          
+          updateStyles();
+        }
+        
+        /* 儲存/讀取設定相關函數 */
+        function saveSettingsToLocal(name, settings) {
+          try {
+            localStorage.setItem('bvShopBarcode_' + name, JSON.stringify(settings));
+          } catch (e) {
+            console.error('無法儲存設定：', e);
+            try {
+              sessionStorage.setItem('bvShopBarcode_' + name, JSON.stringify(settings));
+            } catch (e2) {
+              console.error('sessionStorage 也無法使用');
+            }
+          }
+        }
+        
+        function getSettingsFromLocal(name) {
+          try {
+            let settingsStr = localStorage.getItem('bvShopBarcode_' + name);
+            if (!settingsStr) {
+              settingsStr = sessionStorage.getItem('bvShopBarcode_' + name);
+            }
+            return settingsStr ? JSON.parse(settingsStr) : null;
+          } catch (e) {
+            console.error('無法讀取設定：', e);
+            return null;
+          }
+        }
+        
+        /* 載入設定檔清單 */
+        function loadPresetList() {
+          const presetSelect = document.getElementById('bv-preset-select');
+          if (!presetSelect) return;
+          
+          const allPresets = getSettingsFromLocal('presetList') || [];
+          const lastSelected = getSettingsFromLocal('lastSelectedPreset');
+          
+          while (presetSelect.options.length > 1) {
+            presetSelect.remove(1);
+          }
+          
+          allPresets.forEach(presetName => {
+            const option = document.createElement('option');
+            option.value = presetName;
+            option.textContent = presetName;
+            presetSelect.appendChild(option);
+            
+            if (presetName === lastSelected) {
+              option.selected = true;
+            }
+          });
+        }
+        
+        /* 初始化設定檔系統 */
+        function initPresetSystem() {
+          const presetSelect = document.getElementById('bv-preset-select');
+          const savePresetBtn = document.getElementById('bv-save-preset');
+          const deletePresetBtn = document.getElementById('bv-delete-preset');
+          const savePresetRow = document.getElementById('bv-save-preset-row');
+          const newPresetName = document.getElementById('bv-new-preset-name');
+          const confirmSaveBtn = document.getElementById('bv-confirm-save');
+          const cancelSaveBtn = document.getElementById('bv-cancel-save');
+          
+          if (!presetSelect) return;
+          
+          loadPresetList();
+          
+          presetSelect.addEventListener('change', function() {
+            const selectedPreset = presetSelect.value;
+            if (selectedPreset) {
+              const settings = getSettingsFromLocal('preset_' + selectedPreset);
+              if (settings) {
+                applySavedSettings(settings);
+                saveSettingsToLocal('lastSelectedPreset', selectedPreset);
+                showNotification(`已載入預設「${selectedPreset}」`);
               }
+            }
+          });
+          
+          if (savePresetBtn) {
+            savePresetBtn.addEventListener('click', function() {
+              if (savePresetRow) {
+                savePresetRow.style.display = 'flex';
+              }
+              if (newPresetName) {
+                newPresetName.value = presetSelect.value || '';
+                newPresetName.focus();
+              }
+            });
+          }
+          
+          if (confirmSaveBtn) {
+            confirmSaveBtn.addEventListener('click', function() {
+              if (!newPresetName) return;
+              
+              const presetName = newPresetName.value.trim();
+              if (!presetName) {
+                showNotification('請輸入設定檔名稱', 'warning');
+                return;
+              }
+              
+              const settings = saveCurrentSettings();
+              saveSettingsToLocal('preset_' + presetName, settings);
+              
+              const allPresets = getSettingsFromLocal('presetList') || [];
+              if (!allPresets.includes(presetName)) {
+                allPresets.push(presetName);
+                saveSettingsToLocal('presetList', allPresets);
+              }
+              
+              saveSettingsToLocal('lastSelectedPreset', presetName);
               
               loadPresetList();
-              showNotification(`預設「${selectedPreset}」已刪除`);
-            }
-          });
-        }
-        
-        if (newPresetName) {
-          newPresetName.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && confirmSaveBtn) {
-              confirmSaveBtn.click();
-            }
-          });
-        }
-      }
-      
-      /* 顯示通知訊息 */
-      function showNotification(message, type = 'success') {
-        const existingNotification = document.querySelector('.bv-notification');
-        if (existingNotification) {
-          existingNotification.remove();
-        }
-        
-        const notification = document.createElement('div');
-        notification.className = `bv-notification ${type}`;
-        
-        const icon = document.createElement('span');
-        icon.className = 'material-icons';
-        icon.textContent = type === 'success' ? 'check_circle' : 'warning';
-        
-        notification.appendChild(icon);
-        notification.appendChild(document.createTextNode(message));
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-          notification.style.animation = 'slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-          setTimeout(() => notification.remove(), 400);
-        }, 3000);
-      }
-      
-      /* 載入儲存的面板狀態 */
-      chrome.storage.local.get(['bvPanelMinimized'], (result) => {
-        if (result.bvPanelMinimized !== undefined) {
-          isPanelMinimized = result.bvPanelMinimized;
-          const panel = document.getElementById('bv-barcode-control-panel');
-          const minimizeBtn = document.getElementById('bv-minimize-btn');
+              if (savePresetRow) {
+                savePresetRow.style.display = 'none';
+              }
+              
+              showNotification(`預設「${presetName}」已儲存`);
+            });
+          }
           
-          if (isPanelMinimized && panel && minimizeBtn) {
-            panel.classList.add('minimized');
-            minimizeBtn.querySelector('.material-icons').textContent = 'add';
+          if (cancelSaveBtn) {
+            cancelSaveBtn.addEventListener('click', function() {
+              if (savePresetRow) {
+                savePresetRow.style.display = 'none';
+              }
+            });
+          }
+          
+          if (deletePresetBtn) {
+            deletePresetBtn.addEventListener('click', function() {
+              const selectedPreset = presetSelect.value;
+              if (!selectedPreset) {
+                showNotification('請先選擇一個預設', 'warning');
+                return;
+              }
+              
+              if (confirm(`確定要刪除預設「${selectedPreset}」嗎？`)) {
+                const allPresets = getSettingsFromLocal('presetList') || [];
+                const updatedPresets = allPresets.filter(name => name !== selectedPreset);
+                saveSettingsToLocal('presetList', updatedPresets);
+                
+                try {
+                  localStorage.removeItem('bvShopBarcode_preset_' + selectedPreset);
+                  sessionStorage.removeItem('bvShopBarcode_preset_' + selectedPreset);
+                } catch (e) {
+                  console.error('刪除設定時發生錯誤');
+                }
+                
+                if (getSettingsFromLocal('lastSelectedPreset') === selectedPreset) {
+                  try {
+                    localStorage.removeItem('bvShopBarcode_lastSelectedPreset');
+                    sessionStorage.removeItem('bvShopBarcode_lastSelectedPreset');
+                  } catch (e) {
+                    console.error('清除記錄時發生錯誤');
+                  }
+                }
+                
+                loadPresetList();
+                showNotification(`預設「${selectedPreset}」已刪除`);
+              }
+            });
+          }
+          
+          if (newPresetName) {
+            newPresetName.addEventListener('keypress', function(e) {
+              if (e.key === 'Enter' && confirmSaveBtn) {
+                confirmSaveBtn.click();
+              }
+            });
           }
         }
-      });
-      
-      /* 載入上次設定或預設設定 */
-      function loadInitialSettings() {
-        const lastSelected = getSettingsFromLocal('lastSelectedPreset');
-        if (lastSelected) {
-          const settings = getSettingsFromLocal('preset_' + lastSelected);
-          if (settings) {
-            applySavedSettings(settings);
+        
+        /* 顯示通知訊息 */
+        function showNotification(message, type = 'success') {
+          const existingNotification = document.querySelector('.bv-notification');
+          if (existingNotification) {
+            existingNotification.remove();
+          }
+          
+          const notification = document.createElement('div');
+          notification.className = `bv-notification ${type}`;
+          
+          const icon = document.createElement('span');
+          icon.className = 'material-icons';
+          icon.textContent = type === 'success' ? 'check_circle' : 'warning';
+          
+          notification.appendChild(icon);
+          notification.appendChild(document.createTextNode(message));
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            notification.style.animation = 'slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            setTimeout(() => notification.remove(), 400);
+          }, 3000);
+        }
+        
+        /* 載入儲存的面板狀態 */
+        chrome.storage.local.get(['bvPanelMinimized'], (result) => {
+          if (result.bvPanelMinimized !== undefined) {
+            isPanelMinimized = result.bvPanelMinimized;
+            const panel = document.getElementById('bv-barcode-control-panel');
+            const minimizeBtn = document.getElementById('bv-minimize-btn');
+            
+            if (isPanelMinimized && panel && minimizeBtn) {
+              panel.classList.add('minimized');
+              minimizeBtn.querySelector('.material-icons').textContent = 'add';
+            }
+          }
+        });
+        
+        /* 載入上次設定或預設設定 */
+        function loadInitialSettings() {
+          const lastSelected = getSettingsFromLocal('lastSelectedPreset');
+          if (lastSelected) {
+            const settings = getSettingsFromLocal('preset_' + lastSelected);
+            if (settings) {
+              applySavedSettings(settings);
+              return;
+            }
+          }
+          
+          const tempSettings = getSettingsFromLocal('_current_temp_settings');
+          if (tempSettings) {
+            applySavedSettings(tempSettings);
             return;
           }
+          
+          applySavedSettings(defaultSettings);
         }
         
-        const tempSettings = getSettingsFromLocal('_current_temp_settings');
-        if (tempSettings) {
-          applySavedSettings(tempSettings);
-          return;
-        }
+        /* 防止標籤文字被選取 */
+        const preventSelectionStyle = document.createElement('style');
+        preventSelectionStyle.innerHTML = `
+          .print_sample * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+        `;
+        document.head.appendChild(preventSelectionStyle);
         
-        applySavedSettings(defaultSettings);
-      }
-      
-      /* 防止標籤文字被選取 */
-      const preventSelectionStyle = document.createElement('style');
-      preventSelectionStyle.innerHTML = `
-        .print_sample * {
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-        }
-      `;
-      document.head.appendChild(preventSelectionStyle);
-      
-      /* 初始化所有 range input 的進度條 */
-      document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
-      
-      /* 初始化 */
-      initPresetSystem();
-      loadInitialSettings();
-      updateStyles();
-      
-      /* 將函數掛載到 window 物件 */
-      window.barcodeEditor = {
-        updateStyles,
-        saveCurrentSettings,
-        applySavedSettings,
-        showNotification,
-        updateLogos,
-        initialPageSettings
-      };
+        /* 初始化所有 range input 的進度條 */
+        document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
+        
+        /* 初始化 */
+        initPresetSystem();
+        loadInitialSettings();
+        updateStyles();
+        
+        /* 將函數掛載到 window 物件 */
+        window.barcodeEditor = {
+          updateStyles,
+          saveCurrentSettings,
+          applySavedSettings,
+          showNotification,
+          updateLogos,
+          initialPageSettings,
+          optimizeLayoutForLabelSize
+        };
+      });
     }, 100);
   }, 0);
   
