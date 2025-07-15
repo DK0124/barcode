@@ -34,6 +34,31 @@ javascript:(function(){
   /* 初始頁面樣式儲存變數 */
   let initialPageSettings = null;
 
+  /* 完整的預設值物件 */
+  const completeDefaultSettings = {
+    mainSize: 10,
+    mainBold: true,
+    mainGap: 0,
+    mainLineHeight: 13, // 使用智能計算的預設值
+    subSize: 8,
+    subBold: true,
+    subLineHeight: 10, // 使用智能計算的預設值
+    barcodeTextSize: 8,
+    barcodeTextBold: false,
+    barcodeHeight: 83,
+    barcodeWidth: 90,
+    barcodeYPosition: 50,
+    labelWidth: 40,
+    labelHeight: 26,
+    labelPadding: 1,
+    textAlign: 'left',
+    fontFamily: 'Arial, sans-serif',
+    logoSize: 30,
+    logoX: 50,
+    logoY: 50,
+    logoOpacity: 20
+  };
+
   /* 動態抓取 BV SHOP 原生樣式 - 修正版 */
   function getBVShopNativeSettings() {
     try {
@@ -90,8 +115,7 @@ javascript:(function(){
         subLineHeight: 9,
         barcodeFontSize: 8,
         fontFamily: 'Arial, 微軟正黑體, sans-serif',
-        fontWeight: 700,
-        layoutJustify: 'space-between'
+        fontWeight: 700
       };
       
       // 根據不同樣式設定預設值
@@ -115,7 +139,6 @@ javascript:(function(){
         // 預設值
         textAlign: 'left',
         fontFamily: cssDefaults.fontFamily,
-        layoutJustify: cssDefaults.layoutJustify,
         
         // Logo 預設值
         logoSize: 30,
@@ -684,6 +707,7 @@ javascript:(function(){
       background: linear-gradient(135deg, #faa61a 0%, #f59e0b 100%);
     }
     
+    /* 修正 range input 滑桿樣式 */
     input[type="range"] {
       width: 100%;
       height: 6px;
@@ -693,17 +717,6 @@ javascript:(function(){
       -webkit-appearance: none;
       margin: 16px 0 8px 0;
       position: relative;
-    }
-    
-    /* 為滑軌添加漸層效果 */
-    input[type="range"]:before {
-      content: '';
-      position: absolute;
-      height: 6px;
-      border-radius: 3px;
-      background: linear-gradient(90deg, #5865F2 0%, #7289DA 100%);
-      width: var(--value, 0%);
-      pointer-events: none;
     }
     
     input[type="range"]::-webkit-slider-thumb {
@@ -1240,7 +1253,7 @@ javascript:(function(){
             <button class="icon-button" id="delete-preset" title="刪除設定">
               <span class="material-icons">delete</span>
             </button>
-            <button class="icon-button reset-button" id="reset-format" title="還原頁面原始樣式">
+            <button class="icon-button reset-button" id="reset-format" title="還原預設值">
               <span class="material-icons">restart_alt</span>
             </button>
           </div>
@@ -1348,12 +1361,42 @@ javascript:(function(){
               
               <div class="divider"></div>
               
-              <!-- 其他文字設定保持不變... -->
+              <div class="control-label">
+                <span class="control-label-with-button">
+                  規格/編號/價格
+                  <button class="bold-button active" id="sub-bold-btn" title="粗體">B</button>
+                </span>
+                <span class="value-badge" id="sub-size">8px</span>
+              </div>
+              <input type="range" id="sub-slider" min="6" max="16" value="8">
+              
+              <!-- 次要文字行高 -->
+              <div class="control-label" style="margin-top: 10px;">
+                <span>
+                  行高
+                  <button class="reset-line-height-btn" data-target="sub" title="自動調整行高">
+                    <span class="material-icons">autorenew</span>
+                  </button>
+                </span>
+                <span class="value-badge" id="sub-line-height">9px</span>
+              </div>
+              <input type="range" id="sub-line-height-slider" min="6" max="20" value="9">
+              
+              <div class="divider"></div>
+              
+              <div class="control-label">
+                <span class="control-label-with-button">
+                  條碼數字
+                  <button class="bold-button" id="barcode-text-bold-btn" title="粗體">B</button>
+                </span>
+                <span class="value-badge" id="barcode-text-size">8px</span>
+              </div>
+              <input type="range" id="barcode-text-slider" min="6" max="16" value="8">
             </div>
           </div>
         </div>
         
-        <!-- 版面配置區塊 - 移除佈局對齊 -->
+        <!-- 版面配置區塊 -->
         <div class="section">
           <div class="section-header" data-section="layout">
             <h4>
@@ -1363,37 +1406,27 @@ javascript:(function(){
             <span class="material-icons section-toggle">expand_more</span>
           </div>
           <div class="section-content" id="layout-content">
-            <!-- 只保留條碼設定 -->
+            <!-- 條碼設定 -->
             <div class="control-group">
               <div class="control-group-title">條碼圖案設定</div>
-              <!-- 條碼設定內容... -->
-            </div>
-          </div>
-        </div>
-            
-            <!-- 間距設定 -->
-            <div class="control-group">
-              <div class="control-group-title">間距設定</div>
               <div class="control-label">
-                <span>商品名稱與其他資訊間距</span>
-                <span class="value-badge" id="main-gap">0px</span>
+                <span>條碼圖片高度${shouldUseMobileLayout ? '' : '（相對可用高度）'}</span>
+                <span class="value-badge" id="barcode-height">83%</span>
               </div>
-              <input type="range" id="main-gap-slider" min="0" max="10" step="0.5" value="0">
-            </div>
-            
-            <!-- 佈局設定 -->
-            <div class="control-group">
-              <div class="control-group-title">佈局對齊</div>
-              <div class="control-label">
-                <span>垂直對齊方式</span>
+              <input type="range" id="barcode-height-slider" min="20" max="100" value="83">
+              
+              <div class="control-label" style="margin-top: 20px;">
+                <span>條碼圖片寬度${shouldUseMobileLayout ? '' : '（相對可用寬度）'}</span>
+                <span class="value-badge" id="barcode-width">90%</span>
               </div>
-              <select id="layout-justify">
-                <option value="space-between">兩端對齊（預設）</option>
-                <option value="flex-start">靠上對齊</option>
-                <option value="flex-end">靠下對齊</option>
-                <option value="center">垂直置中</option>
-                <option value="space-around">平均分佈</option>
-              </select>
+              <input type="range" id="barcode-width-slider" min="50" max="100" value="90">
+              
+              <div class="control-label" style="margin-top: 20px;">
+                <span>條碼垂直位置</span>
+                <span class="value-badge" id="barcode-y-position">50%</span>
+              </div>
+              <input type="range" id="barcode-y-position-slider" min="0" max="100" value="50">
+              <div class="control-hint">在可用空間內調整：0% = 最上方，100% = 最下方</div>
             </div>
           </div>
         </div>
@@ -1417,7 +1450,7 @@ javascript:(function(){
                 <div id="upload-prompt">
                   <span class="material-icons" style="font-size:36px; background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">add_photo_alternate</span>
                   <div class="upload-hint">點擊上傳底圖（支援 PNG/JPG）</div>
-                                  </div>
+                </div>
               </div>
               
               <div class="logo-controls" id="logo-controls">
@@ -1532,7 +1565,7 @@ javascript:(function(){
     let logoDataUrl = null;
     let logoAspectRatio = 1;
     
-    /* 為 range input 添加動態值更新 */
+    /* 為 range input 添加動態值更新 - 修正版 */
     function updateRangeProgress(input) {
       const value = (input.value - input.min) / (input.max - input.min) * 100;
       // 使用背景漸層來顯示進度
@@ -1666,35 +1699,8 @@ javascript:(function(){
       const textAlign = document.getElementById('text-align');
       const fontFamily = document.getElementById('font-family-select');
       
-      /* 新增的控制項 */
-      const layoutJustify = document.getElementById('layout-justify');
-      
       /* 備用預設值 */
-      const defaultSettings = initialPageSettings || {
-        mainSize: 10,
-        mainBold: true,
-        mainGap: 0,
-        mainLineHeight: 11,
-        subSize: 8,
-        subBold: true,
-        subLineHeight: 9,
-        barcodeTextSize: 8,
-        barcodeTextBold: false,
-        barcodeHeight: 83,
-        barcodeWidth: 90,
-        barcodeYPosition: 50,
-        labelWidth: 40,
-        labelHeight: 26,
-        labelPadding: 1,
-        layoutJustify: 'space-between',
-        textAlign: 'left',
-        fontFamily: 'Arial, 微軟正黑體, sans-serif',
-        logoSize: 30,
-        logoX: 50,
-        logoY: 50,
-        logoOpacity: 20,
-        logoAspectRatio: 1
-      };
+      const defaultSettings = initialPageSettings || completeDefaultSettings;
       
       /* 粗體按鈕點擊事件 */
       function setupBoldButton(button, updateCallback) {
@@ -1790,7 +1796,7 @@ javascript:(function(){
         /* 獲取所有控制項的值 */
         const mainLineHeight = mainLineHeightSlider ? mainLineHeightSlider.value : 11;
         const subLineHeight = subLineHeightSlider ? subLineHeightSlider.value : 9;
-        const justifyContent = layoutJustify ? layoutJustify.value : 'space-between';
+        const justifyContent = 'space-between'; // 固定使用兩端對齊
         
         /* 使用固定的區域高度 */
         const infoHeight = 17;
@@ -2047,7 +2053,6 @@ javascript:(function(){
         subSize, subLineHeightSlider,
         barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
         labelWidth, labelHeight, labelPadding, textAlign, fontFamily,
-        layoutJustify,
         logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
       ];
       
@@ -2141,7 +2146,6 @@ javascript:(function(){
           labelWidth: labelWidth.value,
           labelHeight: labelHeight.value,
           labelPadding: labelPadding.value,
-          layoutJustify: layoutJustify ? layoutJustify.value : 'space-between',
           textAlign: textAlign.value,
           fontFamily: fontFamily.value,
           logoDataUrl: logoDataUrl,
@@ -2157,44 +2161,40 @@ javascript:(function(){
       function applySavedSettings(settings) {
         if (!settings || !mainSize || !subSize) return;
         
-        mainSize.value = settings.mainSize || defaultSettings.mainSize;
+        mainSize.value = settings.mainSize !== undefined ? settings.mainSize : completeDefaultSettings.mainSize;
         if (mainBoldBtn) {
-          mainBoldBtn.classList.toggle('active', settings.mainBold !== undefined ? settings.mainBold : defaultSettings.mainBold);
+          mainBoldBtn.classList.toggle('active', settings.mainBold !== undefined ? settings.mainBold : completeDefaultSettings.mainBold);
         }
-        mainGap.value = settings.mainGap || defaultSettings.mainGap;
+        mainGap.value = settings.mainGap !== undefined ? settings.mainGap : completeDefaultSettings.mainGap;
         if (mainLineHeightSlider) {
-          mainLineHeightSlider.value = settings.mainLineHeight || defaultSettings.mainLineHeight;
+          mainLineHeightSlider.value = settings.mainLineHeight !== undefined ? settings.mainLineHeight : completeDefaultSettings.mainLineHeight;
         }
         
-        subSize.value = settings.subSize || defaultSettings.subSize;
+        subSize.value = settings.subSize !== undefined ? settings.subSize : completeDefaultSettings.subSize;
         if (subBoldBtn) {
-          subBoldBtn.classList.toggle('active', settings.subBold !== undefined ? settings.subBold : defaultSettings.subBold);
+          subBoldBtn.classList.toggle('active', settings.subBold !== undefined ? settings.subBold : completeDefaultSettings.subBold);
         }
         if (subLineHeightSlider) {
-          subLineHeightSlider.value = settings.subLineHeight || defaultSettings.subLineHeight;
+          subLineHeightSlider.value = settings.subLineHeight !== undefined ? settings.subLineHeight : completeDefaultSettings.subLineHeight;
         }
         
-        barcodeTextSize.value = settings.barcodeTextSize || defaultSettings.barcodeTextSize;
+        barcodeTextSize.value = settings.barcodeTextSize !== undefined ? settings.barcodeTextSize : completeDefaultSettings.barcodeTextSize;
         if (barcodeTextBoldBtn) {
-          barcodeTextBoldBtn.classList.toggle('active', settings.barcodeTextBold !== undefined ? settings.barcodeTextBold : defaultSettings.barcodeTextBold);
+          barcodeTextBoldBtn.classList.toggle('active', settings.barcodeTextBold !== undefined ? settings.barcodeTextBold : completeDefaultSettings.barcodeTextBold);
         }
         
-        barcodeHeight.value = settings.barcodeHeight || defaultSettings.barcodeHeight;
-        barcodeWidth.value = settings.barcodeWidth || defaultSettings.barcodeWidth;
+        barcodeHeight.value = settings.barcodeHeight !== undefined ? settings.barcodeHeight : completeDefaultSettings.barcodeHeight;
+        barcodeWidth.value = settings.barcodeWidth !== undefined ? settings.barcodeWidth : completeDefaultSettings.barcodeWidth;
         if (barcodeYPosition) {
-          barcodeYPosition.value = settings.barcodeYPosition || defaultSettings.barcodeYPosition || 50;
+          barcodeYPosition.value = settings.barcodeYPosition !== undefined ? settings.barcodeYPosition : completeDefaultSettings.barcodeYPosition;
         }
         
-        labelWidth.value = settings.labelWidth || defaultSettings.labelWidth;
-        labelHeight.value = settings.labelHeight || defaultSettings.labelHeight;
-        labelPadding.value = settings.labelPadding || defaultSettings.labelPadding;
+        labelWidth.value = settings.labelWidth !== undefined ? settings.labelWidth : completeDefaultSettings.labelWidth;
+        labelHeight.value = settings.labelHeight !== undefined ? settings.labelHeight : completeDefaultSettings.labelHeight;
+        labelPadding.value = settings.labelPadding !== undefined ? settings.labelPadding : completeDefaultSettings.labelPadding;
         
-        if (layoutJustify) {
-          layoutJustify.value = settings.layoutJustify || defaultSettings.layoutJustify;
-        }
-        
-        textAlign.value = settings.textAlign || defaultSettings.textAlign;
-        fontFamily.value = settings.fontFamily || defaultSettings.fontFamily;
+        textAlign.value = settings.textAlign || completeDefaultSettings.textAlign;
+        fontFamily.value = settings.fontFamily || completeDefaultSettings.fontFamily;
         
         /* 底圖設定 */
         if (settings.logoDataUrl) {
@@ -2216,16 +2216,16 @@ javascript:(function(){
         }
         
         if (logoSizeSlider) {
-          logoSizeSlider.value = settings.logoSize || defaultSettings.logoSize;
+          logoSizeSlider.value = settings.logoSize !== undefined ? settings.logoSize : completeDefaultSettings.logoSize;
         }
         if (logoXSlider) {
-          logoXSlider.value = settings.logoX || defaultSettings.logoX;
+          logoXSlider.value = settings.logoX !== undefined ? settings.logoX : completeDefaultSettings.logoX;
         }
         if (logoYSlider) {
-          logoYSlider.value = settings.logoY || defaultSettings.logoY;
+          logoYSlider.value = settings.logoY !== undefined ? settings.logoY : completeDefaultSettings.logoY;
         }
         if (logoOpacitySlider) {
-          logoOpacitySlider.value = settings.logoOpacity || defaultSettings.logoOpacity;
+          logoOpacitySlider.value = settings.logoOpacity !== undefined ? settings.logoOpacity : completeDefaultSettings.logoOpacity;
         }
         
         /* 更新所有 range 的進度條 */
