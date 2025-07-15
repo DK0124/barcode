@@ -1176,7 +1176,7 @@ javascript:(function(){
         <div class="bv-panel-header">
           <div class="bv-header-content">
             <div class="bv-icon-wrapper">
-              <span class="material-icons">qr_code_2</span>
+              <span class="material-icons">barcode</span>
             </div>
             <div class="bv-title-group">
               <h3 class="bv-panel-title">BV SHOP 條碼列印</h3>
