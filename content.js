@@ -40,11 +40,46 @@ javascript:(function(){
       const sample = document.querySelector('.print_sample');
       if (!sample) return null;
       
-      // 偵測樣式類型的邏輯保持不變...
+      // 偵測樣式類型
+      const detectLayoutType = () => {
+        const specInfo = sample.querySelector('.spec_info');
+        const specBarcode = sample.querySelector('.spec_barcode');
+        
+        // 樣式八：純條碼（print_sample 有 flex 樣式）
+        if (sample.style.display === 'flex' && sample.style.justifyContent === 'center') {
+          return 'style8';
+        }
+        
+        // 樣式三、四：條碼在 spec_info 內的 ul 裡面
+        if (specInfo && specInfo.querySelector('ul .spec_barcode')) {
+          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+          return hasSpecialPrice ? 'style3' : 'style4';
+        }
+        
+        // 樣式六：條碼在 spec_info 內，但有 <br> 標籤
+        if (specInfo && specInfo.querySelector('.spec_barcode') && specInfo.innerHTML.includes('<br>')) {
+          return 'style6';
+        }
+        
+        // 樣式五、七：價格在條碼區
+        if (specBarcode && specBarcode.querySelector('span.sub b')) {
+          const hasProductCode = specInfo && (specInfo.innerHTML.includes('cat-') || specInfo.querySelector('.sub:last-child')?.textContent?.includes('-'));
+          return hasProductCode ? 'style7' : 'style5';
+        }
+        
+        // 樣式一、二：標準版
+        if (specInfo) {
+          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+          return hasSpecialPrice ? 'style1' : 'style2';
+        }
+        
+        return 'style1';
+      };
+      
       const layoutType = detectLayoutType();
       console.log('偵測到的樣式類型:', layoutType);
       
-      // CSS 實際預設值 - 這些是確定的值
+      // CSS 實際預設值
       const cssDefaults = {
         containerWidth: 40,
         labelHeight: 26,
@@ -54,8 +89,6 @@ javascript:(function(){
         subFontSize: 8,
         subLineHeight: 9,
         barcodeFontSize: 8,
-        specInfoHeight: 17,      // 預設值，不要設為 0
-        specBarcodeHeight: 12,    // 預設值，不要設為 0
         fontFamily: 'Arial, 微軟正黑體, sans-serif',
         fontWeight: 700,
         layoutJustify: 'space-between'
@@ -78,10 +111,6 @@ javascript:(function(){
         labelWidth: cssDefaults.containerWidth,
         labelHeight: cssDefaults.labelHeight,
         labelPadding: cssDefaults.labelPadding,
-        
-        // 區域高度 - 使用預設值
-        specInfoHeight: cssDefaults.specInfoHeight,
-        specBarcodeHeight: cssDefaults.specBarcodeHeight,
         
         // 預設值
         textAlign: 'left',
@@ -107,8 +136,6 @@ javascript:(function(){
           
         case 'style3': // 條碼在文字區內，有特價
         case 'style4': // 條碼在文字區內，無特價
-          presetValues.specInfoHeight = 24; // 擴大文字區來容納條碼
-          presetValues.specBarcodeHeight = 0; // 隱藏獨立條碼區
           presetValues.barcodeHeight = 40;
           presetValues.barcodeWidth = 85;
           presetValues.barcodeYPosition = 50;
@@ -122,16 +149,12 @@ javascript:(function(){
           break;
           
         case 'style6': // 特殊間距版本
-          presetValues.specInfoHeight = 24;
-          presetValues.specBarcodeHeight = 0;
           presetValues.barcodeHeight = 35;
           presetValues.barcodeWidth = 90;
           presetValues.barcodeYPosition = 50;
           break;
           
         case 'style8': // 純條碼
-          presetValues.specInfoHeight = 0; // 這裡才設為 0
-          presetValues.specBarcodeHeight = 24; // 使用全高
           presetValues.barcodeHeight = 60;
           presetValues.barcodeWidth = 95;
           presetValues.barcodeYPosition = 50;
@@ -160,6 +183,21 @@ javascript:(function(){
   function validateLineHeight(fontSize, lineHeight) {
     const minLineHeight = Math.ceil(fontSize * 1.1); // 至少是字體大小的 1.1 倍
     return Math.max(parseInt(lineHeight), minLineHeight);
+  }
+  
+  /* 計算建議的行高（基於黃金比例） */
+  function calculateSuggestedLineHeight(fontSize) {
+    const size = parseInt(fontSize);
+    // 使用 1.2 - 1.3 的比例，根據字體大小調整
+    let ratio;
+    if (size <= 10) {
+      ratio = 1.3; // 小字體需要更大的行高比例
+    } else if (size <= 14) {
+      ratio = 1.25;
+    } else {
+      ratio = 1.2; // 大字體可以用較小的行高比例
+    }
+    return Math.round(size * ratio);
   }
   
   /* 建立基本樣式 */
@@ -484,6 +522,31 @@ javascript:(function(){
     .bold-button.active:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 10px rgba(88, 101, 242, 0.35);
+    }
+    
+    /* 重置行高按鈕 */
+    .reset-line-height-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px;
+      margin-left: 4px;
+      color: #6c757d;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+    }
+    
+    .reset-line-height-btn:hover {
+      color: #5865F2;
+      transform: rotate(180deg);
+    }
+    
+    .reset-line-height-btn .material-icons {
+      font-size: 16px !important;
+      vertical-align: middle;
+      line-height: 1;
     }
     
     .section {
@@ -1264,9 +1327,14 @@ javascript:(function(){
               </div>
               <input type="range" id="main-slider" min="8" max="20" value="10">
               
-              <!-- 新增：主要文字行高 -->
+              <!-- 主要文字行高 -->
               <div class="control-label" style="margin-top: 10px;">
-                <span>行高</span>
+                <span>
+                  行高
+                  <button class="reset-line-height-btn" data-target="main" title="自動調整行高">
+                    <span class="material-icons">autorenew</span>
+                  </button>
+                </span>
                 <span class="value-badge" id="main-line-height">11px</span>
               </div>
               <input type="range" id="main-line-height-slider" min="8" max="30" value="11">
@@ -1282,9 +1350,14 @@ javascript:(function(){
               </div>
               <input type="range" id="sub-slider" min="6" max="16" value="8">
               
-              <!-- 新增：次要文字行高 -->
+              <!-- 次要文字行高 -->
               <div class="control-label" style="margin-top: 10px;">
-                <span>行高</span>
+                <span>
+                  行高
+                  <button class="reset-line-height-btn" data-target="sub" title="自動調整行高">
+                    <span class="material-icons">autorenew</span>
+                  </button>
+                </span>
                 <span class="value-badge" id="sub-line-height">9px</span>
               </div>
               <input type="range" id="sub-line-height-slider" min="6" max="20" value="9">
@@ -1313,36 +1386,6 @@ javascript:(function(){
             <span class="material-icons section-toggle">expand_more</span>
           </div>
           <div class="section-content" id="layout-content">
-            <!-- 新增：區域高度設定 -->
-            <div class="control-group">
-              <div class="control-group-title">區域高度設定</div>
-              
-              <div class="control-label">
-                <span>文字區域高度</span>
-                <span class="value-badge" id="spec-info-height">17mm</span>
-              </div>
-              <input type="range" id="spec-info-height-slider" min="0" max="26" value="17">
-              <div class="control-hint">控制商品資訊區域的高度（0 = 無文字區）</div>
-              
-              <div class="control-label" style="margin-top: 20px;">
-                <span>條碼區域高度</span>
-                <span class="value-badge" id="spec-barcode-height">12mm</span>
-              </div>
-              <input type="range" id="spec-barcode-height-slider" min="0" max="26" value="12">
-              <div class="control-hint">控制條碼區域的高度（0 = 無條碼區）</div>
-              
-              <div class="control-label" style="margin-top: 20px;">
-                <span>區域對齊方式</span>
-              </div>
-              <select id="layout-justify">
-                <option value="space-between">兩端對齊（預設）</option>
-                <option value="flex-start">靠上對齊</option>
-                <option value="flex-end">靠下對齊</option>
-                <option value="center">垂直置中</option>
-                <option value="space-around">平均分佈</option>
-              </select>
-            </div>
-            
             <!-- 條碼設定 -->
             <div class="control-group">
               <div class="control-group-title">條碼圖案設定</div>
@@ -1375,6 +1418,21 @@ javascript:(function(){
               </div>
               <input type="range" id="main-gap-slider" min="0" max="10" step="0.5" value="0">
             </div>
+            
+            <!-- 佈局設定 -->
+            <div class="control-group">
+              <div class="control-group-title">佈局對齊</div>
+              <div class="control-label">
+                <span>垂直對齊方式</span>
+              </div>
+              <select id="layout-justify">
+                <option value="space-between">兩端對齊（預設）</option>
+                <option value="flex-start">靠上對齊</option>
+                <option value="flex-end">靠下對齊</option>
+                <option value="center">垂直置中</option>
+                <option value="space-around">平均分佈</option>
+              </select>
+            </div>
           </div>
         </div>
         
@@ -1397,7 +1455,7 @@ javascript:(function(){
                 <div id="upload-prompt">
                   <span class="material-icons" style="font-size:36px; background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">add_photo_alternate</span>
                   <div class="upload-hint">點擊上傳底圖（支援 PNG/JPG）</div>
-                </div>
+                                  </div>
               </div>
               
               <div class="logo-controls" id="logo-controls">
@@ -1646,8 +1704,6 @@ javascript:(function(){
       const fontFamily = document.getElementById('font-family-select');
       
       /* 新增的控制項 */
-      const specInfoHeight = document.getElementById('spec-info-height-slider');
-      const specBarcodeHeight = document.getElementById('spec-barcode-height-slider');
       const layoutJustify = document.getElementById('layout-justify');
       
       /* 備用預設值 */
@@ -1667,8 +1723,6 @@ javascript:(function(){
         labelWidth: 40,
         labelHeight: 26,
         labelPadding: 1,
-        specInfoHeight: 17,
-        specBarcodeHeight: 12,
         layoutJustify: 'space-between',
         textAlign: 'left',
         fontFamily: 'Arial, 微軟正黑體, sans-serif',
@@ -1693,15 +1747,20 @@ javascript:(function(){
       setupBoldButton(subBoldBtn, updateStyles);
       setupBoldButton(barcodeTextBoldBtn, updateStyles);
 
-      /* 字體大小改變時，自動調整行高最小值 */
+      /* 字體大小改變時，自動調整行高 */
       if (mainSize) {
         mainSize.addEventListener('input', function() {
           if (mainLineHeightSlider) {
+            const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
+            
+            // 自動調整行高（但允許使用者覆蓋）
+            if (!mainLineHeightSlider.dataset.userModified) {
+              mainLineHeightSlider.value = suggestedLineHeight;
+            }
+            
+            // 更新最小值
             const minLineHeight = Math.ceil(this.value * 1.1);
             mainLineHeightSlider.min = minLineHeight;
-            if (parseInt(mainLineHeightSlider.value) < minLineHeight) {
-              mainLineHeightSlider.value = minLineHeight;
-            }
           }
           updateStyles();
         });
@@ -1710,15 +1769,56 @@ javascript:(function(){
       if (subSize) {
         subSize.addEventListener('input', function() {
           if (subLineHeightSlider) {
+            const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
+            
+            // 自動調整行高（但允許使用者覆蓋）
+            if (!subLineHeightSlider.dataset.userModified) {
+              subLineHeightSlider.value = suggestedLineHeight;
+            }
+            
+            // 更新最小值
             const minLineHeight = Math.ceil(this.value * 1.1);
             subLineHeightSlider.min = minLineHeight;
-            if (parseInt(subLineHeightSlider.value) < minLineHeight) {
-              subLineHeightSlider.value = minLineHeight;
-            }
           }
           updateStyles();
         });
       }
+
+      // 標記使用者手動調整過行高
+      if (mainLineHeightSlider) {
+        mainLineHeightSlider.addEventListener('input', function() {
+          this.dataset.userModified = 'true';
+          updateStyles();
+        });
+      }
+
+      if (subLineHeightSlider) {
+        subLineHeightSlider.addEventListener('input', function() {
+          this.dataset.userModified = 'true';
+          updateStyles();
+        });
+      }
+
+      // 重置行高按鈕
+      document.querySelectorAll('.reset-line-height-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = this.dataset.target;
+          if (target === 'main' && mainSize && mainLineHeightSlider) {
+            const suggested = calculateSuggestedLineHeight(mainSize.value);
+            mainLineHeightSlider.value = suggested;
+            mainLineHeightSlider.dataset.userModified = 'false';
+            updateStyles();
+            showNotification('已重置主要文字行高');
+          } else if (target === 'sub' && subSize && subLineHeightSlider) {
+            const suggested = calculateSuggestedLineHeight(subSize.value);
+            subLineHeightSlider.value = suggested;
+            subLineHeightSlider.dataset.userModified = 'false';
+            updateStyles();
+            showNotification('已重置次要文字行高');
+          }
+        });
+      });
 
       /* 更新樣式函數 */
       function updateStyles() {
@@ -1727,9 +1827,16 @@ javascript:(function(){
         /* 獲取所有控制項的值 */
         const mainLineHeight = mainLineHeightSlider ? mainLineHeightSlider.value : 11;
         const subLineHeight = subLineHeightSlider ? subLineHeightSlider.value : 9;
-        const infoHeight = specInfoHeight ? specInfoHeight.value : 17;
-        const barcodeAreaHeight = specBarcodeHeight ? specBarcodeHeight.value : 12;
         const justifyContent = layoutJustify ? layoutJustify.value : 'space-between';
+        
+        /* 使用固定的區域高度 */
+        const infoHeight = 17;
+        const barcodeAreaHeight = 12;
+        
+        /* 判斷樣式類型（從 initialPageSettings 取得） */
+        const layoutType = initialPageSettings?.layoutType || 'style1';
+        const showSpecInfo = layoutType !== 'style8';
+        const showSpecBarcode = true; // 所有樣式都有條碼區（只是位置不同）
         
         /* 驗證行高合理性 */
         const validatedMainLineHeight = validateLineHeight(mainSize.value, mainLineHeight);
@@ -1748,7 +1855,7 @@ javascript:(function(){
         const availableHeight = totalHeight - (paddingValue * 2);
         
         /* 計算條碼實際尺寸（基於可用空間的百分比） */
-        const barcodeActualHeight = (parseFloat(barcodeAreaHeight) * parseFloat(barcodeHeight.value) / 100).toFixed(1);
+        const barcodeActualHeight = (barcodeAreaHeight * parseFloat(barcodeHeight.value) / 100).toFixed(1);
         const barcodeActualWidth = (availableWidth * parseFloat(barcodeWidth.value) / 100).toFixed(1);
         
         /* 計算條碼Y軸位置 */
@@ -1770,12 +1877,6 @@ javascript:(function(){
         document.getElementById('label-padding').textContent = labelPadding.value + 'mm';
         
         /* 更新新增的顯示值 */
-        if (document.getElementById('spec-info-height')) {
-          document.getElementById('spec-info-height').textContent = infoHeight + 'mm';
-        }
-        if (document.getElementById('spec-barcode-height')) {
-          document.getElementById('spec-barcode-height').textContent = barcodeAreaHeight + 'mm';
-        }
         if (document.getElementById('main-line-height')) {
           document.getElementById('main-line-height').textContent = validatedMainLineHeight + 'px';
         }
@@ -1813,11 +1914,10 @@ javascript:(function(){
             justify-content: ${justifyContent} !important;
           }
           
-          /* 文字區域高度控制 - 修正選擇器 */
-          ${parseFloat(infoHeight) > 0 ? `
+          /* 文字區域 - 使用固定高度或隱藏 */
+          ${showSpecInfo ? `
           .print_barcode_area .print_sample .spec_info {
             height: ${infoHeight}mm !important;
-            flex: 0 0 ${infoHeight}mm !important;
             margin-bottom: 0 !important;
             overflow: visible !important;
             display: block !important;
@@ -1826,36 +1926,107 @@ javascript:(function(){
             display: none !important;
           }`}
           
-          /* 條碼區域高度控制 - 修正選擇器 */
-          ${parseFloat(barcodeAreaHeight) > 0 ? `
+          /* 條碼區域 - 使用固定高度 */
           .print_barcode_area .print_sample > .spec_barcode {
             height: ${barcodeAreaHeight}mm !important;
-            flex: 0 0 ${barcodeAreaHeight}mm !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             text-align: center !important;
             overflow: visible !important;
             position: relative !important;
+            /* 根據 Y 位置調整對齊 */
             justify-content: ${
               barcodeYPercent <= 20 ? 'flex-start' :
               barcodeYPercent >= 80 ? 'flex-end' : 'center'
             } !important;
-          }` : `
-          .print_barcode_area .print_sample > .spec_barcode {
-            display: none !important;
-          }`}
+          }
           
-          /* 特殊樣式處理：條碼在 spec_info 內時 */
-          .print_barcode_area .print_sample .spec_info .spec_barcode {
-            height: auto !important;
-            flex: none !important;
-            margin: 5px 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
+          /* 樣式八特殊處理 */
+          ${layoutType === 'style8' ? `
+          .print_barcode_area .print_sample {
+            justify-content: center !important;
             align-items: center !important;
           }
-           
+          .print_barcode_area .print_sample > .spec_barcode {
+            height: auto !important;
+          }
+          ` : ''}
+          
+          /* 確保字體套用到所有元素 */
+          .print_barcode_area .print_sample,
+          .print_barcode_area .print_sample .spec_info,
+          .print_barcode_area .print_sample .spec_info ul,
+          .print_barcode_area .print_sample .spec_info li,
+          .print_barcode_area .print_sample .spec_barcode {
+            font-family: ${fontFamily.value} !important;
+          }
+          
+          /* 商品資訊對齊方式 */
+          .print_barcode_area .print_sample .spec_info {
+            text-align: ${textAlign.value} !important;
+          }
+          
+          /* 商品名稱樣式 - 包含行高 */
+          .print_barcode_area .print_sample .spec_info .main {
+            font-size: ${mainSize.value}px !important;
+            line-height: ${validatedMainLineHeight}px !important;
+            font-weight: ${mainFontWeight} !important;
+            margin-bottom: ${mainGap.value}px !important;
+            white-space: normal !important;
+            word-break: break-all !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+          }
+          
+          /* 規格/編號/價格樣式 - 包含行高 */
+          .print_barcode_area .print_sample .spec_info .sub {
+            font-size: ${subSize.value}px !important;
+            line-height: ${validatedSubLineHeight}px !important;
+            font-weight: ${subFontWeight} !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          
+          /* 條碼下方數字樣式 */
+          .print_barcode_area .print_sample .spec_barcode .sub {
+            font-size: ${barcodeTextSize.value}px !important;
+            font-weight: ${barcodeTextFontWeight} !important;
+            pointer-events: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            text-decoration: none !important;
+            color: inherit !important;
+            white-space: nowrap !important;
+          }
+          
+          /* 條碼圖片 - 直接拉伸圖片尺寸 */
+          .print_barcode_area .print_sample .spec_barcode img {
+            height: ${barcodeActualHeight}mm !important;
+            width: ${barcodeActualWidth}mm !important;
+            max-width: none !important;
+            max-height: none !important;
+            object-fit: fill !important; /* 強制拉伸到指定尺寸 */
+            display: block !important;
+            margin: 0 auto !important;
+            position: relative !important;
+            /* 微調 Y 軸位置 */
+            ${barcodeYPosition ? `
+              transform: translateY(${(barcodeYPercent - 50) * 0.1}mm) !important;
+            ` : ''}
+          }
+          
+          /* 特殊樣式處理：條碼在 spec_info 內 */
+          .print_barcode_area .print_sample .spec_info .spec_barcode {
+            height: auto !important;
+            margin: 5px 0 !important;
+          }
+          
           .print_barcode_area .print_sample .spec_info .spec_barcode img {
             height: ${Math.min(parseFloat(barcodeActualHeight), 10)}mm !important;
             width: ${Math.min(parseFloat(barcodeActualWidth), 35)}mm !important;
@@ -1913,7 +2084,7 @@ javascript:(function(){
         subSize, subLineHeightSlider,
         barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
         labelWidth, labelHeight, labelPadding, textAlign, fontFamily,
-        specInfoHeight, specBarcodeHeight, layoutJustify,
+        layoutJustify,
         logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
       ];
       
@@ -2019,8 +2190,6 @@ javascript:(function(){
           labelWidth: labelWidth.value,
           labelHeight: labelHeight.value,
           labelPadding: labelPadding.value,
-          specInfoHeight: specInfoHeight ? specInfoHeight.value : 17,
-          specBarcodeHeight: specBarcodeHeight ? specBarcodeHeight.value : 12,
           layoutJustify: layoutJustify ? layoutJustify.value : 'space-between',
           textAlign: textAlign.value,
           fontFamily: fontFamily.value,
@@ -2069,13 +2238,8 @@ javascript:(function(){
         labelHeight.value = settings.labelHeight || defaultSettings.labelHeight;
         labelPadding.value = settings.labelPadding || defaultSettings.labelPadding;
         
-        if (specInfoHeight) {
-          const infoHeightValue = settings.specInfoHeight !== undefined ? settings.specInfoHeight : defaultSettings.specInfoHeight;
-          specInfoHeight.value = infoHeightValue !== undefined ? infoHeightValue : 17;
-        }
-        if (specBarcodeHeight) {
-          const barcodeHeightValue = settings.specBarcodeHeight !== undefined ? settings.specBarcodeHeight : defaultSettings.specBarcodeHeight;
-          specBarcodeHeight.value = barcodeHeightValue !== undefined ? barcodeHeightValue : 12;
+        if (layoutJustify) {
+          layoutJustify.value = settings.layoutJustify || defaultSettings.layoutJustify;
         }
         
         textAlign.value = settings.textAlign || defaultSettings.textAlign;
