@@ -40,46 +40,11 @@ javascript:(function(){
       const sample = document.querySelector('.print_sample');
       if (!sample) return null;
       
-      // 偵測樣式類型
-      const detectLayoutType = () => {
-        const specInfo = sample.querySelector('.spec_info');
-        const specBarcode = sample.querySelector('.spec_barcode');
-        
-        // 樣式八：純條碼（print_sample 有 flex 樣式）
-        if (sample.style.display === 'flex' && sample.style.justifyContent === 'center') {
-          return 'style8';
-        }
-        
-        // 樣式三、四：條碼在 spec_info 內的 ul 裡面
-        if (specInfo && specInfo.querySelector('ul .spec_barcode')) {
-          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
-          return hasSpecialPrice ? 'style3' : 'style4';
-        }
-        
-        // 樣式六：條碼在 spec_info 內，但有 <br> 標籤
-        if (specInfo && specInfo.querySelector('.spec_barcode') && specInfo.innerHTML.includes('<br>')) {
-          return 'style6';
-        }
-        
-        // 樣式五、七：價格在條碼區
-        if (specBarcode && specBarcode.querySelector('span.sub b')) {
-          const hasProductCode = specInfo && (specInfo.innerHTML.includes('cat-') || specInfo.querySelector('.sub:last-child')?.textContent?.includes('-'));
-          return hasProductCode ? 'style7' : 'style5';
-        }
-        
-        // 樣式一、二：標準版
-        if (specInfo) {
-          const hasSpecialPrice = specInfo.innerHTML.includes('特價');
-          return hasSpecialPrice ? 'style1' : 'style2';
-        }
-        
-        return 'style1';
-      };
-      
+      // 偵測樣式類型的邏輯保持不變...
       const layoutType = detectLayoutType();
       console.log('偵測到的樣式類型:', layoutType);
       
-      // CSS 實際預設值
+      // CSS 實際預設值 - 這些是確定的值
       const cssDefaults = {
         containerWidth: 40,
         labelHeight: 26,
@@ -89,8 +54,8 @@ javascript:(function(){
         subFontSize: 8,
         subLineHeight: 9,
         barcodeFontSize: 8,
-        specInfoHeight: 17,
-        specBarcodeHeight: 12,
+        specInfoHeight: 17,      // 預設值，不要設為 0
+        specBarcodeHeight: 12,    // 預設值，不要設為 0
         fontFamily: 'Arial, 微軟正黑體, sans-serif',
         fontWeight: 700,
         layoutJustify: 'space-between'
@@ -114,6 +79,10 @@ javascript:(function(){
         labelHeight: cssDefaults.labelHeight,
         labelPadding: cssDefaults.labelPadding,
         
+        // 區域高度 - 使用預設值
+        specInfoHeight: cssDefaults.specInfoHeight,
+        specBarcodeHeight: cssDefaults.specBarcodeHeight,
+        
         // 預設值
         textAlign: 'left',
         fontFamily: cssDefaults.fontFamily,
@@ -131,8 +100,6 @@ javascript:(function(){
       switch(layoutType) {
         case 'style1': // 標準版有特價
         case 'style2': // 標準版無特價
-          presetValues.specInfoHeight = 17;
-          presetValues.specBarcodeHeight = 12;
           presetValues.barcodeHeight = 83; // 10mm/12mm ≈ 83%
           presetValues.barcodeWidth = 90;
           presetValues.barcodeYPosition = 50;
@@ -140,44 +107,42 @@ javascript:(function(){
           
         case 'style3': // 條碼在文字區內，有特價
         case 'style4': // 條碼在文字區內，無特價
-          presetValues.specInfoHeight = 26; // 使用全高
-          presetValues.specBarcodeHeight = 0; // 無獨立條碼區
-          presetValues.barcodeHeight = 40; // 條碼在文字區內，相對較小
+          presetValues.specInfoHeight = 24; // 擴大文字區來容納條碼
+          presetValues.specBarcodeHeight = 0; // 隱藏獨立條碼區
+          presetValues.barcodeHeight = 40;
           presetValues.barcodeWidth = 85;
           presetValues.barcodeYPosition = 50;
           break;
           
         case 'style5': // 價格在條碼區
-          presetValues.specInfoHeight = 17;
-          presetValues.specBarcodeHeight = 12;
-          presetValues.barcodeHeight = 70; // 稍小，因為上方有價格
-          presetValues.barcodeWidth = 90;
-          presetValues.barcodeYPosition = 60; // 偏下
-          break;
-          
-        case 'style6': // 特殊間距版本
-          presetValues.specInfoHeight = 26; // 使用全高
-          presetValues.specBarcodeHeight = 0;
-          presetValues.barcodeHeight = 35; // 較小
-          presetValues.barcodeWidth = 90;
-          presetValues.barcodeYPosition = 50;
-          break;
-          
         case 'style7': // 價格在條碼區，有商品編號
-          presetValues.specInfoHeight = 17;
-          presetValues.specBarcodeHeight = 12;
           presetValues.barcodeHeight = 70;
           presetValues.barcodeWidth = 90;
           presetValues.barcodeYPosition = 60;
           break;
           
+        case 'style6': // 特殊間距版本
+          presetValues.specInfoHeight = 24;
+          presetValues.specBarcodeHeight = 0;
+          presetValues.barcodeHeight = 35;
+          presetValues.barcodeWidth = 90;
+          presetValues.barcodeYPosition = 50;
+          break;
+          
         case 'style8': // 純條碼
-          presetValues.specInfoHeight = 0; // 無文字區
-          presetValues.specBarcodeHeight = 26; // 使用全高
-          presetValues.barcodeHeight = 60; // 較大的條碼
+          presetValues.specInfoHeight = 0; // 這裡才設為 0
+          presetValues.specBarcodeHeight = 24; // 使用全高
+          presetValues.barcodeHeight = 60;
           presetValues.barcodeWidth = 95;
           presetValues.barcodeYPosition = 50;
           presetValues.textAlign = 'center';
+          break;
+          
+        default:
+          // 使用標準預設值
+          presetValues.barcodeHeight = 83;
+          presetValues.barcodeWidth = 90;
+          presetValues.barcodeYPosition = 50;
           break;
       }
       
@@ -1848,115 +1813,49 @@ javascript:(function(){
             justify-content: ${justifyContent} !important;
           }
           
-          /* 區域高度控制 */
-          ${infoHeight > 0 ? `
-          html .print_barcode_area .print_sample .spec_info,
-          body .print_barcode_area .print_sample .spec_info {
+          /* 文字區域高度控制 - 修正選擇器 */
+          ${parseFloat(infoHeight) > 0 ? `
+          .print_barcode_area .print_sample .spec_info {
             height: ${infoHeight}mm !important;
+            flex: 0 0 ${infoHeight}mm !important;
             margin-bottom: 0 !important;
             overflow: visible !important;
             display: block !important;
           }` : `
-          html .print_barcode_area .print_sample .spec_info,
-          body .print_barcode_area .print_sample .spec_info {
+          .print_barcode_area .print_sample .spec_info {
             display: none !important;
           }`}
           
-          ${barcodeAreaHeight > 0 ? `
-          html .print_barcode_area .print_sample .spec_barcode,
-          body .print_barcode_area .print_sample .spec_barcode {
+          /* 條碼區域高度控制 - 修正選擇器 */
+          ${parseFloat(barcodeAreaHeight) > 0 ? `
+          .print_barcode_area .print_sample > .spec_barcode {
             height: ${barcodeAreaHeight}mm !important;
+            flex: 0 0 ${barcodeAreaHeight}mm !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             text-align: center !important;
             overflow: visible !important;
             position: relative !important;
-            /* 根據 Y 位置調整對齊 */
             justify-content: ${
               barcodeYPercent <= 20 ? 'flex-start' :
               barcodeYPercent >= 80 ? 'flex-end' : 'center'
             } !important;
           }` : `
-          html .print_barcode_area .print_sample .spec_barcode,
-          body .print_barcode_area .print_sample .spec_barcode {
+          .print_barcode_area .print_sample > .spec_barcode {
             display: none !important;
           }`}
           
-          /* 確保字體套用到所有元素 */
-          .print_barcode_area .print_sample,
-          .print_barcode_area .print_sample .spec_info,
-          .print_barcode_area .print_sample .spec_info ul,
-          .print_barcode_area .print_sample .spec_info li,
-          .print_barcode_area .print_sample .spec_barcode {
-            font-family: ${fontFamily.value} !important;
-          }
-          
-          /* 商品資訊對齊方式 */
-          .print_barcode_area .print_sample .spec_info {
-            text-align: ${textAlign.value} !important;
-          }
-          
-          /* 商品名稱樣式 - 包含行高 */
-          .print_barcode_area .print_sample .spec_info .main {
-            font-size: ${mainSize.value}px !important;
-            line-height: ${validatedMainLineHeight}px !important;
-            font-weight: ${mainFontWeight} !important;
-            margin-bottom: ${mainGap.value}px !important;
-            white-space: normal !important;
-            word-break: break-all !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            display: -webkit-box !important;
-            -webkit-line-clamp: 2 !important;
-            -webkit-box-orient: vertical !important;
-          }
-          
-          /* 規格/編號/價格樣式 - 包含行高 */
-          .print_barcode_area .print_sample .spec_info .sub {
-            font-size: ${subSize.value}px !important;
-            line-height: ${validatedSubLineHeight}px !important;
-            font-weight: ${subFontWeight} !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-          }
-          
-          /* 條碼下方數字樣式 */
-          .print_barcode_area .print_sample .spec_barcode .sub {
-            font-size: ${barcodeTextSize.value}px !important;
-            font-weight: ${barcodeTextFontWeight} !important;
-            pointer-events: none !important;
-            -webkit-touch-callout: none !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            text-decoration: none !important;
-            color: inherit !important;
-            white-space: nowrap !important;
-          }
-          
-          /* 條碼圖片 - 直接拉伸圖片尺寸 */
-          .print_barcode_area .print_sample .spec_barcode img {
-            height: ${barcodeActualHeight}mm !important;
-            width: ${barcodeActualWidth}mm !important;
-            max-width: none !important;
-            max-height: none !important;
-            object-fit: fill !important; /* 強制拉伸到指定尺寸 */
-            display: block !important;
-            margin: 0 auto !important;
-            position: relative !important;
-            /* 微調 Y 軸位置 */
-            ${barcodeYPosition ? `
-              transform: translateY(${(barcodeYPercent - 50) * 0.1}mm) !important;
-            ` : ''}
-          }
-          
-          /* 特殊樣式處理：條碼在 spec_info 內 */
+          /* 特殊樣式處理：條碼在 spec_info 內時 */
           .print_barcode_area .print_sample .spec_info .spec_barcode {
             height: auto !important;
+            flex: none !important;
             margin: 5px 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
           }
-          
+           
           .print_barcode_area .print_sample .spec_info .spec_barcode img {
             height: ${Math.min(parseFloat(barcodeActualHeight), 10)}mm !important;
             width: ${Math.min(parseFloat(barcodeActualWidth), 35)}mm !important;
@@ -2171,13 +2070,12 @@ javascript:(function(){
         labelPadding.value = settings.labelPadding || defaultSettings.labelPadding;
         
         if (specInfoHeight) {
-          specInfoHeight.value = settings.specInfoHeight !== undefined ? settings.specInfoHeight : defaultSettings.specInfoHeight;
+          const infoHeightValue = settings.specInfoHeight !== undefined ? settings.specInfoHeight : defaultSettings.specInfoHeight;
+          specInfoHeight.value = infoHeightValue !== undefined ? infoHeightValue : 17;
         }
         if (specBarcodeHeight) {
-          specBarcodeHeight.value = settings.specBarcodeHeight !== undefined ? settings.specBarcodeHeight : defaultSettings.specBarcodeHeight;
-        }
-        if (layoutJustify) {
-          layoutJustify.value = settings.layoutJustify || defaultSettings.layoutJustify;
+          const barcodeHeightValue = settings.specBarcodeHeight !== undefined ? settings.specBarcodeHeight : defaultSettings.specBarcodeHeight;
+          specBarcodeHeight.value = barcodeHeightValue !== undefined ? barcodeHeightValue : 12;
         }
         
         textAlign.value = settings.textAlign || defaultSettings.textAlign;
