@@ -1196,7 +1196,7 @@ javascript:(function(){
         <div class="bv-panel-header">
           <div class="bv-header-content">
             <div class="bv-icon-wrapper">
-              <span class="material-icons">barcode</span>
+              <span class="material-icons">local_mall</span>
             </div>
             <div class="bv-title-group">
               <h3 class="bv-panel-title">BV SHOP 條碼列印</h3>
@@ -1482,10 +1482,10 @@ javascript:(function(){
                 
                 <button class="bv-remove-logo-btn" id="remove-logo-btn">
                   <span class="material-icons">delete</span>
-移除底圖
+                  移除底圖
                 </button>
               </div>
-            </div>
+  </div>
           </div>
           
           <div class="bv-panel-footer">
@@ -1923,7 +1923,7 @@ javascript:(function(){
           updateStyles();
         }
 
-        /* 更新樣式函數 - 移除所有高度限制 */
+        /* 更新樣式函數 - 修正條碼高度和Y軸位置 */
         function updateStyles() {
           if (!mainSize || !subSize) return;
           
@@ -1990,7 +1990,7 @@ javascript:(function(){
             }
           });
           
-          /* 套用樣式 - 移除所有高度限制 */
+          /* 套用樣式 - 修正條碼高度和Y軸位置 */
           dynamicStyle.innerHTML = `
             /* 調整條碼標籤整體尺寸 */
             .print_barcode_area {
@@ -2008,6 +2008,7 @@ javascript:(function(){
               justify-content: ${justifyContent} !important;
               overflow: hidden !important;
               gap: ${mainGap.value}px !important;
+              position: relative !important;
             }
             
             /* 文字區域 - 移除高度限制 */
@@ -2026,22 +2027,20 @@ javascript:(function(){
               display: none !important;
             }`}
             
-            /* 條碼區域 - 使用剩餘空間 */
+            /* 條碼區域 - 在標籤內定位 */
             .print_barcode_area .print_sample > .spec_barcode {
-              flex: 1 1 auto !important;
+              position: absolute !important;
+              left: ${paddingValue}mm !important;
+              right: ${paddingValue}mm !important;
+              top: ${paddingValue + ((totalHeight - paddingValue * 2) * barcodeYPercent / 100)}mm !important;
+              transform: translateY(-50%) !important;
               display: flex !important;
               flex-direction: column !important;
               align-items: center !important;
               text-align: center !important;
-              overflow: hidden !important;
-              position: relative !important;
-              justify-content: ${
-                barcodeYPercent <= 20 ? 'flex-start' :
-                barcodeYPercent >= 80 ? 'flex-end' : 'center'
-              } !important;
-              /* 移除高度限制 */
-              min-height: auto !important;
+              overflow: visible !important;
               height: auto !important;
+              width: auto !important;
             }
             
             /* 樣式八特殊處理 */
@@ -2051,7 +2050,11 @@ javascript:(function(){
               align-items: center !important;
             }
             .print_barcode_area .print_sample > .spec_barcode {
-              flex: 0 0 auto !important;
+              position: relative !important;
+              top: auto !important;
+              left: auto !important;
+              right: auto !important;
+              transform: none !important;
             }
             ` : ''}
             
@@ -2113,19 +2116,15 @@ javascript:(function(){
               white-space: nowrap !important;
             }
             
-            /* 條碼圖片 - 自動調整大小 */
+            /* 條碼圖片 - 修正高度和寬度計算 */
             .print_barcode_area .print_sample .spec_barcode img {
-              max-height: ${barcodeHeight.value}% !important;
-              max-width: ${barcodeWidth.value}% !important;
-              width: auto !important;
-              height: auto !important;
+              height: ${(totalHeight - paddingValue * 2) * barcodeHeight.value / 100}mm !important;
+              width: ${(totalWidth - paddingValue * 2) * barcodeWidth.value / 100}mm !important;
+              max-height: ${(totalHeight - paddingValue * 2) * barcodeHeight.value / 100}mm !important;
+              max-width: ${(totalWidth - paddingValue * 2) * barcodeWidth.value / 100}mm !important;
               object-fit: contain !important;
               display: block !important;
               margin: 0 auto !important;
-              position: relative !important;
-              ${barcodeYPosition ? `
-                transform: translateY(${(barcodeYPercent - 50) * 0.5}%) !important;
-              ` : ''}
             }
             
             /* 特殊樣式處理：條碼在 spec_info 內 */
@@ -2133,11 +2132,18 @@ javascript:(function(){
               height: auto !important;
               margin: 3px 0 !important;
               text-align: center !important;
+              position: relative !important;
+              left: auto !important;
+              right: auto !important;
+              top: auto !important;
+              transform: none !important;
             }
             
             .print_barcode_area .print_sample .spec_info .spec_barcode img {
-              max-height: 8mm !important;
+              height: 8mm !important;
+              width: auto !important;
               max-width: 90% !important;
+              max-height: 8mm !important;
             }
             
             /* 確保字體覆蓋所有可能的元素 */
@@ -2721,4 +2727,3 @@ javascript:(function(){
     document.addEventListener('touchend', dragEnd);
   }
 })();
-                  
