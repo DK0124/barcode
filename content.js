@@ -1947,7 +1947,7 @@ javascript:(function(){
           updateStyles();
         }
 
-        /* 更新樣式函數 - 確保內容不溢出 */
+        /* 更新樣式函數 - 修正商品名稱換行問題 */
         function updateStyles() {
           if (!mainSize || !subSize) return;
           
@@ -1965,49 +1965,10 @@ javascript:(function(){
           const layoutType = initialPageSettings?.layoutType || 'style1';
           const showSpecInfo = layoutType !== 'style8';
           
-          // 根據不同樣式計算最大行數
-          let maxMainLines = 3; // 商品名稱最多3行
-          let maxSubLines = 2;  // 副文字最多2行
-          
-          // 特殊樣式調整
-          if (layoutType === 'style3' || layoutType === 'style4' || layoutType === 'style6') {
-            // 這些樣式條碼在文字區內，需要調整
-            maxMainLines = 2;
-            maxSubLines = 1;
-          }
-          
-          // 計算文字區域高度 (px to mm)
-          const pxToMm = 0.264583;
-          const mainTextHeightMm = (mainLineHeightPx * maxMainLines) * pxToMm;
-          const gapMm = mainGapPx * pxToMm;
-          const subTextHeightMm = (subLineHeightPx * maxSubLines) * pxToMm;
-          
-          // 總文字區域高度
-          const infoHeight = Math.ceil(mainTextHeightMm + gapMm + subTextHeightMm + 1);
-          
           // 計算可用高度和條碼區域高度
           const totalHeight = parseFloat(labelHeight.value);
           const paddingValue = parseFloat(labelPadding.value);
           const availableHeight = totalHeight - (paddingValue * 2);
-          
-          // 動態分配高度，確保不溢出
-          let finalInfoHeight, finalBarcodeHeight;
-          
-          if (showSpecInfo) {
-            const minimumBarcodeHeight = 5; // 條碼至少需要5mm
-            if (infoHeight + minimumBarcodeHeight <= availableHeight) {
-              finalInfoHeight = infoHeight;
-              finalBarcodeHeight = availableHeight - infoHeight;
-            } else {
-              // 空間不足，按比例分配
-              finalInfoHeight = availableHeight * 0.55; // 文字佔55%
-              finalBarcodeHeight = availableHeight * 0.45; // 條碼佔45%
-            }
-          } else {
-            // 樣式8：純條碼
-            finalInfoHeight = 0;
-            finalBarcodeHeight = availableHeight;
-          }
           
           const validatedMainLineHeight = validateLineHeight(mainSize.value, mainLineHeight);
           const validatedSubLineHeight = validateLineHeight(subSize.value, subLineHeight);
@@ -2018,9 +1979,6 @@ javascript:(function(){
           
           const totalWidth = parseFloat(labelWidth.value);
           const availableWidth = totalWidth - (paddingValue * 2);
-          
-          const barcodeActualHeight = (finalBarcodeHeight * parseFloat(barcodeHeight.value) / 100).toFixed(1);
-          const barcodeActualWidth = (availableWidth * parseFloat(barcodeWidth.value) / 100).toFixed(1);
           
           const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 50;
           
@@ -2066,7 +2024,7 @@ javascript:(function(){
             }
           });
           
-          /* 套用樣式 - 確保內容不溢出 */
+          /* 套用樣式 - 修正商品名稱換行 */
           dynamicStyle.innerHTML = `
             /* 調整條碼標籤整體尺寸 */
             .print_barcode_area {
@@ -2085,13 +2043,12 @@ javascript:(function(){
               overflow: hidden !important;
             }
             
-            /* 文字區域 - 固定高度 */
+            /* 文字區域 - 自動高度 */
             ${showSpecInfo ? `
             .print_barcode_area .print_sample .spec_info {
-              flex: 0 0 ${finalInfoHeight}mm !important;
-              height: ${finalInfoHeight}mm !important;
-              margin-bottom: 0 !important;
-              overflow: hidden !important;
+              flex: 0 0 auto !important;
+              margin-bottom: ${mainGapPx}px !important;
+              overflow: visible !important;
               display: block !important;
             }` : `
             .print_barcode_area .print_sample .spec_info {
@@ -2101,7 +2058,6 @@ javascript:(function(){
             /* 條碼區域 - 使用剩餘空間 */
             .print_barcode_area .print_sample > .spec_barcode {
               flex: 1 1 auto !important;
-              height: ${finalBarcodeHeight}mm !important;
               min-height: 5mm !important;
               display: flex !important;
               flex-direction: column !important;
@@ -2141,21 +2097,25 @@ javascript:(function(){
               text-align: left !important;
             }
             
-            /* 商品名稱樣式 - 支援多行 */
+            /* 商品名稱樣式 - 修正換行問題 */
             .print_barcode_area .print_sample .spec_info .main {
               font-size: ${mainSize.value}px !important;
               line-height: ${validatedMainLineHeight}px !important;
               font-weight: ${mainFontWeight} !important;
               margin-bottom: ${mainGap.value}px !important;
+              /* 關鍵：允許文字正確換行 */
               white-space: normal !important;
               word-break: break-word !important;
               word-wrap: break-word !important;
               overflow-wrap: break-word !important;
               hyphens: auto !important;
-              overflow: hidden !important;
+              /* 移除高度限制，讓文字自然顯示 */
+              overflow: visible !important;
               display: block !important;
-              /* 確保多行顯示正確 */
-              max-height: ${mainLineHeightPx * maxMainLines}px !important;
+              /* 移除 -webkit-line-clamp 限制 */
+              -webkit-line-clamp: unset !important;
+              -webkit-box-orient: unset !important;
+              max-height: none !important;
             }
             
             /* 規格/編號/價格樣式 - 包含行高 */
@@ -2181,18 +2141,18 @@ javascript:(function(){
               white-space: nowrap !important;
             }
             
-            /* 條碼圖片 - 確保在區域內 */
+            /* 條碼圖片 - 自動調整大小 */
             .print_barcode_area .print_sample .spec_barcode img {
-              max-height: calc(${finalBarcodeHeight}mm * ${barcodeHeight.value / 100}) !important;
-              width: ${barcodeActualWidth}mm !important;
-              max-width: calc(100% * ${barcodeWidth.value / 100}) !important;
+              max-height: ${barcodeHeight.value}% !important;
+              max-width: ${barcodeWidth.value}% !important;
+              width: auto !important;
               height: auto !important;
               object-fit: contain !important;
               display: block !important;
               margin: 0 auto !important;
               position: relative !important;
               ${barcodeYPosition ? `
-                transform: translateY(${(barcodeYPercent - 50) * 0.1}mm) !important;
+                transform: translateY(${(barcodeYPercent - 50) * 0.5}%) !important;
               ` : ''}
             }
             
@@ -2200,11 +2160,12 @@ javascript:(function(){
             .print_barcode_area .print_sample .spec_info .spec_barcode {
               height: auto !important;
               margin: 3px 0 !important;
+              text-align: center !important;
             }
             
             .print_barcode_area .print_sample .spec_info .spec_barcode img {
-              height: ${Math.min(parseFloat(barcodeActualHeight), 8)}mm !important;
-              width: ${Math.min(parseFloat(barcodeActualWidth), 30)}mm !important;
+              max-height: 8mm !important;
+              max-width: 90% !important;
             }
             
             /* 確保字體覆蓋所有可能的元素 */
