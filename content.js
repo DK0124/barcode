@@ -42,6 +42,9 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'bottom',
       canAdjustBarcodeY: true,
+      barcodeHeight: 83,
+      barcodeWidth: 90,
+      barcodeYPosition: 50,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -69,6 +72,9 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'bottom',
       canAdjustBarcodeY: true,
+      barcodeHeight: 83,
+      barcodeWidth: 90,
+      barcodeYPosition: 50,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -95,6 +101,9 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'embedded',
       canAdjustBarcodeY: false,
+      barcodeHeight: 40,
+      barcodeWidth: 85,
+      barcodeYPosition: 50,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info" style="height: 100%;">
@@ -123,6 +132,9 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'embedded',
       canAdjustBarcodeY: false,
+      barcodeHeight: 40,
+      barcodeWidth: 85,
+      barcodeYPosition: 50,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info" style="height: 100%;">
@@ -150,6 +162,9 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'bottom',
       canAdjustBarcodeY: true,
+      barcodeHeight: 70,
+      barcodeWidth: 90,
+      barcodeYPosition: 60,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -178,6 +193,9 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'compact',
       canAdjustBarcodeY: true,
+      barcodeHeight: 35,
+      barcodeWidth: 90,
+      barcodeYPosition: 50,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="style6-container" style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
@@ -203,6 +221,9 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'compact',
       canAdjustBarcodeY: true,
+      barcodeHeight: 70,
+      barcodeWidth: 90,
+      barcodeYPosition: 60,
       rebuild: function(sample, data) {
         // 如果沒有 SKU 資料，嘗試從原始 HTML 中獲取
         if (!data.productCode && data.originalHTML) {
@@ -245,6 +266,9 @@ javascript:(function(){
       barcodePosition: 'center',
       hasOnlyBarcode: true,
       canAdjustBarcodeY: true,
+      barcodeHeight: 60,
+      barcodeWidth: 95,
+      barcodeYPosition: 50,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_barcode pure-barcode" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -279,7 +303,7 @@ javascript:(function(){
     barcodeYPosition: 70,
     labelWidth: 40,
     labelHeight: 30,
-    labelPadding: 3,
+    labelScale: 100, // 新增：整體縮放百分比
     fontFamily: 'Arial, sans-serif',
     logoSize: 30,
     logoX: 50,
@@ -1420,6 +1444,20 @@ javascript:(function(){
     originalLayout = detectOriginalLayout();
     currentLayout = originalLayout;
     
+    // 根據偵測到的樣式設定預設值
+    if (layoutTemplates[originalLayout]) {
+      const template = layoutTemplates[originalLayout];
+      if (template.barcodeHeight !== undefined) {
+        completeDefaultSettings.barcodeHeight = template.barcodeHeight;
+      }
+      if (template.barcodeWidth !== undefined) {
+        completeDefaultSettings.barcodeWidth = template.barcodeWidth;
+      }
+      if (template.barcodeYPosition !== undefined) {
+        completeDefaultSettings.barcodeYPosition = template.barcodeYPosition;
+      }
+    }
+    
     // 抓取產品資料
     extractProductData();
     
@@ -1498,10 +1536,10 @@ javascript:(function(){
                   
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
-                      <span>內部邊距</span>
-                      <span class="bv-value-label" id="label-padding">3mm</span>
+                      <span>整體縮放</span>
+                      <span class="bv-value-label" id="label-scale">100%</span>
                     </div>
-                    <input type="range" id="label-padding-slider" min="0" max="5" step="0.5" value="3" class="bv-glass-slider">
+                    <input type="range" id="label-scale-slider" min="50" max="150" value="100" class="bv-glass-slider">
                   </div>
                 </div>
                 
@@ -1791,7 +1829,7 @@ javascript:(function(){
       
       const labelWidth = document.getElementById('label-width-slider');
       const labelHeight = document.getElementById('label-height-slider');
-      const labelPadding = document.getElementById('label-padding-slider');
+      const labelScale = document.getElementById('label-scale-slider'); // 新增
       const fontFamily = document.getElementById('font-family-select');
       
       /* Logo 上傳功能 */
@@ -1890,7 +1928,8 @@ javascript:(function(){
         
         const totalWidth = parseFloat(labelWidth.value);
         const totalHeight = parseFloat(labelHeight.value);
-        const paddingValue = parseFloat(labelPadding.value);
+        const scalePercent = labelScale ? parseFloat(labelScale.value) : 100;
+        const paddingValue = 1.5; // 固定為 1.5mm
         
         const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 70;
         const barcodeHeightScale = barcodeHeight ? parseFloat(barcodeHeight.value) / 100 : 1;
@@ -1925,7 +1964,7 @@ javascript:(function(){
         }
         document.getElementById('label-width').textContent = labelWidth.value + 'mm';
         document.getElementById('label-height').textContent = labelHeight.value + 'mm';
-        document.getElementById('label-padding').textContent = labelPadding.value + 'mm';
+        document.getElementById('label-scale').textContent = scalePercent + '%';
         
         if (document.getElementById('main-line-height')) {
           document.getElementById('main-line-height').textContent = validatedMainLineHeight + 'px';
@@ -1947,7 +1986,7 @@ javascript:(function(){
         /* 更新所有滑桿的進度條 */
         [mainSize, mainGap, mainLineHeightSlider, subSize, subLineHeightSlider, 
          barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
-         labelWidth, labelHeight, labelPadding,
+         labelWidth, labelHeight, labelScale,
          logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider].forEach(control => {
           if (control && control.type === 'range') {
             updateRangeProgress(control);
@@ -1959,6 +1998,8 @@ javascript:(function(){
           /* 調整條碼標籤整體尺寸 */
           .print_barcode_area {
             width: ${labelWidth.value}mm !important;
+            transform: scale(${scalePercent / 100}) !important;
+            transform-origin: top left !important;
           }
           
           /* 調整單個標籤的尺寸 */
@@ -2152,6 +2193,13 @@ javascript:(function(){
             margin-top: ${(barcodeYPercent - 70) * 0.5}mm !important;
           }
           ` : ''}
+          
+          /* 列印時不縮放 */
+          @media print {
+            .print_barcode_area {
+              transform: scale(1) !important;
+            }
+          }
         `;
         
         /* 更新所有標籤的底圖 */
@@ -2434,7 +2482,7 @@ javascript:(function(){
         mainSize, mainGap, mainLineHeightSlider,
         subSize, subLineHeightSlider,
         barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
-        labelWidth, labelHeight, labelPadding, fontFamily,
+        labelWidth, labelHeight, labelScale, fontFamily,
         logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
       ];
       
@@ -2526,7 +2574,7 @@ javascript:(function(){
           barcodeYPosition: barcodeYPosition ? barcodeYPosition.value : 70,
           labelWidth: labelWidth.value,
           labelHeight: labelHeight.value,
-          labelPadding: labelPadding.value,
+          labelScale: labelScale ? labelScale.value : 100, // 新增
           fontFamily: fontFamily.value,
           logoDataUrl: logoDataUrl,
           logoSize: logoSizeSlider ? logoSizeSlider.value : 30,
@@ -2585,7 +2633,9 @@ javascript:(function(){
         
         labelWidth.value = settings.labelWidth !== undefined ? settings.labelWidth : completeDefaultSettings.labelWidth;
         labelHeight.value = settings.labelHeight !== undefined ? settings.labelHeight : completeDefaultSettings.labelHeight;
-        labelPadding.value = settings.labelPadding !== undefined ? settings.labelPadding : completeDefaultSettings.labelPadding;
+        if (labelScale) {
+          labelScale.value = settings.labelScale !== undefined ? settings.labelScale : completeDefaultSettings.labelScale;
+        }
         
         fontFamily.value = settings.fontFamily || completeDefaultSettings.fontFamily;
         
@@ -2834,7 +2884,8 @@ javascript:(function(){
           }
         }
       });
-            /* 載入上次設定或預設設定 */
+      
+      /* 載入上次設定或預設設定 */
       function loadInitialSettings() {
         const lastSelected = getSettingsFromLocal('lastSelectedPreset');
         if (lastSelected) {
