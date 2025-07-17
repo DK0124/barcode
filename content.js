@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 八種樣式模板版本（改進版） */
+  /* BV SHOP 條碼列印排版器 - 八種樣式模板版本（修正版） */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -34,6 +34,7 @@ javascript:(function(){
       hasSubText: true,
       hasBarcode: true,
       barcodePosition: 'bottom',
+      canAdjustBarcodeY: true,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -60,6 +61,7 @@ javascript:(function(){
       hasSubText: true,
       hasBarcode: true,
       barcodePosition: 'bottom',
+      canAdjustBarcodeY: true,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -85,6 +87,7 @@ javascript:(function(){
       hasSubText: true,
       hasBarcode: true,
       barcodePosition: 'embedded',
+      canAdjustBarcodeY: false,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info" style="height: 100%;">
@@ -112,6 +115,7 @@ javascript:(function(){
       hasSubText: true,
       hasBarcode: true,
       barcodePosition: 'embedded',
+      canAdjustBarcodeY: false,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info" style="height: 100%;">
@@ -138,6 +142,7 @@ javascript:(function(){
       hasSubText: true,
       hasBarcode: true,
       barcodePosition: 'bottom',
+      canAdjustBarcodeY: true,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -165,6 +170,7 @@ javascript:(function(){
       hasSubText: true,
       hasBarcode: true,
       barcodePosition: 'compact',
+      canAdjustBarcodeY: true,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="style6-container" style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
@@ -189,7 +195,18 @@ javascript:(function(){
       hasSubText: true,
       hasBarcode: true,
       barcodePosition: 'compact',
+      canAdjustBarcodeY: true,
       rebuild: function(sample, data) {
+        // 如果沒有 SKU 資料，嘗試從原始 HTML 中獲取
+        if (!data.productCode && data.originalHTML) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = data.originalHTML;
+          const skuElement = tempDiv.querySelector('.sub.sku-text, div[style*="font-size: 7px"]');
+          if (skuElement) {
+            data.productCode = skuElement.textContent.trim();
+          }
+        }
+        
         sample.innerHTML = `
           <div class="style7-container" style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
             <div style="flex: 1;">
@@ -220,6 +237,7 @@ javascript:(function(){
       hasBarcode: true,
       barcodePosition: 'center',
       hasOnlyBarcode: true,
+      canAdjustBarcodeY: true,
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_barcode pure-barcode" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -235,6 +253,7 @@ javascript:(function(){
   let currentLayout = 'style1';
   let isPanelMinimized = false;
   let collapsedSections = {};
+  let originalLayout = 'style1'; // 記錄原始樣式
 
   /* 完整的預設值物件 - 根據 BV 原始樣式 */
   const completeDefaultSettings = {
@@ -273,7 +292,40 @@ javascript:(function(){
   let logoDataUrl = null;
   let logoAspectRatio = 1;
 
-  /* 抓取頁面資料 - 改進版（修正 SKU 抓取） */
+  /* 偵測原始樣式 */
+  function detectOriginalLayout() {
+    const firstSample = document.querySelector('.print_sample');
+    if (!firstSample) return 'style1';
+    
+    const html = firstSample.innerHTML;
+    
+    // 根據特徵判斷樣式
+    if (html.includes('height: 100%') && html.includes('justify-content: center') && !html.includes('spec_info')) {
+      return 'style8'; // 純條碼
+    } else if (html.includes('font-size: 7px') || html.includes('sku-text')) {
+      return 'style7'; // 帶SKU
+    } else if (html.includes('display: flex') && html.includes('flex-direction: column')) {
+      return 'style6'; // 簡約版
+    } else if (html.includes('text-align: right') && html.includes('position: absolute')) {
+      return 'style5'; // 價格置右
+    } else if (html.includes('spec_barcode') && html.includes('spec_info') && html.includes('margin:')) {
+      // 內嵌條碼
+      if (html.includes('特價')) {
+        return 'style3';
+      } else {
+        return 'style4';
+      }
+    } else {
+      // 標準版
+      if (html.includes('特價')) {
+        return 'style1';
+      } else {
+        return 'style2';
+      }
+    }
+  }
+
+  /* 抓取頁面資料 - 改進版 */
   function extractProductData() {
     productData = [];
     
@@ -288,28 +340,31 @@ javascript:(function(){
         specialPrice: '',
         productCode: '',
         barcodeImage: '',
-        barcodeNumber: ''
+        barcodeNumber: '',
+        originalHTML: sample.innerHTML
       };
       
       // 抓取商品名稱
-      const mainElement = sample.querySelector('.spec_info .main');
+      const mainElement = sample.querySelector('.spec_info .main, .main');
       if (mainElement) {
         data.productName = mainElement.textContent.trim();
       }
       
       // 抓取規格、價格、編號等資訊
-      const subElements = sample.querySelectorAll('.spec_info .sub');
+      const subElements = sample.querySelectorAll('.spec_info .sub, .sub');
       subElements.forEach((sub, subIndex) => {
         const text = sub.textContent.trim();
         
-        // 檢查是否為條碼數字（在 spec_barcode 區域內的數字）
+        // 檢查是否為條碼數字
         if (sub.closest('.spec_barcode')) {
           if (/\d{5,}/.test(text)) {
             data.barcodeNumber = text;
           }
         } else {
-          // 根據位置和關鍵字判斷資料類型
-          if (subIndex === 0 || (text.includes('/') && !text.includes('$') && !data.spec)) {
+          // 檢查是否為 SKU (特殊處理樣式7)
+          if (sub.classList.contains('sku-text') || sub.parentElement?.style?.fontSize === '7px') {
+            data.productCode = text;
+          } else if (subIndex === 0 || (text.includes('/') && !text.includes('$') && !data.spec)) {
             // 第一個 sub 通常是規格
             data.spec = text;
           } else if (text.includes('特價')) {
@@ -317,13 +372,10 @@ javascript:(function(){
           } else if (text.includes('售價')) {
             data.price = text;
           } else if (text.match(/^[A-Za-z0-9\-_]+$/) && text.length > 2 && text.length < 20) {
-            // 可能是產品編號/SKU - 字母數字組合
+            // 可能是產品編號/SKU
             if (!data.productCode && !text.match(/^\d+$/)) {
               data.productCode = text;
             }
-          } else if (!data.price && !data.specialPrice && !data.spec && !data.productCode) {
-            // 可能是其他類型的產品編號
-            data.productCode = text;
           }
         }
       });
@@ -668,7 +720,8 @@ javascript:(function(){
       margin-bottom: 28px;
     }
     
-    .bv-primary-button {
+    .bv-primary-button,
+    .bv-reset-button {
       width: 100%;
       background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
       border: none;
@@ -683,16 +736,32 @@ javascript:(function(){
       gap: 16px;
       padding: 16px 20px;
       color: white;
+      margin-bottom: 16px;
     }
     
-    .bv-primary-button:hover {
+    .bv-reset-button {
+      background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%);
+      box-shadow: 
+        0 3px 12px rgba(255, 59, 48, 0.25),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+    }
+    
+    .bv-primary-button:hover,
+    .bv-reset-button:hover {
       transform: translateY(-1px);
       box-shadow: 
         0 6px 20px rgba(81, 138, 255, 0.35),
         inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
     }
     
-    .bv-primary-button:active {
+    .bv-reset-button:hover {
+      box-shadow: 
+        0 6px 20px rgba(255, 59, 48, 0.35),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+    }
+    
+    .bv-primary-button:active,
+    .bv-reset-button:active {
       transform: translateY(0);
     }
     
@@ -1292,7 +1361,11 @@ javascript:(function(){
 
   /* 建立控制面板 */
   setTimeout(() => {
-    // 先抓取產品資料
+    // 偵測原始樣式
+    originalLayout = detectOriginalLayout();
+    currentLayout = originalLayout;
+    
+    // 抓取產品資料
     extractProductData();
     
     const panel = document.createElement('div');
@@ -1316,6 +1389,29 @@ javascript:(function(){
         
         <div class="bv-panel-content-wrapper">
           <div class="bv-panel-body">
+            <!-- 主要操作區 -->
+            <div class="bv-primary-section">
+              <button id="bv-reset-format" class="bv-reset-button">
+                <div class="bv-button-icon">
+                  <span class="material-icons">restart_alt</span>
+                </div>
+                <div class="bv-button-content">
+                  <span class="bv-button-title">還原預設值</span>
+                  <span class="bv-button-subtitle">回復 BV 原始設定</span>
+                </div>
+              </button>
+              
+              <button id="bv-transform-btn" class="bv-primary-button">
+                <div class="bv-button-icon">
+                  <span class="material-icons">auto_fix_high</span>
+                </div>
+                <div class="bv-button-content">
+                  <span class="bv-button-title">智能最佳化</span>
+                  <span class="bv-button-subtitle">自動調整所有設定</span>
+                </div>
+              </button>
+            </div>
+            
             <!-- 樣式選擇 -->
             <div class="bv-settings-card" data-section="layout">
               <h4 class="bv-card-title">
@@ -1333,61 +1429,6 @@ javascript:(function(){
                       <div class="bv-layout-option-desc">${template.description}</div>
                     </div>
                   `).join('')}
-                </div>
-              </div>
-            </div>
-            
-            <!-- 主要操作區 -->
-            <div class="bv-primary-section">
-              <button id="bv-transform-btn" class="bv-primary-button">
-                <div class="bv-button-icon">
-                  <span class="material-icons">auto_fix_high</span>
-                </div>
-                <div class="bv-button-content">
-                  <span class="bv-button-title">智能最佳化</span>
-                  <span class="bv-button-subtitle">自動調整所有設定</span>
-                </div>
-              </button>
-            </div>
-            
-            <!-- 預設管理 -->
-            <div class="bv-settings-card" data-section="presets">
-              <h4 class="bv-card-title">
-                <span class="material-icons">bookmark</span>
-                預設管理
-                <span class="material-icons bv-collapse-icon">expand_more</span>
-              </h4>
-              
-              <div class="bv-card-content">
-                <div class="bv-preset-controls">
-                  <div class="bv-preset-select-wrapper">
-                    <select id="bv-preset-select" class="bv-glass-select">
-                      <option value="">選擇預設...</option>
-                    </select>
-                  </div>
-                  <div class="bv-preset-buttons">
-                    <button class="bv-glass-button" id="bv-save-preset" title="儲存">
-                      <span class="material-icons">save</span>
-                    </button>
-                    <button class="bv-glass-button" id="bv-delete-preset" title="刪除">
-                      <span class="material-icons">delete</span>
-                    </button>
-                    <button class="bv-glass-button" id="bv-reset-format" title="還原預設值">
-                      <span class="material-icons">restart_alt</span>
-                    </button>
-                  </div>
-                </div>
-                
-                <div class="bv-preset-save-row" id="bv-save-preset-row" style="display:none;">
-                  <input type="text" id="bv-new-preset-name" class="bv-glass-input" placeholder="輸入預設名稱...">
-                  <div class="bv-preset-buttons">
-                    <button class="bv-glass-button bv-primary" id="bv-confirm-save">
-                      <span class="material-icons">check</span>
-                    </button>
-                    <button class="bv-glass-button" id="bv-cancel-save">
-                      <span class="material-icons">close</span>
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1465,7 +1506,7 @@ javascript:(function(){
                     </div>
                     <input type="range" id="main-slider" min="8" max="20" value="10" class="bv-glass-slider">
                   </div>
-                  
+
                   <div class="bv-slider-item" id="main-line-height-setting">
                     <div class="bv-slider-header">
                       <span>行高</span>
@@ -1628,6 +1669,45 @@ javascript:(function(){
                 </div>
               </div>
             </div>
+            
+            <!-- 預設管理 - 移到最下面 -->
+            <div class="bv-settings-card" data-section="presets">
+              <h4 class="bv-card-title">
+                <span class="material-icons">bookmark</span>
+                預設管理
+                <span class="material-icons bv-collapse-icon">expand_more</span>
+              </h4>
+              
+              <div class="bv-card-content">
+                <div class="bv-preset-controls">
+                  <div class="bv-preset-select-wrapper">
+                    <select id="bv-preset-select" class="bv-glass-select">
+                      <option value="">選擇預設...</option>
+                    </select>
+                  </div>
+                  <div class="bv-preset-buttons">
+                    <button class="bv-glass-button" id="bv-save-preset" title="儲存">
+                      <span class="material-icons">save</span>
+                    </button>
+                    <button class="bv-glass-button" id="bv-delete-preset" title="刪除">
+                      <span class="material-icons">delete</span>
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="bv-preset-save-row" id="bv-save-preset-row" style="display:none;">
+                  <input type="text" id="bv-new-preset-name" class="bv-glass-input" placeholder="輸入預設名稱...">
+                  <div class="bv-preset-buttons">
+                    <button class="bv-glass-button bv-primary" id="bv-confirm-save">
+                      <span class="material-icons">check</span>
+                    </button>
+                    <button class="bv-glass-button" id="bv-cancel-save">
+                      <span class="material-icons">close</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           
           <div class="bv-panel-footer">
@@ -1735,9 +1815,9 @@ javascript:(function(){
           barcodeWidthSetting.classList.toggle('disabled', !template.hasBarcode);
         }
         if (barcodeYPositionSetting) {
-          // 條碼位置只在 bottom 模式下可調整
+          // 條碼位置根據樣式決定是否可調整
           barcodeYPositionSetting.classList.toggle('disabled', 
-            !template.hasBarcode || template.barcodePosition !== 'bottom');
+            !template.hasBarcode || !template.canAdjustBarcodeY);
         }
         
         // 禁用/啟用對應的控制項
@@ -1753,7 +1833,7 @@ javascript:(function(){
         if (barcodeHeight) barcodeHeight.disabled = !template.hasBarcode;
         if (barcodeWidth) barcodeWidth.disabled = !template.hasBarcode;
         if (barcodeYPosition) {
-          barcodeYPosition.disabled = !template.hasBarcode || template.barcodePosition !== 'bottom';
+          barcodeYPosition.disabled = !template.hasBarcode || !template.canAdjustBarcodeY;
         }
       }
       
@@ -1940,13 +2020,26 @@ javascript:(function(){
             max-width: ${(totalWidth * 0.8) * barcodeWidthScale}mm !important;
           }
           
-          /* 緊湊條碼特殊樣式 */
+          /* 緊湊條碼特殊樣式 - 樣式6、7可調整位置 */
+          .print_barcode_area .print_sample .compact-barcode {
+            margin-top: ${(barcodeYPercent - 70) * 0.3}mm !important;
+          }
+          
           .print_barcode_area .print_sample .compact-barcode img {
             height: ${8 * barcodeHeightScale}mm !important;
             max-width: ${(totalWidth * 0.85) * barcodeWidthScale}mm !important;
           }
           
-          /* 純條碼特殊樣式 */
+          /* 純條碼特殊樣式 - 樣式8可調整位置且置中 */
+          .print_barcode_area .print_sample .pure-barcode {
+            position: absolute !important;
+            top: ${barcodeYPercent}% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: auto !important;
+            height: auto !important;
+          }
+          
           .print_barcode_area .print_sample .pure-barcode img {
             height: ${15 * barcodeHeightScale}mm !important;
             max-width: ${(totalWidth * 0.95) * barcodeWidthScale}mm !important;
@@ -2017,8 +2110,8 @@ javascript:(function(){
             max-width: 100% !important;
           }
           
-          /* 特殊情況：當條碼垂直位置調整時（只在底部條碼樣式生效） */
-          ${template.barcodePosition === 'bottom' ? `
+          /* 特殊情況：當條碼垂直位置調整時（可調整的樣式） */
+          ${template.canAdjustBarcodeY && template.barcodePosition === 'bottom' ? `
           .print_barcode_area .print_sample .spec_barcode {
             margin-top: ${(barcodeYPercent - 70) * 0.5}mm !important;
           }
@@ -2383,23 +2476,20 @@ javascript:(function(){
             break;
             
           case 'style6':
-            // 簡約版 - 更緊湊的排版
+          case 'style7':
+            // 簡約版和帶SKU - 更緊湊的排版，條碼位置可調
             optimizedSettings.mainSize = Math.max(optimizedSettings.mainSize - 1, 9);
             optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 1, 7);
             optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight * 0.9, 90);
-            break;
-            
-          case 'style7':
-            // 帶SKU - 需要為SKU留空間
-            optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 1, 7);
-            optimizedSettings.mainGap = Math.max(optimizedSettings.mainGap - 0.5, 0);
+            optimizedSettings.barcodeYPosition = 70;
             break;
             
           case 'style8':
-            // 純條碼 - 最大化條碼
+            // 純條碼 - 最大化條碼，置中
             optimizedSettings.barcodeHeight = Math.min(150, (availableHeight / 15) * 100);
             optimizedSettings.barcodeWidth = Math.min(120, (availableWidth / (labelWidthMM * 0.95)) * 100);
             optimizedSettings.barcodeTextSize = Math.max(Math.round(baseFontSize * 0.9), 9);
+            optimizedSettings.barcodeYPosition = 50; // 置中
             break;
         }
         
@@ -2598,7 +2688,7 @@ javascript:(function(){
         });
       }
       
-      /* 清除格式按鈕功能 */
+      /* 清除格式按鈕功能 - 修正版 */
       const resetFormatBtn = document.getElementById('bv-reset-format');
       if (resetFormatBtn) {
         resetFormatBtn.addEventListener('click', function() {
@@ -2616,8 +2706,8 @@ javascript:(function(){
             if (mainLineHeightSlider) mainLineHeightSlider.dataset.userModified = 'false';
             if (subLineHeightSlider) subLineHeightSlider.dataset.userModified = 'false';
             
-            // 還原預設樣式
-            currentLayout = 'style1';
+            // 還原到原始偵測的樣式
+            currentLayout = originalLayout;
             document.querySelectorAll('.bv-layout-option').forEach(opt => {
               opt.classList.remove('active');
               if (opt.dataset.layout === currentLayout) {
@@ -2628,7 +2718,12 @@ javascript:(function(){
             // 重建標籤內容
             applyLayoutTemplate();
             
-            applySavedSettings(completeDefaultSettings);
+            // 套用完整預設值
+            const defaultsWithOriginalLayout = {
+              ...completeDefaultSettings,
+              layout: originalLayout
+            };
+            applySavedSettings(defaultsWithOriginalLayout);
             
             const presetSelect = document.getElementById('bv-preset-select');
             if (presetSelect) presetSelect.value = '';
@@ -2990,7 +3085,12 @@ javascript:(function(){
           return;
         }
         
-        applySavedSettings(completeDefaultSettings);
+        // 使用原始偵測的樣式作為預設
+        const defaultsWithOriginalLayout = {
+          ...completeDefaultSettings,
+          layout: originalLayout
+        };
+        applySavedSettings(defaultsWithOriginalLayout);
       }
       
       /* 防止標籤文字被選取 */
