@@ -34,8 +34,8 @@ javascript:(function(){
   /* 八種內建樣式模板 */
   const layoutTemplates = {
     style1: {
-      name: '樣式一：標準版（含特價）',
-      description: '商品名稱、規格、特價、編號、條碼',
+      name: '樣式一',
+      description: '標準版（含特價）',
       showProductName: true,
       showSpec: true,
       showPrice: true,
@@ -43,11 +43,12 @@ javascript:(function(){
       showProductCode: true,
       showBarcode: true,
       barcodePosition: 'bottom',
-      priceInBarcode: false
+      priceInBarcode: false,
+      hideElements: []
     },
     style2: {
-      name: '樣式二：標準版',
-      description: '商品名稱、規格、售價、編號、條碼',
+      name: '樣式二',
+      description: '標準版',
       showProductName: true,
       showSpec: true,
       showPrice: true,
@@ -55,11 +56,12 @@ javascript:(function(){
       showProductCode: true,
       showBarcode: true,
       barcodePosition: 'bottom',
-      priceInBarcode: false
+      priceInBarcode: false,
+      hideElements: ['特價']
     },
     style3: {
-      name: '樣式三：精簡版（含特價）',
-      description: '商品名稱、特價、條碼在文字區',
+      name: '樣式三',
+      description: '精簡版（含特價）',
       showProductName: true,
       showSpec: false,
       showPrice: true,
@@ -67,11 +69,12 @@ javascript:(function(){
       showProductCode: false,
       showBarcode: true,
       barcodePosition: 'inline',
-      priceInBarcode: false
+      priceInBarcode: false,
+      hideElements: ['規格', '編號']
     },
     style4: {
-      name: '樣式四：精簡版',
-      description: '商品名稱、售價、條碼在文字區',
+      name: '樣式四',
+      description: '精簡版',
       showProductName: true,
       showSpec: false,
       showPrice: true,
@@ -79,11 +82,12 @@ javascript:(function(){
       showProductCode: false,
       showBarcode: true,
       barcodePosition: 'inline',
-      priceInBarcode: false
+      priceInBarcode: false,
+      hideElements: ['規格', '編號', '特價']
     },
     style5: {
-      name: '樣式五：價格在條碼',
-      description: '商品名稱、規格、價格顯示在條碼下方',
+      name: '樣式五',
+      description: '價格在條碼',
       showProductName: true,
       showSpec: true,
       showPrice: false,
@@ -91,11 +95,12 @@ javascript:(function(){
       showProductCode: false,
       showBarcode: true,
       barcodePosition: 'bottom',
-      priceInBarcode: true
+      priceInBarcode: true,
+      hideElements: ['售價', '特價', '編號']
     },
     style6: {
-      name: '樣式六：垂直排列',
-      description: '商品名稱、條碼、售價垂直排列',
+      name: '樣式六',
+      description: '垂直排列',
       showProductName: true,
       showSpec: false,
       showPrice: true,
@@ -103,11 +108,12 @@ javascript:(function(){
       showProductCode: false,
       showBarcode: true,
       barcodePosition: 'middle',
-      priceInBarcode: false
+      priceInBarcode: false,
+      hideElements: ['規格', '編號', '特價']
     },
     style7: {
-      name: '樣式七：完整版',
-      description: '顯示所有資訊，價格在條碼下',
+      name: '樣式七',
+      description: '完整版',
       showProductName: true,
       showSpec: true,
       showPrice: false,
@@ -115,11 +121,12 @@ javascript:(function(){
       showProductCode: true,
       showBarcode: true,
       barcodePosition: 'bottom',
-      priceInBarcode: true
+      priceInBarcode: true,
+      hideElements: ['售價', '特價']
     },
     style8: {
-      name: '樣式八：純條碼',
-      description: '只顯示條碼',
+      name: '樣式八',
+      description: '純條碼',
       showProductName: false,
       showSpec: false,
       showPrice: false,
@@ -127,7 +134,8 @@ javascript:(function(){
       showProductCode: false,
       showBarcode: true,
       barcodePosition: 'center',
-      priceInBarcode: false
+      priceInBarcode: false,
+      hideElements: ['all']
     }
   };
 
@@ -560,11 +568,11 @@ javascript:(function(){
       margin-bottom: 20px;
     }
     
-    /* 樣式選擇器 */
+    /* 樣式選擇器 - 改為圖片預覽 */
     .bv-layout-selector {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 20px;
     }
     
@@ -572,15 +580,19 @@ javascript:(function(){
       background: rgba(246, 246, 248, 0.5);
       border: 2px solid rgba(0, 0, 0, 0.06);
       border-radius: 12px;
-      padding: 12px;
+      padding: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
     
     .bv-layout-option:hover {
       background: rgba(81, 138, 255, 0.05);
       border-color: rgba(81, 138, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
     .bv-layout-option.active {
@@ -589,17 +601,44 @@ javascript:(function(){
       box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
     }
     
+    .bv-layout-option.active::after {
+      content: '✓';
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      background: #518aff;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .bv-layout-preview {
+      width: 100%;
+      height: 60px;
+      object-fit: contain;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      background: white;
+      padding: 4px;
+    }
+    
     .bv-layout-option-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: #1a1a1a;
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
     
     .bv-layout-option-desc {
-      font-size: 11px;
+      font-size: 10px;
       color: #86868b;
-      line-height: 1.3;
+      line-height: 1.2;
     }
     
     /* 設定卡片 */
@@ -1217,9 +1256,10 @@ javascript:(function(){
               </h4>
               
               <div class="bv-layout-selector">
-                ${Object.entries(layoutTemplates).map(([key, template]) => `
+                ${Object.entries(layoutTemplates).map(([key, template], index) => `
                   <div class="bv-layout-option ${key === currentLayout ? 'active' : ''}" data-layout="${key}">
-                    <div class="bv-layout-option-title">${template.name.split('：')[0]}</div>
+                    <img class="bv-layout-preview" src="https://bvshop-manage.bvshop.tw/img/barcode/barcode${index + 1}.PNG" alt="${template.name}">
+                    <div class="bv-layout-option-title">${template.name}</div>
                     <div class="bv-layout-option-desc">${template.description}</div>
                   </div>
                 `).join('')}
@@ -1493,6 +1533,7 @@ javascript:(function(){
                       <span class="bv-value-label" id="logo-opacity">20%</span>
                     </div>
                     <input type="range" id="logo-opacity-slider" min="0" max="100" value="20" class="bv-glass-slider">
+                  </div>
                 </div>
                 
                 <button class="bv-remove-logo-btn" id="remove-logo-btn">
@@ -1526,6 +1567,67 @@ javascript:(function(){
       const value = (input.value - input.min) / (input.max - input.min) * 100;
       input.style.setProperty('--value', value + '%');
       input.style.background = `linear-gradient(to right, #518aff 0%, #7289DA ${value}%, rgba(0, 0, 0, 0.1) ${value}%, rgba(0, 0, 0, 0.1) 100%)`;
+    }
+    
+    /* 根據樣式模板更新內容顯示 */
+    function applyLayoutTemplate() {
+      const template = layoutTemplates[currentLayout];
+      
+      // 為每個標籤套用顯示/隱藏規則
+      document.querySelectorAll('.print_sample').forEach((sample, index) => {
+        const specInfo = sample.querySelector('.spec_info');
+        if (!specInfo) return;
+        
+        // 商品名稱
+        const mainElement = specInfo.querySelector('.main');
+        if (mainElement) {
+          mainElement.style.display = template.showProductName ? 'block' : 'none';
+        }
+        
+        // 規格、價格、編號等
+        const subElements = specInfo.querySelectorAll('.sub');
+        subElements.forEach(sub => {
+          const text = sub.textContent.trim();
+          
+          // 根據內容類型決定是否顯示
+          if (text.includes('規格:') || text.includes('規格：')) {
+            sub.style.display = template.showSpec ? 'block' : 'none';
+          } else if (text.includes('特價:') || text.includes('特價：')) {
+            sub.style.display = template.showSpecialPrice ? 'block' : 'none';
+          } else if (text.includes('售價:') || text.includes('售價：')) {
+            sub.style.display = template.showPrice ? 'block' : 'none';
+          } else if (text.includes('cat-') || /^[A-Z0-9-]+$/.test(text)) {
+            sub.style.display = template.showProductCode ? 'block' : 'none';
+          }
+        });
+        
+        // 條碼區域
+        const barcodeArea = sample.querySelector('.spec_barcode');
+        if (barcodeArea) {
+          if (template.barcodePosition === 'inline') {
+            // 內嵌條碼模式 - 顯示但調整位置
+            barcodeArea.style.display = 'block';
+            barcodeArea.style.position = 'static';
+            barcodeArea.style.marginTop = '5px';
+            barcodeArea.style.height = 'auto';
+            
+            // 移動到文字區域內
+            if (specInfo && !specInfo.contains(barcodeArea)) {
+              specInfo.appendChild(barcodeArea);
+            }
+          } else {
+            // 其他模式 - 隱藏原始條碼
+            barcodeArea.style.display = 'none';
+          }
+        }
+        
+        // 純條碼樣式特別處理
+        if (currentLayout === 'style8') {
+          specInfo.style.display = 'none';
+        } else {
+          specInfo.style.display = 'block';
+        }
+      });
     }
     
     /* 延遲初始化所有控制項 */
@@ -1998,7 +2100,7 @@ javascript:(function(){
             position: relative !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
+            justify-content: ${template.barcodePosition === 'center' ? 'center' : 'space-between'} !important;
             overflow: hidden !important;
           }
           
@@ -2036,9 +2138,22 @@ javascript:(function(){
             letter-spacing: unset !important;
           }
           
-          /* 隱藏原始條碼區域 */
-          .print_barcode_area .print_sample .spec_barcode {
-            display: none !important;
+          /* 內嵌條碼樣式 */
+          .print_barcode_area .print_sample .spec_info .spec_barcode {
+            margin-top: 5px !important;
+            text-align: center !important;
+          }
+          
+          .print_barcode_area .print_sample .spec_info .spec_barcode img {
+            height: 8mm !important;
+            width: auto !important;
+            max-width: 90% !important;
+          }
+          
+          .print_barcode_area .print_sample .spec_info .spec_barcode .sub {
+            font-size: ${barcodeTextSize.value}px !important;
+            font-weight: ${barcodeTextFontWeight} !important;
+            margin-top: 2px !important;
           }
           
           /* 條碼獨立圖層 */
@@ -2050,6 +2165,7 @@ javascript:(function(){
             height: ${barcodeHeightMM}mm !important;
             max-width: none !important;
             max-height: none !important;
+            display: ${template.showBarcode && template.barcodePosition !== 'inline' ? 'block' : 'none'} !important;
           }
           
           /* 條碼文字圖層 */
@@ -2061,6 +2177,7 @@ javascript:(function(){
             font-weight: ${barcodeTextFontWeight} !important;
             font-family: ${fontFamily.value} !important;
             color: black !important;
+            display: ${template.showBarcode && template.barcodePosition !== 'inline' ? 'block' : 'none'} !important;
           }
           
           /* 底圖樣式 - 保持原始寬高比 */
@@ -2081,6 +2198,9 @@ javascript:(function(){
           }
         `;
         
+        /* 套用樣式模板 */
+        applyLayoutTemplate();
+        
         /* 更新所有標籤的圖層 */
         updateAllLayers();
         
@@ -2090,6 +2210,8 @@ javascript:(function(){
       
       /* 更新所有標籤的圖層 */
       function updateAllLayers() {
+        const template = layoutTemplates[currentLayout];
+        
         // 移除現有圖層
         document.querySelectorAll('.label-background-logo, .label-barcode-layer, .label-barcode-text').forEach(layer => layer.remove());
         
@@ -2105,20 +2227,30 @@ javascript:(function(){
             sample.insertBefore(logo, sample.firstChild);
           }
           
-          // 添加條碼圖片
-          if (data.barcodeImage) {
-            const barcode = document.createElement('img');
-            barcode.className = 'label-barcode-layer';
-            barcode.src = data.barcodeImage;
-            sample.appendChild(barcode);
-          }
-          
-          // 添加條碼文字
-          if (data.barcodeNumber) {
-            const barcodeText = document.createElement('div');
-            barcodeText.className = 'label-barcode-text';
-            barcodeText.textContent = data.barcodeNumber;
-            sample.appendChild(barcodeText);
+          // 只在非內嵌模式下添加條碼圖層
+          if (template.barcodePosition !== 'inline') {
+            // 添加條碼圖片
+            if (data.barcodeImage && template.showBarcode) {
+              const barcode = document.createElement('img');
+              barcode.className = 'label-barcode-layer';
+              barcode.src = data.barcodeImage;
+              sample.appendChild(barcode);
+              
+              // 添加條碼文字
+              if (data.barcodeNumber) {
+                const barcodeText = document.createElement('div');
+                barcodeText.className = 'label-barcode-text';
+                
+                // 如果價格顯示在條碼區域
+                if (template.priceInBarcode && data.price) {
+                  barcodeText.innerHTML = `${data.barcodeNumber}<br><b>${data.price}</b>`;
+                } else {
+                  barcodeText.textContent = data.barcodeNumber;
+                }
+                
+                sample.appendChild(barcodeText);
+              }
+            }
           }
         });
       }
@@ -2165,7 +2297,7 @@ javascript:(function(){
           updateStyles();
           
           // 顯示通知
-          showNotification(`已切換至${template.name.split('：')[0]}`);
+          showNotification(`已切換至${template.name}`);
         });
       });
       
@@ -2287,32 +2419,6 @@ javascript:(function(){
               opt.classList.add('active');
             }
           });
-          
-          // 更新文字設定區塊的顯示狀態
-          const template = layoutTemplates[currentLayout];
-          const mainTextSetting = document.getElementById('main-text-setting');
-          const mainSizeSetting = document.getElementById('main-size-setting');
-          const mainLineHeightSetting = document.getElementById('main-line-height-setting');
-          const mainGapSetting = document.getElementById('main-gap-setting');
-          const textSettingsCard = document.getElementById('text-settings-card');
-          
-          if (template.showProductName) {
-            mainTextSetting.style.display = '';
-            mainSizeSetting.style.display = '';
-            mainLineHeightSetting.style.display = '';
-            mainGapSetting.style.display = '';
-          } else {
-            mainTextSetting.style.display = 'none';
-            mainSizeSetting.style.display = 'none';
-            mainLineHeightSetting.style.display = 'none';
-            mainGapSetting.style.display = 'none';
-          }
-          
-          if (currentLayout === 'style8') {
-            textSettingsCard.style.display = 'none';
-          } else {
-            textSettingsCard.style.display = '';
-          }
         }
         
         mainSize.value = settings.mainSize !== undefined ? settings.mainSize : completeDefaultSettings.mainSize;
