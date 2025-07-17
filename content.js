@@ -163,6 +163,19 @@ javascript:(function(){
   /* 儲存原始資料 */
   let productData = [];
 
+  /* 建立動態樣式元素 - 移到全域作用域 */
+  const dynamicStyle = document.createElement('style');
+  document.head.appendChild(dynamicStyle);
+
+  /* Logo 相關變數 - 移到全域作用域 */
+  let logoDataUrl = null;
+  let logoAspectRatio = 1;
+
+  /* 全域更新樣式函數 - 在最外層定義 */
+  window.updateStylesGlobal = function() {
+    // 稍後會被真正的 updateStyles 函數覆蓋
+  };
+
   /* 抓取頁面資料 */
   function extractProductData() {
     productData = [];
@@ -241,6 +254,130 @@ javascript:(function(){
   function calculateSuggestedLineHeight(fontSize) {
     const size = parseInt(fontSize);
     return Math.round(size * 1.1);
+  }
+  
+  /* 為 range input 添加動態值更新 */
+  function updateRangeProgress(input) {
+    const value = (input.value - input.min) / (input.max - input.min) * 100;
+    input.style.setProperty('--value', value + '%');
+    input.style.background = `linear-gradient(to right, #518aff 0%, #7289DA ${value}%, rgba(0, 0, 0, 0.1) ${value}%, rgba(0, 0, 0, 0.1) 100%)`;
+  }
+  
+  /* 重新建立標籤內容 */
+  function rebuildLabels() {
+    document.querySelectorAll('.print_sample').forEach((sample, index) => {
+      // 清空原始內容
+      sample.innerHTML = '';
+      
+      // 建立新的內容容器
+      const contentWrapper = document.createElement('div');
+      contentWrapper.className = 'bv-label-content';
+      
+      const template = layoutTemplates[currentLayout];
+      const data = productData[index] || {};
+      
+      // 根據樣式建立內容
+      if (template.showProductName || template.showSpec || template.showPrice || template.showProductCode) {
+        const textInfo = document.createElement('div');
+        textInfo.className = 'bv-text-info';
+        
+        // 商品名稱
+        if (template.showProductName && data.productName) {
+          const productName = document.createElement('div');
+          productName.className = 'bv-product-name';
+          productName.textContent = data.productName;
+          textInfo.appendChild(productName);
+        }
+        
+        // 規格
+        if (template.showSpec && data.spec) {
+          const spec = document.createElement('div');
+          spec.className = 'bv-product-spec';
+          spec.textContent = `規格: ${data.spec}`;
+          textInfo.appendChild(spec);
+        }
+        
+        // 價格（如果不在條碼區域顯示）
+        if (template.showPrice && !template.priceInBarcode) {
+          if (template.showSpecialPrice && data.specialPrice) {
+            const specialPrice = document.createElement('div');
+            specialPrice.className = 'bv-product-price';
+            specialPrice.textContent = `特價: ${data.specialPrice}`;
+            textInfo.appendChild(specialPrice);
+          } else if (data.price) {
+            const price = document.createElement('div');
+            price.className = 'bv-product-price';
+            price.textContent = `售價: ${data.price}`;
+            textInfo.appendChild(price);
+          }
+        }
+        
+        // 產品編號
+        if (template.showProductCode && data.productCode) {
+          const productCode = document.createElement('div');
+          productCode.className = 'bv-product-code';
+          productCode.textContent = data.productCode;
+          textInfo.appendChild(productCode);
+        }
+        
+        // 內嵌條碼（樣式三、四）
+        if (template.barcodePosition === 'inline' && template.showBarcode && data.barcodeImage) {
+          const barcodeArea = document.createElement('div');
+          barcodeArea.className = 'bv-barcode-area bv-inline-barcode';
+          
+          const barcodeImg = document.createElement('img');
+          barcodeImg.className = 'bv-barcode-image';
+          barcodeImg.src = data.barcodeImage;
+          barcodeArea.appendChild(barcodeImg);
+          
+          if (data.barcodeNumber) {
+            const barcodeText = document.createElement('div');
+            barcodeText.className = 'bv-barcode-text';
+            barcodeText.textContent = data.barcodeNumber;
+            barcodeArea.appendChild(barcodeText);
+          }
+          
+          textInfo.appendChild(barcodeArea);
+        }
+        
+        contentWrapper.appendChild(textInfo);
+      }
+      
+      // 底部或中間條碼
+      if ((template.barcodePosition === 'bottom' || template.barcodePosition === 'middle' || template.barcodePosition === 'center') 
+          && template.showBarcode && data.barcodeImage) {
+        const barcodeArea = document.createElement('div');
+        barcodeArea.className = 'bv-barcode-area';
+        
+        const barcodeImg = document.createElement('img');
+        barcodeImg.className = 'bv-barcode-image';
+        barcodeImg.src = data.barcodeImage;
+        barcodeArea.appendChild(barcodeImg);
+        
+        if (data.barcodeNumber) {
+          const barcodeText = document.createElement('div');
+          barcodeText.className = 'bv-barcode-text';
+          
+          // 如果價格顯示在條碼區域
+          if (template.priceInBarcode && data.price) {
+            barcodeText.innerHTML = `${data.barcodeNumber}<br><b>${data.price}</b>`;
+          } else {
+            barcodeText.textContent = data.barcodeNumber;
+          }
+          
+          barcodeArea.appendChild(barcodeText);
+        }
+        
+        contentWrapper.appendChild(barcodeArea);
+      }
+      
+      sample.appendChild(contentWrapper);
+    });
+    
+    // 使用全域的 updateStyles 函數
+    if (window.updateStylesGlobal) {
+      window.updateStylesGlobal();
+    }
   }
   
   /* 建立基本樣式 */
@@ -1558,136 +1695,6 @@ javascript:(function(){
     floatingButton.innerHTML = '<span class="material-icons">print</span>';
     document.body.appendChild(floatingButton);
     
-    /* 建立動態樣式元素 */
-    const dynamicStyle = document.createElement('style');
-    document.head.appendChild(dynamicStyle);
-    
-    /* Logo 相關變數 */
-    let logoDataUrl = null;
-    let logoAspectRatio = 1;
-    
-    /* 為 range input 添加動態值更新 */
-    function updateRangeProgress(input) {
-      const value = (input.value - input.min) / (input.max - input.min) * 100;
-      input.style.setProperty('--value', value + '%');
-      input.style.background = `linear-gradient(to right, #518aff 0%, #7289DA ${value}%, rgba(0, 0, 0, 0.1) ${value}%, rgba(0, 0, 0, 0.1) 100%)`;
-    }
-    
-    /* 重新建立標籤內容 */
-    function rebuildLabels() {
-      document.querySelectorAll('.print_sample').forEach((sample, index) => {
-        // 清空原始內容
-        sample.innerHTML = '';
-        
-        // 建立新的內容容器
-        const contentWrapper = document.createElement('div');
-        contentWrapper.className = 'bv-label-content';
-        
-        const template = layoutTemplates[currentLayout];
-        const data = productData[index] || {};
-        
-        // 根據樣式建立內容
-        if (template.showProductName || template.showSpec || template.showPrice || template.showProductCode) {
-          const textInfo = document.createElement('div');
-          textInfo.className = 'bv-text-info';
-          
-          // 商品名稱
-          if (template.showProductName && data.productName) {
-            const productName = document.createElement('div');
-            productName.className = 'bv-product-name';
-            productName.textContent = data.productName;
-            textInfo.appendChild(productName);
-          }
-          
-          // 規格
-          if (template.showSpec && data.spec) {
-            const spec = document.createElement('div');
-            spec.className = 'bv-product-spec';
-            spec.textContent = `規格: ${data.spec}`;
-            textInfo.appendChild(spec);
-          }
-          
-          // 價格（如果不在條碼區域顯示）
-          if (template.showPrice && !template.priceInBarcode) {
-            if (template.showSpecialPrice && data.specialPrice) {
-              const specialPrice = document.createElement('div');
-              specialPrice.className = 'bv-product-price';
-              specialPrice.textContent = `特價: ${data.specialPrice}`;
-              textInfo.appendChild(specialPrice);
-            } else if (data.price) {
-              const price = document.createElement('div');
-              price.className = 'bv-product-price';
-              price.textContent = `售價: ${data.price}`;
-              textInfo.appendChild(price);
-            }
-          }
-          
-          // 產品編號
-          if (template.showProductCode && data.productCode) {
-            const productCode = document.createElement('div');
-            productCode.className = 'bv-product-code';
-            productCode.textContent = data.productCode;
-            textInfo.appendChild(productCode);
-          }
-          
-          // 內嵌條碼（樣式三、四）
-          if (template.barcodePosition === 'inline' && template.showBarcode && data.barcodeImage) {
-            const barcodeArea = document.createElement('div');
-            barcodeArea.className = 'bv-barcode-area bv-inline-barcode';
-            
-            const barcodeImg = document.createElement('img');
-            barcodeImg.className = 'bv-barcode-image';
-            barcodeImg.src = data.barcodeImage;
-            barcodeArea.appendChild(barcodeImg);
-            
-            if (data.barcodeNumber) {
-              const barcodeText = document.createElement('div');
-              barcodeText.className = 'bv-barcode-text';
-              barcodeText.textContent = data.barcodeNumber;
-              barcodeArea.appendChild(barcodeText);
-            }
-            
-            textInfo.appendChild(barcodeArea);
-          }
-          
-          contentWrapper.appendChild(textInfo);
-        }
-        
-        // 底部或中間條碼
-        if ((template.barcodePosition === 'bottom' || template.barcodePosition === 'middle' || template.barcodePosition === 'center') 
-            && template.showBarcode && data.barcodeImage) {
-          const barcodeArea = document.createElement('div');
-          barcodeArea.className = 'bv-barcode-area';
-          
-          const barcodeImg = document.createElement('img');
-          barcodeImg.className = 'bv-barcode-image';
-          barcodeImg.src = data.barcodeImage;
-          barcodeArea.appendChild(barcodeImg);
-          
-          if (data.barcodeNumber) {
-            const barcodeText = document.createElement('div');
-            barcodeText.className = 'bv-barcode-text';
-            
-            // 如果價格顯示在條碼區域
-            if (template.priceInBarcode && data.price) {
-              barcodeText.innerHTML = `${data.barcodeNumber}<br><b>${data.price}</b>`;
-            } else {
-              barcodeText.textContent = data.barcodeNumber;
-            }
-            
-            barcodeArea.appendChild(barcodeText);
-          }
-          
-          contentWrapper.appendChild(barcodeArea);
-        }
-        
-        sample.appendChild(contentWrapper);
-      });
-      
-      // 更新樣式
-      updateStyles();
-    }
-    
     /* 樣式選擇事件 */
     document.querySelectorAll('.bv-layout-option').forEach(option => {
       option.addEventListener('click', function() {
@@ -2361,6 +2368,9 @@ javascript:(function(){
         });
       }
       
+      // 將 updateStyles 函數覆蓋全域函數
+      window.updateStylesGlobal = updateStyles;
+      
       /* 添加事件監聽器 */
       const controls = [
         mainSize, mainGap, mainLineHeightSlider,
@@ -2903,5 +2913,28 @@ javascript:(function(){
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
   }
+  
+  /* 顯示通知訊息 - 全域函數 */
+  window.showNotification = function(message, type = 'success') {
+    const existingNotification = document.querySelector('.bv-notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `bv-notification ${type}`;
+    
+    const icon = document.createElement('span');
+    icon.className = 'material-icons';
+    icon.textContent = type === 'success' ? 'check_circle' : 'warning';
+    
+    notification.appendChild(icon);
+    notification.appendChild(document.createTextNode(message));
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      setTimeout(() => notification.remove(), 400);
+    }, 3000);
+  };
 })();
-                    
