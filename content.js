@@ -43,8 +43,8 @@ javascript:(function(){
             <ul>
               <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
               <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub">${data.price || '$1,234'}</li>
-              <li class="sub">${data.specialPrice || '$1,111'}</li>
+              <li class="sub">${data.price || '售價 $1,234'}</li>
+              <li class="sub">${data.specialPrice || '特價 $1,111'}</li>
             </ul>
           </div>
           <div class="spec_barcode">
@@ -65,7 +65,7 @@ javascript:(function(){
             <ul>
               <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
               <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub">售價 ${data.price || '$1,234'}</li>
+              <li class="sub">${data.price || '售價 $1,234'}</li>
             </ul>
           </div>
           <div class="spec_barcode">
@@ -91,8 +91,8 @@ javascript:(function(){
                 ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 10mm;">` : ''}
                 <span class="sub">${data.barcodeNumber || '123456789'}</span>
               </div>
-              <li class="sub">售價 ${data.price || '$1,234'}</li>
-              <li class="sub">特價 ${data.specialPrice || '$1,111'}</li>
+              <li class="sub">${data.price || '售價 $1,234'}</li>
+              <li class="sub">${data.specialPrice || '特價 $1,111'}</li>
             </ul>
           </div>
         `;
@@ -114,7 +114,7 @@ javascript:(function(){
                 ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 10mm;">` : ''}
                 <span class="sub">${data.barcodeNumber || '123456789'}</span>
               </div>
-              <li class="sub">售價 ${data.price || '$1,234'}</li>
+              <li class="sub">${data.price || '售價 $1,234'}</li>
             </ul>
           </div>
         `;
@@ -135,7 +135,7 @@ javascript:(function(){
           </div>
           <div class="spec_barcode" style="position: relative;">
             <div style="text-align: right; position: absolute; right: 0; top: -20px; font-size: 10px;">
-              <span class="sub">售價 ${data.price || '$1,234'} 特價 ${data.specialPrice || '$1,111'}</span>
+              <span class="sub">${data.price || '售價 $1,234'} ${data.specialPrice || '特價 $1,111'}</span>
             </div>
             ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="margin-top: 5px;">` : ''}
             <span class="sub">${data.barcodeNumber || '123456789'}</span>
@@ -174,11 +174,11 @@ javascript:(function(){
             <div style="flex: 1;">
               <div class="main" style="font-size: 10px;">${data.productName || '商品名稱'}</div>
               <div class="sub" style="font-size: 8px;">${data.spec || '規格名稱一 / 規格名稱二'}</div>
-              <div class="sub" style="font-size: 7px; margin-top: 2px;">sku</div>
+              <div class="sub" style="font-size: 7px; margin-top: 2px;">${data.productCode || 'sku'}</div>
             </div>
             <div style="text-align: center;">
               <div class="sub" style="font-size: 8px; text-align: right; margin-bottom: 2px;">
-                售價 ${data.price || '$1,234'} 特價 ${data.specialPrice || '$1,111'}
+                ${data.price || '售價 $1,234'} ${data.specialPrice || '特價 $1,111'}
               </div>
               ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 8mm; width: auto;">` : ''}
               <div class="sub" style="font-size: 7px; margin-top: 1px;">${data.barcodeNumber || '123456789'}</div>
@@ -202,7 +202,7 @@ javascript:(function(){
       }
     }
   };
-
+  
   /* 初始變數 */
   let currentLayout = 'style1';
   let isPanelMinimized = false;
