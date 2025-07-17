@@ -209,23 +209,23 @@ javascript:(function(){
 
   /* 完整的預設值物件 */
   const completeDefaultSettings = {
-    layout: 'style1',
-    mainSize: 11,          // 調大一點（原本10）
-    mainBold: true,
-    mainGap: 2,           // 增加間距（原本0）
-    mainLineHeight: 13,    // 調整行高
-    subSize: 9,           // 調大一點（原本8）
-    subBold: false,       // 副文字不需要粗體
-    subLineHeight: 11,    
-    barcodeTextSize: 9,   // 條碼數字稍大
-    barcodeTextBold: false,
-    barcodeHeight: 100,
-    barcodeWidth: 100,
-    barcodeYPosition: 70,
-    labelWidth: 40,       // 40mm
-    labelHeight: 30,      // 30mm（修正）
-    labelPadding: 2,      // 增加內邊距
-    fontFamily: 'Arial, sans-serif',
+    layout: 'style1',      // 預設使用樣式一
+    mainSize: 10,          // 商品名稱字體大小
+    mainBold: true,        // 商品名稱粗體
+    mainGap: 0,           // 商品名稱下方間距
+    mainLineHeight: 11,    // 商品名稱行高
+    subSize: 8,           // 副文字大小（規格、價格等）
+    subBold: true,        // 副文字粗體
+    subLineHeight: 9,     // 副文字行高
+    barcodeTextSize: 8,   // 條碼數字大小
+    barcodeTextBold: true, // 條碼數字粗體（原始樣式有 <b> 標籤）
+    barcodeHeight: 100,   // 條碼高度
+    barcodeWidth: 100,    // 條碼寬度
+    barcodeYPosition: 70, // 條碼垂直位置
+    labelWidth: 40,       // 標籤寬度 40mm
+    labelHeight: 26,      // 標籤高度 26mm（根據原始CSS）
+    labelPadding: 1,      // 內邊距 1mm
+    fontFamily: 'Arial, sans-serif', // 預設字體
     logoSize: 30,
     logoX: 50,
     logoY: 50,
