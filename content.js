@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 八種樣式模板版本（修正版） */
+  /* BV SHOP 條碼列印排版器 - 八種樣式模板版本（改進版） */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -30,6 +30,10 @@ javascript:(function(){
       name: '樣式一',
       description: '標準版（含特價）',
       imageExt: 'PNG',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      barcodePosition: 'bottom',
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -52,6 +56,10 @@ javascript:(function(){
       name: '樣式二',
       description: '標準版（無特價）',
       imageExt: 'PNG',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      barcodePosition: 'bottom',
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -73,6 +81,10 @@ javascript:(function(){
       name: '樣式三',
       description: '條碼嵌入（含特價）',
       imageExt: 'PNG',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      barcodePosition: 'embedded',
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info" style="height: 100%;">
@@ -80,8 +92,8 @@ javascript:(function(){
               <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
               <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
               <li class="sub">${data.barcodeNumber || '123456789'}</li>
-              <div class="spec_barcode" style="margin: 3px 0;">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 10mm;">` : ''}
+              <div class="spec_barcode embedded-barcode" style="margin: 3px 0;">
+                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
                 <span class="sub">${data.barcodeNumber || '123456789'}</span>
               </div>
               <li class="sub">${data.price || '售價 $1,234'}</li>
@@ -96,6 +108,10 @@ javascript:(function(){
       name: '樣式四',
       description: '條碼嵌入（無特價）',
       imageExt: 'PNG',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      barcodePosition: 'embedded',
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info" style="height: 100%;">
@@ -103,8 +119,8 @@ javascript:(function(){
               <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
               <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
               <li class="sub">${data.barcodeNumber || '123456789'}</li>
-              <div class="spec_barcode" style="margin: 3px 0;">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 10mm;">` : ''}
+              <div class="spec_barcode embedded-barcode" style="margin: 3px 0;">
+                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
                 <span class="sub">${data.barcodeNumber || '123456789'}</span>
               </div>
               <li class="sub">${data.price || '售價 $1,234'}</li>
@@ -118,6 +134,10 @@ javascript:(function(){
       name: '樣式五',
       description: '價格置右',
       imageExt: 'PNG',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      barcodePosition: 'bottom',
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
@@ -126,8 +146,8 @@ javascript:(function(){
               <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
             </ul>
           </div>
-          <div class="spec_barcode" style="position: relative;">
-            <div style="text-align: right; position: absolute; right: 0; top: -20px; font-size: 10px;">
+          <div class="spec_barcode style5-barcode" style="position: relative;">
+            <div class="price-right" style="text-align: right; position: absolute; right: 0; top: -20px;">
               <span class="sub">${data.price || '售價 $1,234'} ${data.specialPrice || '特價 $1,111'}</span>
             </div>
             ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="margin-top: 5px;">` : ''}
@@ -141,16 +161,20 @@ javascript:(function(){
       name: '樣式六',
       description: '簡約版',
       imageExt: 'jpg',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      barcodePosition: 'compact',
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
+          <div class="style6-container" style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
             <div style="flex: 1;">
-              <div class="main" style="font-size: 10px;">${data.productName || '商品名稱'}</div>
-              <div class="sub" style="font-size: 8px;">${data.spec || '規格名稱一 / 規格名稱二'}</div>
+              <div class="main">${data.productName || '商品名稱'}</div>
+              <div class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</div>
             </div>
-            <div style="text-align: center;">
-              ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 8mm; width: auto;">` : ''}
-              <div class="sub" style="font-size: 7px; margin-top: 1px;">${data.barcodeNumber || '123456789'}</div>
+            <div class="spec_barcode compact-barcode" style="text-align: center;">
+              ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
+              <div class="sub">${data.barcodeNumber || '123456789'}</div>
             </div>
           </div>
         `;
@@ -161,20 +185,26 @@ javascript:(function(){
       name: '樣式七',
       description: '帶SKU版',
       imageExt: 'jpg',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      barcodePosition: 'compact',
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
+          <div class="style7-container" style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
             <div style="flex: 1;">
-              <div class="main" style="font-size: 10px;">${data.productName || '商品名稱'}</div>
-              <div class="sub" style="font-size: 8px;">${data.spec || '規格名稱一 / 規格名稱二'}</div>
-              <div class="sub" style="font-size: 7px; margin-top: 2px;">${data.productCode || 'sku'}</div>
+              <div class="main">${data.productName || '商品名稱'}</div>
+              <div class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</div>
+              <div class="sub sku-text">${data.productCode || 'sku'}</div>
             </div>
-            <div style="text-align: center;">
-              <div class="sub" style="font-size: 8px; text-align: right; margin-bottom: 2px;">
+            <div class="price-section" style="text-align: center;">
+              <div class="sub" style="text-align: right; margin-bottom: 2px;">
                 ${data.price || '售價 $1,234'} ${data.specialPrice || '特價 $1,111'}
               </div>
-              ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 8mm; width: auto;">` : ''}
-              <div class="sub" style="font-size: 7px; margin-top: 1px;">${data.barcodeNumber || '123456789'}</div>
+              <div class="spec_barcode compact-barcode">
+                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
+                <div class="sub">${data.barcodeNumber || '123456789'}</div>
+              </div>
             </div>
           </div>
         `;
@@ -185,12 +215,16 @@ javascript:(function(){
       name: '樣式八',
       description: '純條碼',
       imageExt: 'jpg',
-      hasOnlyBarcode: true, // 標記此樣式只有條碼
+      hasMainText: false,
+      hasSubText: false,
+      hasBarcode: true,
+      barcodePosition: 'center',
+      hasOnlyBarcode: true,
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div class="spec_barcode" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 15mm; width: auto;">` : ''}
-            <span class="sub" style="font-size: 9px; margin-top: 3px;">${data.barcodeNumber || '123456789'}</span>
+          <div class="spec_barcode pure-barcode" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
+            <span class="sub">${data.barcodeNumber || '123456789'}</span>
           </div>
         `;
       }
@@ -200,6 +234,7 @@ javascript:(function(){
   /* 初始變數 */
   let currentLayout = 'style1';
   let isPanelMinimized = false;
+  let collapsedSections = {};
 
   /* 完整的預設值物件 - 根據 BV 原始樣式 */
   const completeDefaultSettings = {
@@ -217,7 +252,7 @@ javascript:(function(){
     barcodeWidth: 100,
     barcodeYPosition: 70,
     labelWidth: 40,
-    labelHeight: 30, // 修正為 30mm
+    labelHeight: 30,
     labelPadding: 1,
     fontFamily: 'Arial, sans-serif',
     logoSize: 30,
@@ -238,7 +273,7 @@ javascript:(function(){
   let logoDataUrl = null;
   let logoAspectRatio = 1;
 
-  /* 抓取頁面資料 - 改進版 */
+  /* 抓取頁面資料 - 改進版（修正 SKU 抓取） */
   function extractProductData() {
     productData = [];
     
@@ -264,7 +299,7 @@ javascript:(function(){
       
       // 抓取規格、價格、編號等資訊
       const subElements = sample.querySelectorAll('.spec_info .sub');
-      subElements.forEach(sub => {
+      subElements.forEach((sub, subIndex) => {
         const text = sub.textContent.trim();
         
         // 檢查是否為條碼數字（在 spec_barcode 區域內的數字）
@@ -273,26 +308,22 @@ javascript:(function(){
             data.barcodeNumber = text;
           }
         } else {
-          // 根據關鍵字判斷資料類型
-          if (text.includes('規格:') || text.includes('規格：')) {
-            data.spec = text.replace(/規格[:：]\s*/, '');
+          // 根據位置和關鍵字判斷資料類型
+          if (subIndex === 0 || (text.includes('/') && !text.includes('$') && !data.spec)) {
+            // 第一個 sub 通常是規格
+            data.spec = text;
           } else if (text.includes('特價')) {
             data.specialPrice = text;
           } else if (text.includes('售價')) {
             data.price = text;
-          } else if (text.includes('/') && !text.includes('$')) {
-            // 可能是規格（例如：小型 / 奶油虎斑 / 短毛）
-            if (!data.spec) {
-              data.spec = text;
+          } else if (text.match(/^[A-Za-z0-9\-_]+$/) && text.length > 2 && text.length < 20) {
+            // 可能是產品編號/SKU - 字母數字組合
+            if (!data.productCode && !text.match(/^\d+$/)) {
+              data.productCode = text;
             }
-          } else if (/^(cat-|CAT-|[A-Z0-9]{2,}-)/i.test(text)) {
-            // 產品編號
+          } else if (!data.price && !data.specialPrice && !data.spec && !data.productCode) {
+            // 可能是其他類型的產品編號
             data.productCode = text;
-          } else if (/^\d{5,}$/.test(text)) {
-            // 純數字可能是條碼
-            if (!data.barcodeNumber) {
-              data.barcodeNumber = text;
-            }
           }
         }
       });
@@ -303,19 +334,12 @@ javascript:(function(){
         data.barcodeImage = barcodeImg.src;
       }
       
-      // 如果價格在條碼區域（樣式5、7）
-      const barcodePrice = sample.querySelector('.spec_barcode span.sub b');
-      if (barcodePrice && !data.price) {
-        const priceText = barcodePrice.textContent.trim();
-        if (priceText.includes('售價')) {
-          const parts = priceText.split(/\s+/);
-          parts.forEach(part => {
-            if (part.includes('售價')) {
-              data.price = part;
-            } else if (part.includes('特價')) {
-              data.specialPrice = part;
-            }
-          });
+      // 條碼數字（補充抓取）
+      const barcodeText = sample.querySelector('.spec_barcode span.sub, .spec_barcode b');
+      if (barcodeText && !data.barcodeNumber) {
+        const text = barcodeText.textContent.trim();
+        if (/\d{5,}/.test(text)) {
+          data.barcodeNumber = text;
         }
       }
       
@@ -718,6 +742,14 @@ javascript:(function(){
       transition: all 0.3s ease;
     }
     
+    .bv-settings-card.collapsed {
+      padding-bottom: 20px;
+    }
+    
+    .bv-settings-card.collapsed .bv-card-content {
+      display: none;
+    }
+    
     .bv-card-title {
       margin: 0 0 20px 0;
       font-size: 14px;
@@ -728,11 +760,41 @@ javascript:(function(){
       gap: 8px;
       text-transform: uppercase;
       letter-spacing: 0.02em;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .bv-settings-card.collapsed .bv-card-title {
+      margin-bottom: 0;
     }
     
     .bv-card-title .material-icons {
       font-size: 18px;
       color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .bv-card-title .bv-collapse-icon {
+      margin-left: auto;
+      transition: transform 0.3s ease;
+    }
+    
+    .bv-settings-card.collapsed .bv-card-title .bv-collapse-icon {
+      transform: rotate(-90deg);
+    }
+    
+    .bv-card-content {
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     /* Glass Slider - Apple 風格 */
@@ -746,6 +808,11 @@ javascript:(function(){
       display: flex;
       flex-direction: column;
       gap: 12px;
+    }
+    
+    .bv-slider-item.disabled {
+      opacity: 0.5;
+      pointer-events: none;
     }
     
     .bv-slider-header {
@@ -780,6 +847,11 @@ javascript:(function(){
       margin: 12px 0;
     }
     
+    .bv-glass-slider:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    
     .bv-glass-slider:before {
       content: '';
       position: absolute;
@@ -806,11 +878,19 @@ javascript:(function(){
       z-index: 1;
     }
     
+    .bv-glass-slider:disabled::-webkit-slider-thumb {
+      cursor: not-allowed;
+    }
+    
     .bv-glass-slider::-webkit-slider-thumb:hover {
       transform: scale(1.1);
       box-shadow: 
         0 2px 8px rgba(0, 0, 0, 0.2),
         0 0 0 0.5px rgba(0, 0, 0, 0.08);
+    }
+    
+    .bv-glass-slider:disabled::-webkit-slider-thumb:hover {
+      transform: scale(1);
     }
     
     .bv-glass-slider::-moz-range-thumb {
@@ -1155,17 +1235,6 @@ javascript:(function(){
       animation: fadeIn 0.3s ease;
     }
     
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
     .bv-remove-logo-btn {
       background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%);
       color: white;
@@ -1248,20 +1317,23 @@ javascript:(function(){
         <div class="bv-panel-content-wrapper">
           <div class="bv-panel-body">
             <!-- 樣式選擇 -->
-            <div class="bv-settings-card">
+            <div class="bv-settings-card" data-section="layout">
               <h4 class="bv-card-title">
                 <span class="material-icons">dashboard</span>
                 樣式選擇
+                <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
-              <div class="bv-layout-selector">
-                ${Object.entries(layoutTemplates).map(([key, template], index) => `
-                  <div class="bv-layout-option ${key === currentLayout ? 'active' : ''}" data-layout="${key}">
-                    <img class="bv-layout-preview" src="https://bvshop-manage.bvshop.tw/img/barcode/barcode${index + 1}.${template.imageExt}" alt="${template.name}">
-                    <div class="bv-layout-option-title">${template.name}</div>
-                    <div class="bv-layout-option-desc">${template.description}</div>
-                  </div>
-                `).join('')}
+              <div class="bv-card-content">
+                <div class="bv-layout-selector">
+                  ${Object.entries(layoutTemplates).map(([key, template], index) => `
+                    <div class="bv-layout-option ${key === currentLayout ? 'active' : ''}" data-layout="${key}">
+                      <img class="bv-layout-preview" src="https://bvshop-manage.bvshop.tw/img/barcode/barcode${index + 1}.${template.imageExt}" alt="${template.name}">
+                      <div class="bv-layout-option-title">${template.name}</div>
+                      <div class="bv-layout-option-desc">${template.description}</div>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
             </div>
             
@@ -1273,272 +1345,287 @@ javascript:(function(){
                 </div>
                 <div class="bv-button-content">
                   <span class="bv-button-title">智能最佳化</span>
-                  <span class="bv-button-subtitle">針對清晰列印優化</span>
+                  <span class="bv-button-subtitle">自動調整所有設定</span>
                 </div>
               </button>
             </div>
             
             <!-- 預設管理 -->
-            <div class="bv-settings-card">
+            <div class="bv-settings-card" data-section="presets">
               <h4 class="bv-card-title">
                 <span class="material-icons">bookmark</span>
                 預設管理
+                <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
-              <div class="bv-preset-controls">
-                <div class="bv-preset-select-wrapper">
-                  <select id="bv-preset-select" class="bv-glass-select">
-                    <option value="">選擇預設...</option>
-                  </select>
+              <div class="bv-card-content">
+                <div class="bv-preset-controls">
+                  <div class="bv-preset-select-wrapper">
+                    <select id="bv-preset-select" class="bv-glass-select">
+                      <option value="">選擇預設...</option>
+                    </select>
+                  </div>
+                  <div class="bv-preset-buttons">
+                    <button class="bv-glass-button" id="bv-save-preset" title="儲存">
+                      <span class="material-icons">save</span>
+                    </button>
+                    <button class="bv-glass-button" id="bv-delete-preset" title="刪除">
+                      <span class="material-icons">delete</span>
+                    </button>
+                    <button class="bv-glass-button" id="bv-reset-format" title="還原預設值">
+                      <span class="material-icons">restart_alt</span>
+                    </button>
+                  </div>
                 </div>
-                <div class="bv-preset-buttons">
-                  <button class="bv-glass-button" id="bv-save-preset" title="儲存">
-                    <span class="material-icons">save</span>
-                  </button>
-                  <button class="bv-glass-button" id="bv-delete-preset" title="刪除">
-                    <span class="material-icons">delete</span>
-                  </button>
-                  <button class="bv-glass-button" id="bv-reset-format" title="還原預設值">
-                    <span class="material-icons">restart_alt</span>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="bv-preset-save-row" id="bv-save-preset-row" style="display:none;">
-                <input type="text" id="bv-new-preset-name" class="bv-glass-input" placeholder="輸入預設名稱...">
-                <div class="bv-preset-buttons">
-                  <button class="bv-glass-button bv-primary" id="bv-confirm-save">
-                    <span class="material-icons">check</span>
-                  </button>
-                  <button class="bv-glass-button" id="bv-cancel-save">
-                    <span class="material-icons">close</span>
-                  </button>
+                
+                <div class="bv-preset-save-row" id="bv-save-preset-row" style="display:none;">
+                  <input type="text" id="bv-new-preset-name" class="bv-glass-input" placeholder="輸入預設名稱...">
+                  <div class="bv-preset-buttons">
+                    <button class="bv-glass-button bv-primary" id="bv-confirm-save">
+                      <span class="material-icons">check</span>
+                    </button>
+                    <button class="bv-glass-button" id="bv-cancel-save">
+                      <span class="material-icons">close</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
             
             <!-- 基本設定區塊 -->
-            <div class="bv-settings-card">
+            <div class="bv-settings-card" data-section="basic">
               <h4 class="bv-card-title">
                 <span class="material-icons">tune</span>
                 基本設定
+                <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
-              <!-- 標籤尺寸 -->
-              <div class="bv-slider-group">
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>標籤寬度</span>
-                    <span class="bv-value-label" id="label-width">40mm</span>
+              <div class="bv-card-content">
+                <!-- 標籤尺寸 -->
+                <div class="bv-slider-group">
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>標籤寬度</span>
+                      <span class="bv-value-label" id="label-width">40mm</span>
+                    </div>
+                    <input type="range" id="label-width-slider" min="30" max="60" value="40" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="label-width-slider" min="30" max="60" value="40" class="bv-glass-slider">
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>標籤高度</span>
+                      <span class="bv-value-label" id="label-height">30mm</span>
+                    </div>
+                    <input type="range" id="label-height-slider" min="20" max="40" value="30" class="bv-glass-slider">
+                  </div>
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>內部邊距</span>
+                      <span class="bv-value-label" id="label-padding">1mm</span>
+                    </div>
+                    <input type="range" id="label-padding-slider" min="0" max="5" step="0.5" value="1" class="bv-glass-slider">
+                  </div>
                 </div>
                 
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>標籤高度</span>
-                    <span class="bv-value-label" id="label-height">30mm</span>
+                <!-- 字體設定 -->
+                <div style="margin-top: 20px;">
+                  <div class="bv-setting-item" style="padding-bottom: 10px;">
+                    <span class="bv-setting-label">字體類型</span>
                   </div>
-                  <input type="range" id="label-height-slider" min="20" max="40" value="30" class="bv-glass-slider">
+                  <select id="font-family-select" class="bv-glass-select">
+                    ${fontOptions.map(font => `<option value="${font.value}">${font.name}</option>`).join('')}
+                  </select>
                 </div>
-                
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>內部邊距</span>
-                    <span class="bv-value-label" id="label-padding">1mm</span>
-                  </div>
-                  <input type="range" id="label-padding-slider" min="0" max="5" step="0.5" value="1" class="bv-glass-slider">
-                </div>
-              </div>
-              
-              <!-- 字體設定 -->
-              <div style="margin-top: 20px;">
-                <div class="bv-setting-item" style="padding-bottom: 10px;">
-                  <span class="bv-setting-label">字體類型</span>
-                </div>
-                <select id="font-family-select" class="bv-glass-select">
-                  ${fontOptions.map(font => `<option value="${font.value}">${font.name}</option>`).join('')}
-                </select>
               </div>
             </div>
             
             <!-- 文字設定區塊 -->
-            <div class="bv-settings-card" id="text-settings-card">
+            <div class="bv-settings-card" id="text-settings-card" data-section="text">
               <h4 class="bv-card-title">
                 <span class="material-icons">text_fields</span>
                 文字設定
+                <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
-              <div class="bv-slider-group">
-                <!-- 商品名稱 -->
-                <div class="bv-setting-item" id="main-text-setting">
-                  <div class="bv-setting-info">
-                    <span class="bv-setting-label">商品名稱</span>
+              <div class="bv-card-content">
+                <div class="bv-slider-group">
+                  <!-- 商品名稱 -->
+                  <div class="bv-setting-item" id="main-text-setting">
+                    <div class="bv-setting-info">
+                      <span class="bv-setting-label">商品名稱</span>
+                    </div>
+                    <button class="bv-bold-button active" id="main-bold-btn" title="粗體">B</button>
                   </div>
-                  <button class="bv-bold-button active" id="main-bold-btn" title="粗體">B</button>
-                </div>
-                
-                <div class="bv-slider-item" id="main-size-setting">
-                  <div class="bv-slider-header">
-                    <span>文字大小</span>
-                    <span class="bv-value-label" id="main-size">10px</span>
+                  
+                  <div class="bv-slider-item" id="main-size-setting">
+                    <div class="bv-slider-header">
+                      <span>文字大小</span>
+                      <span class="bv-value-label" id="main-size">10px</span>
+                    </div>
+                    <input type="range" id="main-slider" min="8" max="20" value="10" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="main-slider" min="8" max="20" value="10" class="bv-glass-slider">
-                </div>
-                
-                <div class="bv-slider-item" id="main-line-height-setting">
-                  <div class="bv-slider-header">
-                    <span>行高</span>
-                    <span class="bv-value-label" id="main-line-height">11px</span>
+                  
+                  <div class="bv-slider-item" id="main-line-height-setting">
+                    <div class="bv-slider-header">
+                      <span>行高</span>
+                      <span class="bv-value-label" id="main-line-height">11px</span>
+                    </div>
+                    <input type="range" id="main-line-height-slider" min="8" max="30" value="11" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="main-line-height-slider" min="8" max="30" value="11" class="bv-glass-slider">
-                </div>
-                
-                <div class="bv-slider-item" id="main-gap-setting">
-                  <div class="bv-slider-header">
-                    <span>商品名稱與其他資訊間距</span>
-                    <span class="bv-value-label" id="main-gap">0px</span>
+                  
+                  <div class="bv-slider-item" id="main-gap-setting">
+                    <div class="bv-slider-header">
+                      <span>商品名稱與其他資訊間距</span>
+                      <span class="bv-value-label" id="main-gap">0px</span>
+                    </div>
+                    <input type="range" id="main-gap-slider" min="0" max="10" step="0.5" value="0" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="main-gap-slider" min="0" max="10" step="0.5" value="0" class="bv-glass-slider">
-                </div>
-                
-                <!-- 分隔線 -->
-                <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
-                
-                <!-- 規格/編號/價格 -->
-                <div class="bv-setting-item">
-                  <div class="bv-setting-info">
-                    <span class="bv-setting-label">規格/編號/價格</span>
+                  
+                  <!-- 分隔線 -->
+                  <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
+                  
+                  <!-- 規格/編號/價格 -->
+                  <div class="bv-setting-item">
+                    <div class="bv-setting-info">
+                      <span class="bv-setting-label">規格/編號/價格</span>
+                    </div>
+                    <button class="bv-bold-button active" id="sub-bold-btn" title="粗體">B</button>
                   </div>
-                  <button class="bv-bold-button active" id="sub-bold-btn" title="粗體">B</button>
-                </div>
-                
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>文字大小</span>
-                    <span class="bv-value-label" id="sub-size">8px</span>
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>文字大小</span>
+                      <span class="bv-value-label" id="sub-size">8px</span>
+                    </div>
+                    <input type="range" id="sub-slider" min="6" max="16" value="8" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="sub-slider" min="6" max="16" value="8" class="bv-glass-slider">
-                </div>
-                
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>行高</span>
-                    <span class="bv-value-label" id="sub-line-height">9px</span>
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>行高</span>
+                      <span class="bv-value-label" id="sub-line-height">9px</span>
+                    </div>
+                    <input type="range" id="sub-line-height-slider" min="6" max="20" value="9" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="sub-line-height-slider" min="6" max="20" value="9" class="bv-glass-slider">
-                </div>
-                
-                <!-- 分隔線 -->
-                <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
-                
-                <!-- 條碼數字 -->
-                <div class="bv-setting-item">
-                  <div class="bv-setting-info">
-                    <span class="bv-setting-label">條碼數字</span>
+                  
+                  <!-- 分隔線 -->
+                  <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
+                  
+                  <!-- 條碼數字 -->
+                  <div class="bv-setting-item">
+                    <div class="bv-setting-info">
+                      <span class="bv-setting-label">條碼數字</span>
+                    </div>
+                    <button class="bv-bold-button active" id="barcode-text-bold-btn" title="粗體">B</button>
                   </div>
-                  <button class="bv-bold-button active" id="barcode-text-bold-btn" title="粗體">B</button>
-                </div>
-                
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>文字大小</span>
-                    <span class="bv-value-label" id="barcode-text-size">8px</span>
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>文字大小</span>
+                      <span class="bv-value-label" id="barcode-text-size">8px</span>
+                    </div>
+                    <input type="range" id="barcode-text-slider" min="6" max="16" value="8" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="barcode-text-slider" min="6" max="16" value="8" class="bv-glass-slider">
                 </div>
               </div>
             </div>
             
             <!-- 條碼圖片設定 -->
-            <div class="bv-settings-card" id="barcode-settings-card">
+            <div class="bv-settings-card" id="barcode-settings-card" data-section="barcode">
               <h4 class="bv-card-title">
                 <span class="material-icons">qr_code_2</span>
                 條碼圖片設定
+                <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
-              <div class="bv-slider-group">
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>條碼圖片高度（Y軸拉伸）</span>
-                    <span class="bv-value-label" id="barcode-height">100%</span>
+              <div class="bv-card-content">
+                <div class="bv-slider-group">
+                  <div class="bv-slider-item" id="barcode-height-setting">
+                    <div class="bv-slider-header">
+                      <span>條碼圖片高度（Y軸拉伸）</span>
+                      <span class="bv-value-label" id="barcode-height">100%</span>
+                    </div>
+                    <input type="range" id="barcode-height-slider" min="50" max="200" value="100" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="barcode-height-slider" min="50" max="200" value="100" class="bv-glass-slider">
-                </div>
-                
-                <div class="bv-slider-item">
-                  <div class="bv-slider-header">
-                    <span>條碼圖片寬度（X軸拉伸）</span>
-                    <span class="bv-value-label" id="barcode-width">100%</span>
+                  
+                  <div class="bv-slider-item" id="barcode-width-setting">
+                    <div class="bv-slider-header">
+                      <span>條碼圖片寬度（X軸拉伸）</span>
+                      <span class="bv-value-label" id="barcode-width">100%</span>
+                    </div>
+                    <input type="range" id="barcode-width-slider" min="50" max="150" value="100" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="barcode-width-slider" min="50" max="150" value="100" class="bv-glass-slider">
-                </div>
-                
-                <div class="bv-slider-item" id="barcode-y-position-setting">
-                  <div class="bv-slider-header">
-                    <span>條碼垂直位置</span>
-                    <span class="bv-value-label" id="barcode-y-position">70%</span>
+                  
+                  <div class="bv-slider-item" id="barcode-y-position-setting">
+                    <div class="bv-slider-header">
+                      <span>條碼垂直位置</span>
+                      <span class="bv-value-label" id="barcode-y-position">70%</span>
+                    </div>
+                    <input type="range" id="barcode-y-position-slider" min="0" max="100" value="70" class="bv-glass-slider">
                   </div>
-                  <input type="range" id="barcode-y-position-slider" min="0" max="100" value="70" class="bv-glass-slider">
                 </div>
               </div>
             </div>
             
             <!-- 底圖設定區塊 -->
-            <div class="bv-settings-card">
+            <div class="bv-settings-card" data-section="logo">
               <h4 class="bv-card-title">
                 <span class="material-icons">image</span>
                 底圖設定
+                <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
-              <div class="bv-logo-upload-area" id="logo-upload-area">
-                <input type="file" id="logo-input" accept="image/png,image/jpeg,image/jpg" style="display:none;">
-                <img id="logo-preview" class="bv-logo-preview" style="display:none;">
-                <div id="upload-prompt">
-                  <span class="material-icons" style="font-size:36px; color: #86868b;">add_photo_alternate</span>
-                  <div class="bv-upload-hint">點擊上傳底圖（支援 PNG/JPG）</div>
-                </div>
-              </div>
-              
-              <div class="bv-logo-controls" id="logo-controls">
-                <div class="bv-slider-group">
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>底圖大小</span>
-                      <span class="bv-value-label" id="logo-size">30%</span>
-                    </div>
-                    <input type="range" id="logo-size-slider" min="10" max="100" value="30" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>水平位置</span>
-                      <span class="bv-value-label" id="logo-x">50%</span>
-                    </div>
-                    <input type="range" id="logo-x-slider" min="0" max="100" value="50" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>垂直位置</span>
-                      <span class="bv-value-label" id="logo-y">50%</span>
-                    </div>
-                    <input type="range" id="logo-y-slider" min="0" max="100" value="50" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>淡化程度</span>
-                      <span class="bv-value-label" id="logo-opacity">20%</span>
-                    </div>
-                    <input type="range" id="logo-opacity-slider" min="0" max="100" value="20" class="bv-glass-slider">
+              <div class="bv-card-content">
+                <div class="bv-logo-upload-area" id="logo-upload-area">
+                  <input type="file" id="logo-input" accept="image/png,image/jpeg,image/jpg" style="display:none;">
+                  <img id="logo-preview" class="bv-logo-preview" style="display:none;">
+                  <div id="upload-prompt">
+                    <span class="material-icons" style="font-size:36px; color: #86868b;">add_photo_alternate</span>
+                    <div class="bv-upload-hint">點擊上傳底圖（支援 PNG/JPG）</div>
                   </div>
                 </div>
                 
-                <button class="bv-remove-logo-btn" id="remove-logo-btn">
-                  <span class="material-icons">delete</span>
-                  移除底圖
-                </button>
+                <div class="bv-logo-controls" id="logo-controls">
+                  <div class="bv-slider-group">
+                    <div class="bv-slider-item">
+                      <div class="bv-slider-header">
+                        <span>底圖大小</span>
+                        <span class="bv-value-label" id="logo-size">30%</span>
+                      </div>
+                      <input type="range" id="logo-size-slider" min="10" max="100" value="30" class="bv-glass-slider">
+                    </div>
+                    
+                    <div class="bv-slider-item">
+                      <div class="bv-slider-header">
+                        <span>水平位置</span>
+                        <span class="bv-value-label" id="logo-x">50%</span>
+                      </div>
+                      <input type="range" id="logo-x-slider" min="0" max="100" value="50" class="bv-glass-slider">
+                    </div>
+                    
+                    <div class="bv-slider-item">
+                      <div class="bv-slider-header">
+                        <span>垂直位置</span>
+                        <span class="bv-value-label" id="logo-y">50%</span>
+                      </div>
+                      <input type="range" id="logo-y-slider" min="0" max="100" value="50" class="bv-glass-slider">
+                    </div>
+                    
+                    <div class="bv-slider-item">
+                      <div class="bv-slider-header">
+                        <span>淡化程度</span>
+                        <span class="bv-value-label" id="logo-opacity">20%</span>
+                      </div>
+                      <input type="range" id="logo-opacity-slider" min="0" max="100" value="20" class="bv-glass-slider">
+                    </div>
+                  </div>
+                  
+                  <button class="bv-remove-logo-btn" id="remove-logo-btn">
+                    <span class="material-icons">delete</span>
+                    移除底圖
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1605,14 +1692,79 @@ javascript:(function(){
       const logoYSlider = document.getElementById('logo-y-slider');
       const logoOpacitySlider = document.getElementById('logo-opacity-slider');
       
+      /* 根據樣式調整控制項狀態 */
+      function updateControlStates() {
+        const template = layoutTemplates[currentLayout];
+        
+        // 文字設定
+        const textSettingsCard = document.getElementById('text-settings-card');
+        const mainSettings = ['main-text-setting', 'main-size-setting', 'main-line-height-setting', 'main-gap-setting'];
+        const subSettings = ['sub-text-setting', 'sub-size-setting', 'sub-line-height-setting'];
+        
+        if (template.hasOnlyBarcode) {
+          // 純條碼模式 - 隱藏文字設定卡片
+          textSettingsCard.style.display = 'none';
+        } else {
+          textSettingsCard.style.display = '';
+          
+          // 根據樣式啟用/禁用相關設定
+          mainSettings.forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) {
+              elem.classList.toggle('disabled', !template.hasMainText);
+            }
+          });
+          
+          subSettings.forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) {
+              elem.classList.toggle('disabled', !template.hasSubText);
+            }
+          });
+        }
+        
+        // 條碼設定
+        const barcodeHeightSetting = document.getElementById('barcode-height-setting');
+        const barcodeWidthSetting = document.getElementById('barcode-width-setting');
+        const barcodeYPositionSetting = document.getElementById('barcode-y-position-setting');
+        
+        if (barcodeHeightSetting) {
+          barcodeHeightSetting.classList.toggle('disabled', !template.hasBarcode);
+        }
+        if (barcodeWidthSetting) {
+          barcodeWidthSetting.classList.toggle('disabled', !template.hasBarcode);
+        }
+        if (barcodeYPositionSetting) {
+          // 條碼位置只在 bottom 模式下可調整
+          barcodeYPositionSetting.classList.toggle('disabled', 
+            !template.hasBarcode || template.barcodePosition !== 'bottom');
+        }
+        
+        // 禁用/啟用對應的控制項
+        if (mainSize) mainSize.disabled = !template.hasMainText;
+        if (mainBoldBtn) mainBoldBtn.disabled = !template.hasMainText;
+        if (mainGap) mainGap.disabled = !template.hasMainText;
+        if (mainLineHeightSlider) mainLineHeightSlider.disabled = !template.hasMainText;
+        
+        if (subSize) subSize.disabled = !template.hasSubText;
+        if (subBoldBtn) subBoldBtn.disabled = !template.hasSubText;
+        if (subLineHeightSlider) subLineHeightSlider.disabled = !template.hasSubText;
+        
+        if (barcodeHeight) barcodeHeight.disabled = !template.hasBarcode;
+        if (barcodeWidth) barcodeWidth.disabled = !template.hasBarcode;
+        if (barcodeYPosition) {
+          barcodeYPosition.disabled = !template.hasBarcode || template.barcodePosition !== 'bottom';
+        }
+      }
+      
       /* 更新樣式函數 */
       function updateStyles() {
         if (!mainSize || !subSize) return;
         
+        const template = layoutTemplates[currentLayout];
         const mainLineHeight = mainLineHeightSlider ? mainLineHeightSlider.value : 11;
         const subLineHeight = subLineHeightSlider ? subLineHeightSlider.value : 9;
         
-        const template = layoutTemplates[currentLayout];
         const validatedMainLineHeight = validateLineHeight(mainSize.value, mainLineHeight);
         const validatedSubLineHeight = validateLineHeight(subSize.value, subLineHeight);
         
@@ -1629,8 +1781,20 @@ javascript:(function(){
         const barcodeWidthScale = barcodeWidth ? parseFloat(barcodeWidth.value) / 100 : 1;
         
         // 計算條碼實際尺寸（拉伸後）
-        const barcodeHeightMM = 10 * barcodeHeightScale; // 基礎高度 10mm
-        const barcodeWidthMM = (totalWidth * 0.9) * barcodeWidthScale;
+        let barcodeHeightMM = 10 * barcodeHeightScale; // 基礎高度 10mm
+        let barcodeWidthMM = (totalWidth * 0.9) * barcodeWidthScale;
+        
+        // 根據樣式調整條碼尺寸
+        if (template.barcodePosition === 'embedded') {
+          barcodeHeightMM = 8 * barcodeHeightScale; // 內嵌條碼較小
+          barcodeWidthMM = (totalWidth * 0.8) * barcodeWidthScale;
+        } else if (template.barcodePosition === 'compact') {
+          barcodeHeightMM = 8 * barcodeHeightScale;
+          barcodeWidthMM = (totalWidth * 0.85) * barcodeWidthScale;
+        } else if (template.barcodePosition === 'center') {
+          barcodeHeightMM = 15 * barcodeHeightScale; // 純條碼較大
+          barcodeWidthMM = (totalWidth * 0.95) * barcodeWidthScale;
+        }
         
         /* 更新顯示值 */
         document.getElementById('main-size').textContent = mainSize.value + 'px';
@@ -1744,6 +1908,11 @@ javascript:(function(){
             display: block !important;
           }
           
+          /* SKU 特殊樣式 */
+          .print_barcode_area .print_sample .sku-text {
+            font-size: ${Math.max(subSize.value - 1, 6)}px !important;
+          }
+          
           /* 條碼區域樣式 */
           .print_barcode_area .print_sample .spec_barcode {
             display: flex !important;
@@ -1755,9 +1924,8 @@ javascript:(function(){
             align-items: center !important;
           }
           
-          /* 條碼圖片樣式 */
-          .print_barcode_area .print_sample .spec_barcode > img,
-          .print_barcode_area .print_sample > div > .spec_barcode > img {
+          /* 條碼圖片樣式 - 根據樣式調整 */
+          .print_barcode_area .print_sample .spec_barcode > img {
             height: ${barcodeHeightMM}mm !important;
             width: auto !important;
             max-width: ${barcodeWidthMM}mm !important;
@@ -1766,10 +1934,29 @@ javascript:(function(){
             display: block !important;
           }
           
+          /* 內嵌條碼特殊樣式 */
+          .print_barcode_area .print_sample .embedded-barcode img {
+            height: ${8 * barcodeHeightScale}mm !important;
+            max-width: ${(totalWidth * 0.8) * barcodeWidthScale}mm !important;
+          }
+          
+          /* 緊湊條碼特殊樣式 */
+          .print_barcode_area .print_sample .compact-barcode img {
+            height: ${8 * barcodeHeightScale}mm !important;
+            max-width: ${(totalWidth * 0.85) * barcodeWidthScale}mm !important;
+          }
+          
+          /* 純條碼特殊樣式 */
+          .print_barcode_area .print_sample .pure-barcode img {
+            height: ${15 * barcodeHeightScale}mm !important;
+            max-width: ${(totalWidth * 0.95) * barcodeWidthScale}mm !important;
+          }
+          
           /* 條碼文字樣式 */
           .print_barcode_area .print_sample .spec_barcode > span.sub,
           .print_barcode_area .print_sample .spec_barcode > b > span.sub,
-          .print_barcode_area .print_sample .spec_barcode > .sub {
+          .print_barcode_area .print_sample .spec_barcode > .sub,
+          .print_barcode_area .print_sample .spec_barcode .sub {
             font-size: ${barcodeTextSize.value}px !important;
             font-weight: ${barcodeTextFontWeight} !important;
             font-family: ${fontFamily.value} !important;
@@ -1778,32 +1965,8 @@ javascript:(function(){
             display: block !important;
           }
           
-          /* 樣式3、4 - 內嵌條碼特殊樣式 */
-          .print_barcode_area .print_sample .spec_info .spec_barcode {
-            margin: 5px 0 !important;
-            text-align: center !important;
-            display: block !important;
-            flex-direction: column !important;
-            align-items: center !important;
-          }
-          
-          .print_barcode_area .print_sample .spec_info .spec_barcode img {
-            height: 10mm !important;
-            width: auto !important;
-            max-width: 90% !important;
-            object-fit: contain !important;
-            display: block !important;
-            margin: 0 auto !important;
-          }
-          
-          .print_barcode_area .print_sample .spec_info .spec_barcode .sub {
-            font-size: ${barcodeTextSize.value}px !important;
-            margin-top: 1px !important;
-            display: block !important;
-          }
-          
           /* 樣式5 - 價格置右特殊處理 */
-          .print_barcode_area .print_sample .spec_barcode > div[style*="text-align: right"] {
+          .print_barcode_area .print_sample .price-right {
             position: absolute !important;
             right: 0 !important;
             top: -20px !important;
@@ -1811,58 +1974,21 @@ javascript:(function(){
             z-index: 3 !important;
           }
           
-          .print_barcode_area .print_sample .spec_barcode > div[style*="text-align: right"] .sub {
+          .print_barcode_area .print_sample .price-right .sub {
             white-space: nowrap !important;
           }
           
-          /* 樣式6、7 - 緊湊排版 */
-          .print_barcode_area .print_sample > div[style*="display: flex"] {
+          /* 樣式5的條碼位置調整 */
+          .print_barcode_area .print_sample .style5-barcode {
+            margin-top: ${(barcodeYPercent - 70) * 0.5}mm !important;
+          }
+          
+          /* 樣式6、7容器 */
+          .print_barcode_area .print_sample .style6-container,
+          .print_barcode_area .print_sample .style7-container {
             height: 100% !important;
             box-sizing: border-box !important;
-            padding: 0 !important;
-          }
-          
-          .print_barcode_area .print_sample > div[style*="display: flex"] .main {
-            font-size: ${mainSize.value}px !important;
-            line-height: ${validatedMainLineHeight}px !important;
-            font-weight: ${mainFontWeight} !important;
-            margin-bottom: ${mainGap.value}px !important;
-          }
-          
-          .print_barcode_area .print_sample > div[style*="display: flex"] .sub {
-            font-size: ${subSize.value}px !important;
-            line-height: ${validatedSubLineHeight}px !important;
-            font-weight: ${subFontWeight} !important;
-          }
-          
-          .print_barcode_area .print_sample > div[style*="display: flex"] img {
-            height: 8mm !important;
-            width: auto !important;
-          }
-          
-          /* 樣式7 - 帶SKU特殊處理 */
-          .print_barcode_area .print_sample div[style*="font-size: 7px"] {
-            font-size: ${Math.max(subSize.value - 1, 6)}px !important;
-          }
-          
-          /* 樣式8 - 純條碼置中 */
-          .print_barcode_area .print_sample .spec_barcode[style*="height: 100%"] {
-            height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            align-items: center !important;
-          }
-          
-          .print_barcode_area .print_sample .spec_barcode[style*="height: 100%"] img {
-            height: 15mm !important;
-            width: auto !important;
-            max-width: 90% !important;
-          }
-          
-          .print_barcode_area .print_sample .spec_barcode[style*="height: 100%"] .sub {
-            font-size: ${barcodeTextSize.value}px !important;
-            margin-top: 3px !important;
+            font-family: ${fontFamily.value} !important;
           }
           
           /* 底圖樣式 */
@@ -1891,13 +2017,8 @@ javascript:(function(){
             max-width: 100% !important;
           }
           
-          /* 移除樣式6、7、8可能的內建樣式 */
-          .print_barcode_area .print_sample div[style] {
-            font-family: ${fontFamily.value} !important;
-          }
-          
-          /* 特殊情況：當條碼垂直位置調整時 */
-          ${currentLayout !== 'style8' ? `
+          /* 特殊情況：當條碼垂直位置調整時（只在底部條碼樣式生效） */
+          ${template.barcodePosition === 'bottom' ? `
           .print_barcode_area .print_sample .spec_barcode {
             margin-top: ${(barcodeYPercent - 70) * 0.5}mm !important;
           }
@@ -1915,29 +2036,8 @@ javascript:(function(){
       function applyLayoutTemplate() {
         const template = layoutTemplates[currentLayout];
         
-        // 更新文字設定區塊的顯示狀態
-        const textSettingsCard = document.getElementById('text-settings-card');
-        const barcodeSettingsCard = document.getElementById('barcode-settings-card');
-        
-        if (currentLayout === 'style8') {
-          // 純條碼樣式：隱藏文字設定，只保留條碼設定
-          textSettingsCard.style.display = 'none';
-          if (barcodeSettingsCard) {
-            // 隱藏條碼位置設定（因為固定在中央）
-            const barcodeYPositionSetting = document.getElementById('barcode-y-position-setting');
-            if (barcodeYPositionSetting) {
-              barcodeYPositionSetting.style.display = 'none';
-            }
-          }
-        } else {
-          textSettingsCard.style.display = '';
-          if (barcodeSettingsCard) {
-            const barcodeYPositionSetting = document.getElementById('barcode-y-position-setting');
-            if (barcodeYPositionSetting) {
-              barcodeYPositionSetting.style.display = '';
-            }
-          }
-        }
+        // 更新控制項狀態
+        updateControlStates();
         
         // 重建每個標籤的內容
         document.querySelectorAll('.print_sample').forEach((sample, index) => {
@@ -2043,6 +2143,43 @@ javascript:(function(){
         });
       }
       
+      /* 收摺功能 */
+      function setupCollapsibleCards() {
+        document.querySelectorAll('.bv-card-title').forEach(title => {
+          title.addEventListener('click', function() {
+            const card = this.closest('.bv-settings-card');
+            const sectionId = card.getAttribute('data-section');
+            
+            if (card.classList.contains('collapsed')) {
+              card.classList.remove('collapsed');
+              collapsedSections[sectionId] = false;
+            } else {
+              card.classList.add('collapsed');
+              collapsedSections[sectionId] = true;
+            }
+            
+            chrome.storage.local.set({ bvCollapsedSections: collapsedSections });
+          });
+        });
+      }
+      
+      setupCollapsibleCards();
+      
+      /* 載入收摺狀態 */
+      chrome.storage.local.get(['bvCollapsedSections'], (result) => {
+        if (result.bvCollapsedSections) {
+          collapsedSections = result.bvCollapsedSections;
+          Object.keys(collapsedSections).forEach(sectionId => {
+            if (collapsedSections[sectionId]) {
+              const card = document.querySelector(`[data-section="${sectionId}"]`);
+              if (card) {
+                card.classList.add('collapsed');
+              }
+            }
+          });
+        }
+      });
+      
       /* 初始化拖曳功能 */
       initDragFunction();
       
@@ -2050,8 +2187,10 @@ javascript:(function(){
       function setupBoldButton(button, updateCallback) {
         if (button) {
           button.addEventListener('click', function() {
-            this.classList.toggle('active');
-            updateCallback();
+            if (!this.disabled) {
+              this.classList.toggle('active');
+              updateCallback();
+            }
           });
         }
       }
@@ -2063,7 +2202,7 @@ javascript:(function(){
       /* 字體大小改變時，自動調整行高 */
       if (mainSize) {
         mainSize.addEventListener('input', function() {
-          if (mainLineHeightSlider) {
+          if (mainLineHeightSlider && !mainLineHeightSlider.disabled) {
             const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
             
             if (!mainLineHeightSlider.dataset.userModified) {
@@ -2084,7 +2223,7 @@ javascript:(function(){
 
       if (subSize) {
         subSize.addEventListener('input', function() {
-          if (subLineHeightSlider) {
+          if (subLineHeightSlider && !subLineHeightSlider.disabled) {
             const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
             
             if (!subLineHeightSlider.dataset.userModified) {
@@ -2118,187 +2257,275 @@ javascript:(function(){
         });
       }
 
-      /* 智能最佳化函數 - 以清晰列印為優先 */
+      /* 智能最佳化函數 - 完整版 */
       function optimizeLayoutForLabelSize() {
         const labelWidthMM = parseFloat(labelWidth.value);
         const labelHeightMM = parseFloat(labelHeight.value);
-        const paddingMM = parseFloat(labelPadding.value);
+        const template = layoutTemplates[currentLayout];
         
         // 可用空間
+        const paddingMM = 1; // 最佳內邊距
         const availableWidth = labelWidthMM - (paddingMM * 2);
         const availableHeight = labelHeightMM - (paddingMM * 2);
         
         // 計算寬高比
         const aspectRatio = labelWidthMM / labelHeightMM;
         
-        // 根據標籤尺寸計算最佳設定 - 以清晰列印為主
-        let optimizedSettings = {};
+        // 計算內容密度（根據樣式）
+        let contentLines = 0;
+        if (template.hasMainText) contentLines += 2; // 主標題可能多行
+        if (template.hasSubText) {
+          if (currentLayout === 'style1' || currentLayout === 'style3') contentLines += 3; // 含特價
+          else if (currentLayout === 'style7') contentLines += 3; // 含SKU
+          else contentLines += 2;
+        }
         
-        // 基於標籤大小計算基礎字體大小（考慮列印清晰度）
-        const baseFontSize = Math.min(availableWidth / 3.5, availableHeight / 2);
+        // 計算最佳字體大小
+        const baseFontSize = Math.min(
+          availableWidth / 4, 
+          (availableHeight - (template.hasBarcode ? 10 : 0)) / (contentLines + 1)
+        );
         
-        // 根據寬度分類並套用清晰列印優化參數
+        // 根據標籤尺寸和樣式優化設定
+        let optimizedSettings = {
+          labelPadding: paddingMM,
+          mainSize: 10,
+          mainLineHeight: 11,
+          mainGap: 0,
+          mainBold: true,
+          subSize: 8,
+          subLineHeight: 9,
+          subBold: true,
+          barcodeTextSize: 8,
+          barcodeTextBold: true,
+          barcodeHeight: 100,
+          barcodeWidth: 100,
+          barcodeYPosition: 70,
+          fontFamily: fontFamily.value || 'Arial, sans-serif'
+        };
+        
+        // 根據尺寸分類優化
         if (labelWidthMM <= 30) {
-          // 超小標籤 - 提高最小字體大小確保可讀性
-          optimizedSettings = {
-            mainSize: Math.max(Math.round(baseFontSize * 0.85), 9),
-            mainLineHeight: Math.round(baseFontSize * 0.935),
-            mainGap: 0.5,
-            subSize: Math.max(Math.round(baseFontSize * 0.7), 7),
-            subLineHeight: Math.round(baseFontSize * 0.77),
-            barcodeTextSize: Math.max(Math.round(baseFontSize * 0.7), 7),
-            barcodeHeight: 85,
-            barcodeWidth: 95,
-            barcodeYPosition: 65,
-            labelPadding: Math.min(paddingMM, 0.8)
-          };
-        } else if (labelWidthMM <= 35) {
-          // 小標籤 - 平衡可讀性與內容量
-          optimizedSettings = {
-            mainSize: Math.max(Math.round(baseFontSize * 0.9), 10),
-            mainLineHeight: Math.round(baseFontSize * 0.99),
-            mainGap: 0.5,
-            subSize: Math.max(Math.round(baseFontSize * 0.72), 8),
-            subLineHeight: Math.round(baseFontSize * 0.792),
-            barcodeTextSize: Math.max(Math.round(baseFontSize * 0.72), 8),
-            barcodeHeight: 90,
-            barcodeWidth: 98,
-            barcodeYPosition: 68,
-            labelPadding: Math.min(paddingMM, 1)
-          };
-        } else if (labelWidthMM <= 45) {
-          // 標準標籤 - 40×30mm 最佳化
-          optimizedSettings = {
-            mainSize: Math.max(Math.round(baseFontSize * 0.95), 10),
-            mainLineHeight: Math.round(baseFontSize * 1.045),
-            mainGap: 1,
-            subSize: Math.max(Math.round(baseFontSize * 0.76), 8),
-            subLineHeight: Math.round(baseFontSize * 0.836),
-            barcodeTextSize: Math.max(Math.round(baseFontSize * 0.76), 8),
-            barcodeHeight: 100,
-            barcodeWidth: 100,
-            barcodeYPosition: 70,
-            labelPadding: paddingMM
-          };
-        } else if (labelWidthMM <= 55) {
-          // 中型標籤 - 確保條碼清晰
-          optimizedSettings = {
-            mainSize: Math.max(Math.round(baseFontSize), 11),
-            mainLineHeight: Math.round(baseFontSize * 1.1),
-            mainGap: 1.5,
-            subSize: Math.max(Math.round(baseFontSize * 0.8), 9),
-            subLineHeight: Math.round(baseFontSize * 0.88),
-            barcodeTextSize: Math.max(Math.round(baseFontSize * 0.8), 9),
-            barcodeHeight: 110,
-            barcodeWidth: 100,
-            barcodeYPosition: 72,
-            labelPadding: paddingMM
-          };
+          // 超小標籤
+          optimizedSettings.mainSize = Math.max(Math.round(baseFontSize * 0.9), 9);
+          optimizedSettings.subSize = Math.max(Math.round(baseFontSize * 0.7), 7);
+          optimizedSettings.barcodeTextSize = Math.max(Math.round(baseFontSize * 0.7), 7);
+          optimizedSettings.mainGap = 0;
+          optimizedSettings.labelPadding = 0.5;
+          
+          if (template.hasBarcode) {
+            optimizedSettings.barcodeHeight = 80;
+            optimizedSettings.barcodeWidth = 90;
+          }
+        } else if (labelWidthMM <= 40) {
+          // 標準標籤 (40×30mm)
+          optimizedSettings.mainSize = Math.max(Math.round(baseFontSize * 1.0), 10);
+          optimizedSettings.subSize = Math.max(Math.round(baseFontSize * 0.8), 8);
+          optimizedSettings.barcodeTextSize = Math.max(Math.round(baseFontSize * 0.8), 8);
+          optimizedSettings.mainGap = 0.5;
+          
+          if (template.hasBarcode) {
+            optimizedSettings.barcodeHeight = 100;
+            optimizedSettings.barcodeWidth = 100;
+          }
         } else {
-          // 大標籤 - 提升整體清晰度
-          optimizedSettings = {
-            mainSize: Math.max(Math.round(baseFontSize * 1.05), 12),
-            mainLineHeight: Math.round(baseFontSize * 1.155),
-            mainGap: 2,
-            subSize: Math.max(Math.round(baseFontSize * 0.85), 10),
-            subLineHeight: Math.round(baseFontSize * 0.935),
-            barcodeTextSize: Math.max(Math.round(baseFontSize * 0.85), 10),
-            barcodeHeight: 120,
-            barcodeWidth: 100,
-            barcodeYPosition: 75,
-            labelPadding: paddingMM
-          };
+          // 大標籤
+          optimizedSettings.mainSize = Math.max(Math.round(baseFontSize * 1.1), 11);
+          optimizedSettings.subSize = Math.max(Math.round(baseFontSize * 0.85), 9);
+          optimizedSettings.barcodeTextSize = Math.max(Math.round(baseFontSize * 0.85), 9);
+          optimizedSettings.mainGap = 1;
+          
+          if (template.hasBarcode) {
+            optimizedSettings.barcodeHeight = 110;
+            optimizedSettings.barcodeWidth = 100;
+          }
         }
         
-        // 特殊高度調整 - 確保條碼可掃描
-        if (labelHeightMM <= 20) {
-          // 超矮標籤 - 縮小條碼但保持可掃描性
-          optimizedSettings.barcodeHeight = Math.max(optimizedSettings.barcodeHeight - 15, 75);
-          optimizedSettings.barcodeYPosition = 60;
+        // 根據高度調整
+        if (labelHeightMM < 25) {
+          // 矮標籤 - 減少間距和條碼高度
           optimizedSettings.mainGap = Math.max(optimizedSettings.mainGap - 0.5, 0);
-        } else if (labelHeightMM <= 25) {
-          // 矮標籤
-          optimizedSettings.barcodeHeight = Math.max(optimizedSettings.barcodeHeight - 5, 85);
-        } else if (labelHeightMM >= 35) {
-          // 高標籤 - 增加條碼高度以提升掃描成功率
-          optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight + 15, 130);
+          optimizedSettings.mainLineHeight = optimizedSettings.mainSize + 1;
+          optimizedSettings.subLineHeight = optimizedSettings.subSize + 1;
+          
+          if (template.hasBarcode) {
+            optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight * 0.8, 70);
+            optimizedSettings.barcodeYPosition = 65;
+          }
+        } else if (labelHeightMM > 35) {
+          // 高標籤 - 增加間距
+          optimizedSettings.mainGap = Math.min(optimizedSettings.mainGap + 0.5, 2);
+          optimizedSettings.mainLineHeight = optimizedSettings.mainSize + 2;
+          optimizedSettings.subLineHeight = optimizedSettings.subSize + 2;
+          
+          if (template.hasBarcode) {
+            optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight * 1.2, 150);
+            optimizedSettings.barcodeYPosition = 75;
+          }
+        } else {
+          // 標準高度
+          optimizedSettings.mainLineHeight = Math.round(optimizedSettings.mainSize * 1.1);
+          optimizedSettings.subLineHeight = Math.round(optimizedSettings.subSize * 1.1);
         }
         
-        // 根據寬高比進一步優化清晰度
-        if (aspectRatio < 1.2) {
-          // 接近正方形 - 避免條碼過寬
-          optimizedSettings.barcodeWidth = Math.min(optimizedSettings.barcodeWidth, 85);
-        } else if (aspectRatio > 2.5) {
-          // 特別寬 - 確保條碼不會太細
-          optimizedSettings.barcodeWidth = Math.max(optimizedSettings.barcodeWidth - 5, 90);
+        // 特殊樣式調整
+        switch (currentLayout) {
+          case 'style3':
+          case 'style4':
+            // 內嵌條碼 - 需要更緊湊
+            optimizedSettings.mainGap = Math.max(optimizedSettings.mainGap - 0.5, 0);
+            optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight * 0.8, 80);
+            break;
+            
+          case 'style5':
+            // 價格置右 - 條碼位置需要調整
+            optimizedSettings.barcodeYPosition = Math.min(optimizedSettings.barcodeYPosition + 5, 80);
+            break;
+            
+          case 'style6':
+            // 簡約版 - 更緊湊的排版
+            optimizedSettings.mainSize = Math.max(optimizedSettings.mainSize - 1, 9);
+            optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 1, 7);
+            optimizedSettings.barcodeHeight = Math.min(optimizedSettings.barcodeHeight * 0.9, 90);
+            break;
+            
+          case 'style7':
+            // 帶SKU - 需要為SKU留空間
+            optimizedSettings.subSize = Math.max(optimizedSettings.subSize - 1, 7);
+            optimizedSettings.mainGap = Math.max(optimizedSettings.mainGap - 0.5, 0);
+            break;
+            
+          case 'style8':
+            // 純條碼 - 最大化條碼
+            optimizedSettings.barcodeHeight = Math.min(150, (availableHeight / 15) * 100);
+            optimizedSettings.barcodeWidth = Math.min(120, (availableWidth / (labelWidthMM * 0.95)) * 100);
+            optimizedSettings.barcodeTextSize = Math.max(Math.round(baseFontSize * 0.9), 9);
+            break;
         }
         
-        // 確保最小值符合列印清晰度要求
-        optimizedSettings.mainSize = Math.max(9, optimizedSettings.mainSize);
-        optimizedSettings.subSize = Math.max(7, optimizedSettings.subSize);
-        optimizedSettings.barcodeTextSize = Math.max(7, optimizedSettings.barcodeTextSize);
+        // 防止溢出檢查
+        const estimatedContentHeight = 
+          (template.hasMainText ? (optimizedSettings.mainSize * 1.5 + optimizedSettings.mainGap) : 0) +
+          (template.hasSubText ? (optimizedSettings.subSize * contentLines) : 0) +
+          (template.hasBarcode && template.barcodePosition === 'bottom' ? 12 : 0);
+        
+        if (estimatedContentHeight > availableHeight) {
+          // 內容可能溢出，縮小字體
+          const scaleFactor = availableHeight / estimatedContentHeight * 0.9;
+          optimizedSettings.mainSize = Math.max(Math.round(optimizedSettings.mainSize * scaleFactor), 8);
+          optimizedSettings.subSize = Math.max(Math.round(optimizedSettings.subSize * scaleFactor), 6);
+          optimizedSettings.barcodeTextSize = Math.max(Math.round(optimizedSettings.barcodeTextSize * scaleFactor), 6);
+          optimizedSettings.mainGap = Math.max(optimizedSettings.mainGap * scaleFactor, 0);
+        }
+        
+        // 底圖優化設定
+        if (logoDataUrl) {
+          optimizedSettings.logoSize = Math.min(30, (Math.min(labelWidthMM, labelHeightMM) / 40) * 30);
+          optimizedSettings.logoOpacity = 20;
+          optimizedSettings.logoX = 50;
+          optimizedSettings.logoY = 50;
+        }
         
         // 套用最佳化設定
         applyOptimizedSettings(optimizedSettings);
         
         // 顯示詳細通知
-        showNotification(`已針對 ${labelWidthMM}×${labelHeightMM}mm 標籤優化清晰列印設定`);
+        showNotification(`已優化 ${labelWidthMM}×${labelHeightMM}mm ${template.name} 的設定`);
       }
 
       /* 套用最佳化設定 */
       function applyOptimizedSettings(settings) {
-        // 套用標籤內距（如果有設定）
+        // 基本設定
         if (labelPadding && settings.labelPadding !== undefined) {
           labelPadding.value = settings.labelPadding;
           updateRangeProgress(labelPadding);
         }
         
-        // 套用文字大小
-        if (mainSize && settings.mainSize !== undefined) {
+        // 文字設定
+        if (mainSize && settings.mainSize !== undefined && !mainSize.disabled) {
           mainSize.value = settings.mainSize;
           updateRangeProgress(mainSize);
         }
         
-        if (mainLineHeightSlider && settings.mainLineHeight !== undefined) {
+        if (mainLineHeightSlider && settings.mainLineHeight !== undefined && !mainLineHeightSlider.disabled) {
           mainLineHeightSlider.value = settings.mainLineHeight;
           mainLineHeightSlider.dataset.userModified = 'false';
           updateRangeProgress(mainLineHeightSlider);
         }
         
-        if (mainGap && settings.mainGap !== undefined) {
+        if (mainGap && settings.mainGap !== undefined && !mainGap.disabled) {
           mainGap.value = settings.mainGap;
           updateRangeProgress(mainGap);
         }
         
-        if (subSize && settings.subSize !== undefined) {
+        if (mainBoldBtn && settings.mainBold !== undefined && !mainBoldBtn.disabled) {
+          mainBoldBtn.classList.toggle('active', settings.mainBold);
+        }
+        
+        if (subSize && settings.subSize !== undefined && !subSize.disabled) {
           subSize.value = settings.subSize;
           updateRangeProgress(subSize);
         }
         
-        if (subLineHeightSlider && settings.subLineHeight !== undefined) {
+        if (subLineHeightSlider && settings.subLineHeight !== undefined && !subLineHeightSlider.disabled) {
           subLineHeightSlider.value = settings.subLineHeight;
           subLineHeightSlider.dataset.userModified = 'false';
           updateRangeProgress(subLineHeightSlider);
         }
         
+        if (subBoldBtn && settings.subBold !== undefined && !subBoldBtn.disabled) {
+          subBoldBtn.classList.toggle('active', settings.subBold);
+        }
+        
+        // 條碼設定
         if (barcodeTextSize && settings.barcodeTextSize !== undefined) {
           barcodeTextSize.value = settings.barcodeTextSize;
           updateRangeProgress(barcodeTextSize);
         }
         
-        if (barcodeHeight && settings.barcodeHeight !== undefined) {
+        if (barcodeTextBoldBtn && settings.barcodeTextBold !== undefined) {
+          barcodeTextBoldBtn.classList.toggle('active', settings.barcodeTextBold);
+        }
+        
+        if (barcodeHeight && settings.barcodeHeight !== undefined && !barcodeHeight.disabled) {
           barcodeHeight.value = settings.barcodeHeight;
           updateRangeProgress(barcodeHeight);
         }
         
-        if (barcodeWidth && settings.barcodeWidth !== undefined) {
+        if (barcodeWidth && settings.barcodeWidth !== undefined && !barcodeWidth.disabled) {
           barcodeWidth.value = settings.barcodeWidth;
           updateRangeProgress(barcodeWidth);
         }
         
-        if (barcodeYPosition && settings.barcodeYPosition !== undefined) {
+        if (barcodeYPosition && settings.barcodeYPosition !== undefined && !barcodeYPosition.disabled) {
           barcodeYPosition.value = settings.barcodeYPosition;
           updateRangeProgress(barcodeYPosition);
+        }
+        
+        // 字體設定
+        if (fontFamily && settings.fontFamily) {
+          fontFamily.value = settings.fontFamily;
+        }
+        
+        // 底圖設定
+        if (logoSizeSlider && settings.logoSize !== undefined) {
+          logoSizeSlider.value = settings.logoSize;
+          updateRangeProgress(logoSizeSlider);
+        }
+        
+        if (logoXSlider && settings.logoX !== undefined) {
+          logoXSlider.value = settings.logoX;
+          updateRangeProgress(logoXSlider);
+        }
+        
+        if (logoYSlider && settings.logoY !== undefined) {
+          logoYSlider.value = settings.logoY;
+          updateRangeProgress(logoYSlider);
+        }
+        
+        if (logoOpacitySlider && settings.logoOpacity !== undefined) {
+          logoOpacitySlider.value = settings.logoOpacity;
+          updateRangeProgress(logoOpacitySlider);
         }
         
         // 立即更新樣式
@@ -2784,6 +3011,7 @@ javascript:(function(){
       /* 初始化 */
       initPresetSystem();
       loadInitialSettings();
+      updateControlStates();
       
       /* 將函數掛載到 window 物件 */
       window.barcodeEditor = {
@@ -2827,13 +3055,8 @@ javascript:(function(){
     function dragStart(e) {
       if (e.target.closest('.bv-glass-button') || e.target.closest('.bv-minimize-btn')) return;
       
-      if (e.type === "touchstart") {
-        initialX = e.touches[0].clientX - xOffset;
-        initialY = e.touches[0].clientY - yOffset;
-      } else {
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
-      }
+      initialX = e.clientX - xOffset;
+      initialY = e.clientY - yOffset;
       
       if (e.target === header || (header.contains(e.target) && !e.target.closest('.bv-glass-button'))) {
         isDragging = true;
@@ -2862,13 +3085,8 @@ javascript:(function(){
       if (isDragging) {
         e.preventDefault();
         
-        if (e.type === "touchmove") {
-          currentX = e.touches[0].clientX - initialX;
-          currentY = e.touches[0].clientY - initialY;
-        } else {
-          currentX = e.clientX - initialX;
-          currentY = e.clientY - initialY;
-        }
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
         
         xOffset = currentX;
         yOffset = currentY;
@@ -2892,19 +3110,15 @@ javascript:(function(){
     header.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
-    
-    header.addEventListener('touchstart', dragStart, { passive: false });
-    document.addEventListener('touchmove', drag, { passive: false });
-    document.addEventListener('touchend', dragEnd);
   }
   
   /* 添加樣式選擇器的樣式 */
   const layoutSelectorStyle = document.createElement('style');
   layoutSelectorStyle.innerHTML = `
-    /* 樣式選擇器 */
+    /* 樣式選擇器 - 改進版 */
     .bv-layout-selector {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       margin-top: 16px;
     }
@@ -2913,7 +3127,7 @@ javascript:(function(){
       background: rgba(255, 255, 255, 0.6);
       border: 1px solid rgba(0, 0, 0, 0.1);
       border-radius: 8px;
-      padding: 8px;
+      padding: 12px;
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
@@ -2937,8 +3151,8 @@ javascript:(function(){
     .bv-layout-option.active::before {
       content: '';
       position: absolute;
-      top: 4px;
-      right: 4px;
+      top: 6px;
+      right: 6px;
       width: 20px;
       height: 20px;
       background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
@@ -2952,8 +3166,8 @@ javascript:(function(){
     .bv-layout-option.active::after {
       content: '✓';
       position: absolute;
-      top: 6px;
-      right: 6px;
+      top: 8px;
+      right: 8px;
       color: white;
       font-size: 12px;
       font-weight: bold;
@@ -2967,26 +3181,26 @@ javascript:(function(){
       margin-bottom: 8px;
       border-radius: 4px;
       object-fit: contain;
-      max-height: 60px;
+      max-height: 80px;
     }
     
     .bv-layout-option-title {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       color: #000;
       margin-bottom: 2px;
     }
     
     .bv-layout-option-desc {
-      font-size: 10px;
+      font-size: 11px;
       color: rgba(0, 0, 0, 0.5);
       line-height: 1.2;
     }
     
     /* 響應式調整 */
-    @media (max-width: 1400px) {
+    @media (max-width: 1600px) {
       .bv-layout-selector {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
       }
     }
   `;
