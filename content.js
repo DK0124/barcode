@@ -41,172 +41,164 @@ javascript:(function(){
         sample.innerHTML = `
           <div class="spec_info">
             <ul>
-              <li class="main break-all show-multi-line">${data.productName || ''}</li>
-              ${data.spec ? `<li class="sub">${data.spec}</li>` : ''}
-              ${data.productCode ? `<li class="sub">${data.productCode}</li>` : '<li class="sub"></li>'}
-              <li class="sub">${data.price || ''}</li>
-              ${data.specialPrice ? `<li class="sub">${data.specialPrice}</li>` : '<li class="sub">&nbsp;</li>'}
+              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
+              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
+              <li class="sub">售價 ${data.price || '$1,234'}</li>
+              <li class="sub">特價 ${data.specialPrice || '$1,111'}</li>
             </ul>
           </div>
           <div class="spec_barcode">
             ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <b><span class="sub">${data.barcodeNumber || ''}</span></b>
+            <span class="sub">${data.barcodeNumber || '123456789'}</span>
           </div>
         `;
       }
     },
+    
     style2: {
       name: '樣式二',
-      description: '標準版',
+      description: '標準版（無特價）',
       imageExt: 'PNG',
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
             <ul>
-              <li class="main break-all show-multi-line">${data.productName || ''}</li>
-              ${data.spec ? `<li class="sub">${data.spec}</li>` : ''}
-              ${data.productCode ? `<li class="sub">${data.productCode}</li>` : '<li class="sub"></li>'}
-              <li class="sub">${data.price || ''}</li>
-              <li class="sub">&nbsp;</li>
+              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
+              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
+              <li class="sub">售價 ${data.price || '$1,234'}</li>
             </ul>
           </div>
           <div class="spec_barcode">
             ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <b><span class="sub">${data.barcodeNumber || ''}</span></b>
+            <span class="sub">${data.barcodeNumber || '123456789'}</span>
           </div>
         `;
       }
     },
+    
     style3: {
       name: '樣式三',
-      description: '精簡版（含特價）',
+      description: '條碼嵌入（含特價）',
       imageExt: 'PNG',
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div class="spec_info">
+          <div class="spec_info" style="height: 100%;">
             <ul>
-              <li class="main break-all show-multi-line">${data.productName || ''}</li>
-              ${data.spec ? `<li class="sub">${data.spec}</li>` : ''}
-              <li class="sub">${data.barcodeNumber || ''}</li>
-              <div class="spec_barcode">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-                <span class="sub">${data.barcodeNumber || ''}</span>
+              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
+              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
+              <li class="sub">${data.barcodeNumber || '123456789'}</li>
+              <div class="spec_barcode" style="margin: 3px 0;">
+                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 10mm;">` : ''}
+                <span class="sub">${data.barcodeNumber || '123456789'}</span>
               </div>
-              <li class="sub">${data.price || ''}</li>
-              ${data.specialPrice ? `<li class="sub">${data.specialPrice}</li>` : ''}
+              <li class="sub">售價 ${data.price || '$1,234'}</li>
+              <li class="sub">特價 ${data.specialPrice || '$1,111'}</li>
             </ul>
           </div>
         `;
       }
     },
+    
     style4: {
       name: '樣式四',
-      description: '精簡版',
+      description: '條碼嵌入（無特價）',
       imageExt: 'PNG',
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div class="spec_info">
+          <div class="spec_info" style="height: 100%;">
             <ul>
-              <li class="main break-all show-multi-line">${data.productName || ''}</li>
-              ${data.spec ? `<li class="sub">${data.spec}</li>` : ''}
-              <li class="sub">${data.barcodeNumber || ''}</li>
-              <div class="spec_barcode">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-                <span class="sub">${data.barcodeNumber || ''}</span>
+              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
+              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
+              <li class="sub">${data.barcodeNumber || '123456789'}</li>
+              <div class="spec_barcode" style="margin: 3px 0;">
+                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 10mm;">` : ''}
+                <span class="sub">${data.barcodeNumber || '123456789'}</span>
               </div>
-              <li class="sub">${data.price || ''}</li>
+              <li class="sub">售價 ${data.price || '$1,234'}</li>
             </ul>
           </div>
         `;
       }
     },
+    
     style5: {
       name: '樣式五',
-      description: '價格在條碼',
+      description: '價格置右',
       imageExt: 'PNG',
       rebuild: function(sample, data) {
         sample.innerHTML = `
           <div class="spec_info">
             <ul>
-              <li class="main break-all show-multi-line">${data.productName || ''}</li>
-              ${data.spec ? `<li class="sub">${data.spec}</li>` : ''}
-              ${data.productCode ? `<li class="sub">${data.productCode}</li>` : '<li class="sub"></li>'}
+              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
+              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
             </ul>
           </div>
-          <div class="spec_barcode">
-            <span style="text-align: right" class="sub">
-              <b>${data.price || ''}
-                ${data.specialPrice ? data.specialPrice : ''}
-              </b>
-            </span>
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <b><span class="sub">${data.barcodeNumber || ''}</span></b>
+          <div class="spec_barcode" style="position: relative;">
+            <div style="text-align: right; position: absolute; right: 0; top: -20px; font-size: 10px;">
+              <span class="sub">售價 ${data.price || '$1,234'} 特價 ${data.specialPrice || '$1,111'}</span>
+            </div>
+            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="margin-top: 5px;">` : ''}
+            <span class="sub">${data.barcodeNumber || '123456789'}</span>
           </div>
         `;
       }
     },
+    
     style6: {
       name: '樣式六',
-      description: '垂直排列',
+      description: '簡約版',
       imageExt: 'jpg',
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div class="spec_info">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || ''}</li>
-              ${data.spec ? `<li class="sub">${data.spec}</li>` : ''}
-              <br>
-              <br>
-              <div class="spec_barcode">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-                <div class="sub" style="margin-top: 1%;">${data.barcodeNumber || ''}</div>
-              </div>
-            </ul>
+          <div style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
+            <div style="flex: 1;">
+              <div class="main" style="font-size: 10px;">${data.productName || '商品名稱'}</div>
+              <div class="sub" style="font-size: 8px;">${data.spec || '規格名稱一 / 規格名稱二'}</div>
+            </div>
+            <div style="text-align: center;">
+              ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 8mm; width: auto;">` : ''}
+              <div class="sub" style="font-size: 7px; margin-top: 1px;">${data.barcodeNumber || '123456789'}</div>
+            </div>
           </div>
         `;
       }
     },
+    
     style7: {
       name: '樣式七',
-      description: '完整版',
+      description: '帶SKU版',
       imageExt: 'jpg',
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div class="spec_info">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || ''}</li>
-              ${data.spec ? `<li class="sub">${data.spec}</li>` : ''}
-              ${data.productCode ? `<li class="sub">${data.productCode}</li>` : '<li class="sub"></li>'}
-              <div class="sub">${data.productCode || ''}</div>
-            </ul>
-          </div>
-          <div class="spec_barcode">
-            <span style="text-align: right" class="sub">
-              <b>${data.price || ''}
-                ${data.specialPrice ? data.specialPrice : ''}
-              </b>
-            </span>
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <b><div class="sub" style="margin-top: 1%;">${data.barcodeNumber || ''}</div></b>
+          <div style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
+            <div style="flex: 1;">
+              <div class="main" style="font-size: 10px;">${data.productName || '商品名稱'}</div>
+              <div class="sub" style="font-size: 8px;">${data.spec || '規格名稱一 / 規格名稱二'}</div>
+              <div class="sub" style="font-size: 7px; margin-top: 2px;">sku</div>
+            </div>
+            <div style="text-align: center;">
+              <div class="sub" style="font-size: 8px; text-align: right; margin-bottom: 2px;">
+                售價 ${data.price || '$1,234'} 特價 ${data.specialPrice || '$1,111'}
+              </div>
+              ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 8mm; width: auto;">` : ''}
+              <div class="sub" style="font-size: 7px; margin-top: 1px;">${data.barcodeNumber || '123456789'}</div>
+            </div>
           </div>
         `;
       }
     },
+    
     style8: {
       name: '樣式八',
       description: '純條碼',
       imageExt: 'jpg',
       rebuild: function(sample, data) {
         sample.innerHTML = `
-          <div class="spec_barcode">
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <br>
-            <b><span class="sub">${data.barcodeNumber || ''}</span></b>
+          <div class="spec_barcode" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="height: 15mm; width: auto;">` : ''}
+            <span class="sub" style="font-size: 9px; margin-top: 3px;">${data.barcodeNumber || '123456789'}</span>
           </div>
         `;
-        sample.style.display = 'flex';
-        sample.style.justifyContent = 'center';
-        sample.style.alignItems = 'center';
       }
     }
   };
@@ -218,21 +210,21 @@ javascript:(function(){
   /* 完整的預設值物件 */
   const completeDefaultSettings = {
     layout: 'style1',
-    mainSize: 10,
+    mainSize: 11,          // 調大一點（原本10）
     mainBold: true,
-    mainGap: 0,
-    mainLineHeight: 11,
-    subSize: 8,
-    subBold: true,
-    subLineHeight: 9,
-    barcodeTextSize: 8,
+    mainGap: 2,           // 增加間距（原本0）
+    mainLineHeight: 13,    // 調整行高
+    subSize: 9,           // 調大一點（原本8）
+    subBold: false,       // 副文字不需要粗體
+    subLineHeight: 11,    
+    barcodeTextSize: 9,   // 條碼數字稍大
     barcodeTextBold: false,
     barcodeHeight: 100,
     barcodeWidth: 100,
     barcodeYPosition: 70,
-    labelWidth: 40,
-    labelHeight: 26,
-    labelPadding: 1,
+    labelWidth: 40,       // 40mm
+    labelHeight: 30,      // 30mm（修正）
+    labelPadding: 2,      // 增加內邊距
     fontFamily: 'Arial, sans-serif',
     logoSize: 30,
     logoX: 50,
