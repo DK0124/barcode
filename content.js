@@ -1,14 +1,11 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 修正版 */
+  /* BV SHOP 條碼標籤編輯器 - 完整版 v2.0 */
   
   // 只在條碼列印頁面上執行
-  if (!document.querySelector('.print_barcode_area')) return;
-
-  /* 載入思源黑體 */
-  const fontLink = document.createElement('link');
-  fontLink.rel = 'stylesheet';
-  fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap';
-  document.head.appendChild(fontLink);
+  if (!document.querySelector('.print_barcode_area')) {
+    alert('請在 BV SHOP 條碼列印頁面上使用此工具');
+    return;
+  }
 
   /* 載入 Material Icons */
   const iconLink = document.createElement('link');
@@ -18,251 +15,13 @@ javascript:(function(){
 
   /* 字體選項 */
   const fontOptions = [
-    { name: '思源黑體', value: '"Noto Sans TC", sans-serif' },
     { name: '系統預設', value: 'Arial, sans-serif' },
     { name: '微軟正黑體', value: 'Microsoft JhengHei, 微軟正黑體, sans-serif' },
-    { name: '蘋方體', value: 'PingFang TC, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif' }
+    { name: '蘋方體', value: 'PingFang TC, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif' },
+    { name: '標楷體', value: 'DFKai-SB, 標楷體, serif' }
   ];
 
-  /* 預設尺寸選項 */
-  const presetSizes = [
-    { name: '42×29mm', width: 42, height: 29 },
-    { name: '40×30mm', width: 40, height: 30 },
-    { name: '60×30mm', width: 60, height: 30 }
-  ];
-
-  /* 八種內建樣式模板 - 根據 BV SHOP 官方樣式 */
-  const layoutTemplates = {
-    style1: {
-      name: '樣式一',
-      description: '標準版（含特價）',
-      imageExt: 'PNG',
-      hasMainText: true,
-      hasSubText: true,
-      hasBarcode: true,
-      barcodePosition: 'bottom',
-      canAdjustBarcodeY: true,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="spec_info">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
-              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub">${data.price || '售價 $1,234'}</li>
-              <li class="sub">${data.specialPrice || '特價 $1,111'}</li>
-            </ul>
-          </div>
-          <div class="spec_barcode">
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <span class="sub">${data.barcodeNumber || '123456789'}</span>
-          </div>
-        `;
-      }
-    },
-    
-    style2: {
-      name: '樣式二',
-      description: '標準版（無特價）',
-      imageExt: 'PNG',
-      hasMainText: true,
-      hasSubText: true,
-      hasBarcode: true,
-      barcodePosition: 'bottom',
-      canAdjustBarcodeY: true,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="spec_info">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
-              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub">${data.price || '售價 $1,234'}</li>
-            </ul>
-          </div>
-          <div class="spec_barcode">
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <span class="sub">${data.barcodeNumber || '123456789'}</span>
-          </div>
-        `;
-      }
-    },
-    
-    style3: {
-      name: '樣式三',
-      description: '條碼嵌入（含特價）',
-      imageExt: 'PNG',
-      hasMainText: true,
-      hasSubText: true,
-      hasBarcode: true,
-      barcodePosition: 'embedded',
-      canAdjustBarcodeY: false,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="spec_info" style="height: 100%;">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
-              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub">${data.barcodeNumber || '123456789'}</li>
-              <div class="spec_barcode embedded-barcode" style="margin: 3px 0;">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-                <span class="sub">${data.barcodeNumber || '123456789'}</span>
-              </div>
-              <li class="sub">${data.price || '售價 $1,234'}</li>
-              <li class="sub">${data.specialPrice || '特價 $1,111'}</li>
-            </ul>
-          </div>
-        `;
-      }
-    },
-    
-    style4: {
-      name: '樣式四',
-      description: '條碼嵌入（無特價）',
-      imageExt: 'PNG',
-      hasMainText: true,
-      hasSubText: true,
-      hasBarcode: true,
-      barcodePosition: 'embedded',
-      canAdjustBarcodeY: false,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="spec_info" style="height: 100%;">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
-              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub">${data.barcodeNumber || '123456789'}</li>
-              <div class="spec_barcode embedded-barcode" style="margin: 3px 0;">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-                <span class="sub">${data.barcodeNumber || '123456789'}</span>
-              </div>
-              <li class="sub">${data.price || '售價 $1,234'}</li>
-            </ul>
-          </div>
-        `;
-      }
-    },
-    
-    style5: {
-      name: '樣式五',
-      description: '價格置右',
-      imageExt: 'PNG',
-      hasMainText: true,
-      hasSubText: true,
-      hasBarcode: true,
-      barcodePosition: 'bottom',
-      canAdjustBarcodeY: true,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="spec_info">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
-              <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-            </ul>
-          </div>
-          <div class="spec_barcode style5-barcode" style="position: relative;">
-            <div class="price-right" style="text-align: right; position: absolute; right: 0; top: -20px;">
-              <span class="sub">${data.price || '售價 $1,234'} ${data.specialPrice || '特價 $1,111'}</span>
-            </div>
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode" style="margin-top: 5px;">` : ''}
-            <span class="sub">${data.barcodeNumber || '123456789'}</span>
-          </div>
-        `;
-      }
-    },
-    
-    style6: {
-      name: '樣式六',
-      description: '簡約版',
-      imageExt: 'jpg',
-      hasMainText: true,
-      hasSubText: true,
-      hasBarcode: true,
-      barcodePosition: 'compact',
-      canAdjustBarcodeY: true,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="style6-container" style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
-            <div style="flex: 1;">
-              <div class="main">${data.productName || '商品名稱'}</div>
-              <div class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</div>
-            </div>
-            <div class="spec_barcode compact-barcode" style="text-align: center;">
-              ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-              <div class="sub">${data.barcodeNumber || '123456789'}</div>
-            </div>
-          </div>
-        `;
-      }
-    },
-    
-    style7: {
-      name: '樣式七',
-      description: '帶SKU版',
-      imageExt: 'jpg',
-      hasMainText: true,
-      hasSubText: true,
-      hasBarcode: true,
-      barcodePosition: 'compact',
-      canAdjustBarcodeY: true,
-      rebuild: function(sample, data) {
-        // 如果沒有 SKU 資料，嘗試從原始 HTML 中獲取
-        if (!data.productCode && data.originalHTML) {
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = data.originalHTML;
-          const skuElement = tempDiv.querySelector('.sub.sku-text, div[style*="font-size: 7px"]');
-          if (skuElement) {
-            data.productCode = skuElement.textContent.trim();
-          }
-        }
-        
-        sample.innerHTML = `
-          <div class="style7-container" style="display: flex; flex-direction: column; height: 100%; padding: 2mm;">
-            <div style="flex: 1;">
-              <div class="main">${data.productName || '商品名稱'}</div>
-              <div class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</div>
-              <div class="sub sku-text">${data.productCode || 'sku'}</div>
-            </div>
-            <div class="price-section" style="text-align: center;">
-              <div class="sub" style="text-align: right; margin-bottom: 2px;">
-                ${data.price || '售價 $1,234'} ${data.specialPrice || '特價 $1,111'}
-              </div>
-              <div class="spec_barcode compact-barcode">
-                ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-                <div class="sub">${data.barcodeNumber || '123456789'}</div>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-    },
-    
-    style8: {
-      name: '樣式八',
-      description: '純條碼',
-      imageExt: 'jpg',
-      hasMainText: false,
-      hasSubText: false,
-      hasBarcode: true,
-      barcodePosition: 'center',
-      hasOnlyBarcode: true,
-      canAdjustBarcodeY: true,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="spec_barcode pure-barcode" style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <span class="sub">${data.barcodeNumber || '123456789'}</span>
-          </div>
-        `;
-      }
-    }
-  };
-
-  /* 初始變數 */
-  let currentLayout = 'style1';
-  let isPanelMinimized = false;
-  let collapsedSections = {};
-  let originalLayout = 'style1'; // 記錄原始樣式
-
-  /* 完整的預設值物件 - 根據 BV 原始樣式 */
+  /* 完整的預設值物件 - 內距改為 3mm */
   const completeDefaultSettings = {
     layout: 'style1',
     mainSize: 10,
@@ -279,191 +38,328 @@ javascript:(function(){
     barcodeYPosition: 70,
     labelWidth: 40,
     labelHeight: 30,
-    labelPadding: 3,
+    labelPadding: 3, // 預設內距改為 3mm
     fontFamily: 'Arial, sans-serif',
     logoSize: 30,
     logoX: 50,
     logoY: 50,
     logoOpacity: 20
   };
-
-  /* 儲存原始資料 */
-  let productData = [];
-  let originalHTML = {};
   
-  /* 建立動態樣式元素 */
-  const dynamicStyle = document.createElement('style');
-  document.head.appendChild(dynamicStyle);
-
-  /* Logo 相關變數 */
-  let logoDataUrl = null;
-  let logoAspectRatio = 1;
-
-  /* 偵測原始樣式 - 改進版 */
+  /* 偵測原始樣式 - 基於舊程式碼的改進版 */
   function detectOriginalLayout() {
     const firstSample = document.querySelector('.print_sample');
     if (!firstSample) return 'style1';
     
-    // 檢查關鍵 DOM 結構特徵
-    const hasSpecInfo = firstSample.querySelector('.spec_info');
-    const hasSpecBarcode = firstSample.querySelector('.spec_barcode');
-    const allSubElements = firstSample.querySelectorAll('.sub');
-    const mainElement = firstSample.querySelector('.main');
+    const specInfo = firstSample.querySelector('.spec_info');
+    const specBarcode = firstSample.querySelector('.spec_barcode');
     
-    // 檢查是否為純條碼（樣式8）
-    if (!hasSpecInfo && hasSpecBarcode) {
-      const barcodeParent = hasSpecBarcode.parentElement;
-      if (barcodeParent && barcodeParent.style.cssText.includes('justify-content: center') && 
-          barcodeParent.style.cssText.includes('align-items: center')) {
-        return 'style8';
-      }
+    // 樣式八：純條碼（print_sample 有 flex 樣式）
+    if (firstSample.style.display === 'flex' && firstSample.style.justifyContent === 'center') {
+      console.log('偵測到樣式8：純條碼');
+      return 'style8';
     }
     
-    // 檢查是否有特殊容器（樣式6、7）
-    const style6Container = firstSample.querySelector('.style6-container');
-    const style7Container = firstSample.querySelector('.style7-container');
-    
-    if (style6Container) return 'style6';
-    if (style7Container) return 'style7';
-    
-    // 檢查是否有 flex 容器且無 spec_info（樣式6、7的另一種形式）
-    const flexContainer = firstSample.querySelector('div[style*="display: flex"][style*="flex-direction: column"]');
-    if (flexContainer && !hasSpecInfo) {
-      // 檢查是否有 SKU 文字
-      let hasSKU = false;
-      allSubElements.forEach(sub => {
-        if (sub.classList.contains('sku-text') || 
-            (sub.parentElement && sub.parentElement.style.fontSize === '7px')) {
-          hasSKU = true;
-        }
-      });
-      return hasSKU ? 'style7' : 'style6';
+    // 樣式三、四：條碼在 spec_info 內的 ul 裡面
+    if (specInfo && specInfo.querySelector('ul .spec_barcode')) {
+      const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+      console.log(`偵測到樣式${hasSpecialPrice ? '3' : '4'}：條碼在文字區內`);
+      return hasSpecialPrice ? 'style3' : 'style4';
     }
     
-    // 檢查價格是否置右（樣式5）
-    const priceRight = firstSample.querySelector('.price-right');
-    const absolutePrice = firstSample.querySelector('div[style*="position: absolute"][style*="text-align: right"]');
-    if (priceRight || absolutePrice) {
-      return 'style5';
+    // 樣式六：條碼在 spec_info 內，但有 <br> 標籤
+    if (specInfo && specInfo.querySelector('.spec_barcode') && specInfo.innerHTML.includes('<br>')) {
+      console.log('偵測到樣式6：特殊間距版本');
+      return 'style6';
     }
     
-    // 檢查條碼是否內嵌（樣式3、4）
-    if (hasSpecInfo && hasSpecBarcode) {
-      // 檢查條碼是否在 spec_info 內部
-      if (hasSpecInfo.contains(hasSpecBarcode)) {
-        // 檢查是否有特價
-        let hasSpecialPrice = false;
-        allSubElements.forEach(sub => {
-          if (sub.textContent.includes('特價')) {
-            hasSpecialPrice = true;
-          }
-        });
-        return hasSpecialPrice ? 'style3' : 'style4';
-      }
-      
-      // 檢查條碼是否有內嵌樣式類別
-      if (hasSpecBarcode.classList.contains('embedded-barcode')) {
-        let hasSpecialPrice = false;
-        allSubElements.forEach(sub => {
-          if (sub.textContent.includes('特價')) {
-            hasSpecialPrice = true;
-          }
-        });
-        return hasSpecialPrice ? 'style3' : 'style4';
-      }
+    // 樣式五、七：價格在條碼區
+    if (specBarcode && specBarcode.querySelector('span.sub b')) {
+      const hasProductCode = specInfo && (
+        specInfo.innerHTML.includes('cat-') || 
+        specInfo.querySelector('.sub:last-child')?.textContent?.includes('-')
+      );
+      console.log(`偵測到樣式${hasProductCode ? '7' : '5'}：價格在條碼區`);
+      return hasProductCode ? 'style7' : 'style5';
     }
     
-    // 標準版判斷（樣式1、2）
-    if (hasSpecInfo && hasSpecBarcode && !hasSpecInfo.contains(hasSpecBarcode)) {
-      // 檢查是否有特價
-      let hasSpecialPrice = false;
-      allSubElements.forEach(sub => {
-        if (sub.textContent.includes('特價')) {
-          hasSpecialPrice = true;
-        }
-      });
+    // 樣式一、二：標準版
+    if (specInfo) {
+      const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+      console.log(`偵測到樣式${hasSpecialPrice ? '1' : '2'}：標準版`);
       return hasSpecialPrice ? 'style1' : 'style2';
     }
     
-    // 預設返回樣式1
+    console.log('使用預設樣式1');
     return 'style1';
-}
-
-  /* 抓取頁面資料 - 改進版 */
-  function extractProductData() {
-    productData = [];
-    
+  }
+  
+  /* 收集產品資料 */
+  function collectProductData() {
+    const data = [];
     document.querySelectorAll('.print_sample').forEach((sample, index) => {
-      // 保存原始HTML
-      originalHTML[index] = sample.innerHTML;
+      const specInfo = sample.querySelector('.spec_info');
+      const specBarcode = sample.querySelector('.spec_barcode');
       
-      const data = {
-        productName: '',
+      const productData = {
+        index: index,
+        name: '',
         spec: '',
         price: '',
         specialPrice: '',
-        productCode: '',
-        barcodeImage: '',
-        barcodeNumber: '',
-        originalHTML: sample.innerHTML
+        sku: '',
+        barcode: '',
+        barcodeImg: null
       };
       
-      // 抓取商品名稱
-      const mainElement = sample.querySelector('.spec_info .main, .main');
+      // 獲取商品名稱
+      const mainElement = specInfo?.querySelector('.main') || sample.querySelector('.main');
       if (mainElement) {
-        data.productName = mainElement.textContent.trim();
+        productData.name = mainElement.textContent.trim();
       }
       
-      // 抓取規格、價格、編號等資訊
-      const subElements = sample.querySelectorAll('.spec_info .sub, .sub');
-      subElements.forEach((sub, subIndex) => {
+      // 獲取其他資訊
+      const subElements = sample.querySelectorAll('.sub');
+      subElements.forEach(sub => {
         const text = sub.textContent.trim();
         
-        // 檢查是否為條碼數字
-        if (sub.closest('.spec_barcode')) {
-          if (/\d{5,}/.test(text)) {
-            data.barcodeNumber = text;
+        // 特價
+        if (text.includes('特價')) {
+          productData.specialPrice = text;
+        }
+        // SKU/商品編號
+        else if (text.includes('cat-') || text.includes('-') || sub.classList.contains('sku-text')) {
+          productData.sku = text;
+        }
+        // 規格
+        else if (sub.parentElement === specInfo && !productData.spec) {
+          productData.spec = text;
+        }
+        // 價格
+        else if (text.includes('$') || /^\d+$/.test(text)) {
+          if (!productData.price) {
+            productData.price = text;
           }
-        } else {
-          // 檢查是否為 SKU (特殊處理樣式7)
-          if (sub.classList.contains('sku-text') || sub.parentElement?.style?.fontSize === '7px') {
-            data.productCode = text;
-          } else if (subIndex === 0 || (text.includes('/') && !text.includes('$') && !data.spec)) {
-            // 第一個 sub 通常是規格
-            data.spec = text;
-          } else if (text.includes('特價')) {
-            data.specialPrice = text;
-          } else if (text.includes('售價')) {
-            data.price = text;
-          } else if (text.match(/^[A-Za-z0-9\-_]+$/) && text.length > 2 && text.length < 20) {
-            // 可能是產品編號/SKU
-            if (!data.productCode && !text.match(/^\d+$/)) {
-              data.productCode = text;
-            }
-          }
+        }
+        // 條碼數字
+        else if (sub.parentElement === specBarcode || sub.closest('.spec_barcode')) {
+          productData.barcode = text;
         }
       });
       
-      // 抓取條碼圖片
-      const barcodeImg = sample.querySelector('.spec_barcode img, img[alt="barcode"]');
+      // 獲取條碼圖片
+      const barcodeImg = sample.querySelector('.spec_barcode img') || specInfo?.querySelector('.spec_barcode img');
       if (barcodeImg) {
-        data.barcodeImage = barcodeImg.src;
+        productData.barcodeImg = barcodeImg.src;
       }
       
-      // 條碼數字（補充抓取）
-      const barcodeText = sample.querySelector('.spec_barcode span.sub, .spec_barcode b');
-      if (barcodeText && !data.barcodeNumber) {
-        const text = barcodeText.textContent.trim();
-        if (/\d{5,}/.test(text)) {
-          data.barcodeNumber = text;
-        }
-      }
-      
-      productData.push(data);
+      data.push(productData);
     });
     
-    console.log('抓取到的產品資料:', productData);
+    return data;
   }
+  
+  const productData = collectProductData();
+  const originalLayout = detectOriginalLayout();
+  let currentLayout = originalLayout;
+  
+  /* 樣式模板定義 */
+  const layoutTemplates = {
+    'style1': {
+      name: '標準版（有特價）',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      hasOnlyBarcode: false,
+      barcodePosition: 'bottom',
+      canAdjustBarcodeY: false,
+      rebuild: function(sample, data) {
+        sample.innerHTML = `
+          <div class="spec_info">
+            <span class="main">${data.name || '商品名稱'}</span>
+            <ul>
+              <li><span class="sub">${data.spec || '規格'}</span></li>
+              <li><span class="sub">${data.specialPrice || '特價 $999'}</span></li>
+            </ul>
+          </div>
+          <div class="spec_barcode">
+            ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+            <span class="sub">${data.barcode || '1234567890123'}</span>
+          </div>
+        `;
+      }
+    },
+    'style2': {
+      name: '標準版（無特價）',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      hasOnlyBarcode: false,
+      barcodePosition: 'bottom',
+      canAdjustBarcodeY: false,
+      rebuild: function(sample, data) {
+        sample.innerHTML = `
+          <div class="spec_info">
+            <span class="main">${data.name || '商品名稱'}</span>
+            <ul>
+              <li><span class="sub">${data.spec || '規格'}</span></li>
+              <li><span class="sub">${data.price || '$999'}</span></li>
+            </ul>
+          </div>
+          <div class="spec_barcode">
+            ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+            <span class="sub">${data.barcode || '1234567890123'}</span>
+          </div>
+        `;
+      }
+    },
+    'style3': {
+      name: '條碼內嵌版（有特價）',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      hasOnlyBarcode: false,
+      barcodePosition: 'embedded',
+      canAdjustBarcodeY: false,
+      rebuild: function(sample, data) {
+        sample.innerHTML = `
+          <div class="spec_info">
+            <span class="main">${data.name || '商品名稱'}</span>
+            <ul>
+              <li><span class="sub">${data.spec || '規格'}</span></li>
+              <li><span class="sub">${data.specialPrice || '特價 $999'}</span></li>
+              <li>
+                <div class="spec_barcode embedded-barcode">
+                  ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+                  <span class="sub">${data.barcode || '1234567890123'}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        `;
+      }
+    },
+    'style4': {
+      name: '條碼內嵌版（無特價）',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      hasOnlyBarcode: false,
+      barcodePosition: 'embedded',
+      canAdjustBarcodeY: false,
+      rebuild: function(sample, data) {
+        sample.innerHTML = `
+          <div class="spec_info">
+            <span class="main">${data.name || '商品名稱'}</span>
+            <ul>
+              <li><span class="sub">${data.spec || '規格'}</span></li>
+              <li><span class="sub">${data.price || '$999'}</span></li>
+              <li>
+                <div class="spec_barcode embedded-barcode">
+                  ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+                  <span class="sub">${data.barcode || '1234567890123'}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        `;
+      }
+    },
+    'style5': {
+      name: '價格置右版',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      hasOnlyBarcode: false,
+      barcodePosition: 'bottom',
+      canAdjustBarcodeY: true,
+      rebuild: function(sample, data) {
+        sample.innerHTML = `
+          <div class="spec_info">
+            <span class="main">${data.name || '商品名稱'}</span>
+            <ul>
+              <li><span class="sub">${data.spec || '規格'}</span></li>
+            </ul>
+          </div>
+          <div class="spec_barcode style5-barcode">
+            <div class="price-right">
+              <span class="sub"><b>${data.price || '$999'}</b></span>
+            </div>
+            ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+            <span class="sub">${data.barcode || '1234567890123'}</span>
+          </div>
+        `;
+      }
+    },
+    'style6': {
+      name: '緊湊版（規格）',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      hasOnlyBarcode: false,
+      barcodePosition: 'compact',
+      canAdjustBarcodeY: true,
+      rebuild: function(sample, data) {
+        sample.innerHTML = `
+          <div class="style6-container">
+            <div class="spec_info">
+              <span class="main">${data.name || '商品名稱'}</span>
+              <br>
+              <span class="sub">${data.spec || '規格'}</span>
+              <span class="sub">${data.price || '$999'}</span>
+              <div class="spec_barcode compact-barcode">
+                ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+                <span class="sub">${data.barcode || '1234567890123'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    },
+    'style7': {
+      name: '緊湊版（SKU）',
+      hasMainText: true,
+      hasSubText: true,
+      hasBarcode: true,
+      hasOnlyBarcode: false,
+      barcodePosition: 'compact',
+      canAdjustBarcodeY: true,
+      rebuild: function(sample, data) {
+        sample.innerHTML = `
+          <div class="style7-container">
+            <span class="main">${data.name || '商品名稱'}</span>
+            <div class="sub">${data.spec || '規格'}</div>
+            <div class="sub sku-text" style="font-size: 7px;">${data.sku || 'cat-SKU-001'}</div>
+            <div class="spec_barcode compact-barcode">
+              <span class="sub"><b>${data.price || '$999'}</b></span>
+              ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+              <span class="sub">${data.barcode || '1234567890123'}</span>
+            </div>
+          </div>
+        `;
+      }
+    },
+    'style8': {
+      name: '純條碼',
+      hasMainText: false,
+      hasSubText: false,
+      hasBarcode: true,
+      hasOnlyBarcode: true,
+      barcodePosition: 'center',
+      canAdjustBarcodeY: true,
+      rebuild: function(sample, data) {
+        sample.style.display = 'flex';
+        sample.style.justifyContent = 'center';
+        sample.style.alignItems = 'center';
+        sample.innerHTML = `
+          <div class="spec_barcode pure-barcode">
+            ${data.barcodeImg ? `<img src="${data.barcodeImg}">` : ''}
+            <span class="sub">${data.barcode || '1234567890123'}</span>
+          </div>
+        `;
+      }
+    }
+  };
   
   /* 驗證行高合理性 */
   function validateLineHeight(fontSize, lineHeight) {
@@ -474,1326 +370,1074 @@ javascript:(function(){
   /* 計算建議的行高 */
   function calculateSuggestedLineHeight(fontSize) {
     const size = parseInt(fontSize);
-    return Math.round(size * 1.1);
+    let ratio;
+    if (size <= 10) {
+      ratio = 1.3;
+    } else if (size <= 14) {
+      ratio = 1.25;
+    } else {
+      ratio = 1.2;
+    }
+    return Math.round(size * ratio);
   }
   
   /* 建立基本樣式 */
   const style = document.createElement('style');
   style.innerHTML = `
-    /* 移除所有 focus outline */
-    * {
-      outline: none !important;
-    }
-    
-    *:focus,
-    *:focus-visible,
-    *:focus-within,
-    *:active {
-      outline: none !important;
-      box-shadow: none !important;
-    }
-    
-    /* 預覽區域容器 */
-    .bv-preview-container {
-      transform: scale(2);
-      transform-origin: top left;
-      width: 50%;
+    body {
+      background: #f5f5f7;
       margin: 0;
       padding: 20px;
-      background: #f0f0f0;
     }
     
-    /* body 保持原始大小 */
-    body {
-      margin: 0;
-      padding: 0;
-      background: #f0f0f0;
-      overflow-x: auto;
-    }
-    
-    /* 隱藏原本的列印按鈕 */
     body > button.no-print {
       display: none !important;
     }
     
-    /* 為每個標籤添加效果 */
-    .print_sample {
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e8e8e8;
-      position: relative;
-      transition: all 0.2s ease;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      overflow: hidden !important;
+    .print_barcode_area {
+      margin-top: 20px;
     }
     
-    /* 標籤懸停效果 */
-    @media (hover: hover) {
-      .print_sample:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-        transform: translateY(-2px);
-      }
+    .print_sample {
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e1e4e8;
+      position: relative;
+      margin-bottom: 8px;
+      overflow: hidden;
     }
     
     @media print {
-      .bv-preview-container {
-        transform: scale(1) !important;
-        width: 100% !important;
-        padding: 0 !important;
-        background: white !important;
-      }
-      
       body {
         background: white !important;
+        padding: 0 !important;
+      }
+      
+      .print_barcode_area {
+        margin-top: 0 !important;
       }
       
       .print_sample {
         box-shadow: none !important;
         border: none !important;
         margin-bottom: 0 !important;
-        border-radius: 0 !important;
-        transform: none !important;
       }
       
-      #bv-barcode-control-panel {
-        display: none !important;
-      }
-      
-      .bv-floating-button {
-        display: none !important;
-      }
-      
+      #bv-barcode-control-panel,
+      #bv-floating-print,
       .bv-notification {
         display: none !important;
       }
-      
-      /* 移除多餘的分頁 */
-      .print_barcode_area {
-        page-break-after: auto !important;
+    }
+    
+    @media print {
+      @page {
+        margin: 0;
       }
-      
-      .print_sample {
-        page-break-inside: avoid !important;
-        page-break-after: auto !important;
-      }
-    }
-  
-    /* 主面板 - Apple 風格優化 */
-    #bv-barcode-control-panel {
-      position: fixed;
-      right: 24px;
-      top: 24px;
-      bottom: 24px;
-      width: 360px;
-      z-index: 10000;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans TC', sans-serif;
-      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    
-    .bv-glass-panel {
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(50px) saturate(180%);
-      -webkit-backdrop-filter: blur(50px) saturate(180%);
-      border-radius: 16px;
-      border: 0.5px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.08),
-        0 0 0 0.5px rgba(0, 0, 0, 0.03),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.9);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    /* 最小化狀態 */
-    #bv-barcode-control-panel.minimized {
-      height: auto;
-      bottom: auto;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    
-    #bv-barcode-control-panel.minimized .bv-glass-panel {
-      height: auto;
-    }
-    
-    #bv-barcode-control-panel.minimized .bv-panel-content-wrapper {
-      display: none;
-    }
-    
-    /* 浮動按鈕 */
-    .bv-floating-button {
-      position: fixed;
-      bottom: 32px;
-      right: 32px;
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
-      color: white;
-      border: none;
-      border-radius: 30px;
-      box-shadow: 
-        0 4px 24px rgba(81, 138, 255, 0.3),
-        0 0 0 0.5px rgba(255, 255, 255, 0.2),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    
-    .bv-floating-button:hover {
-      transform: scale(1.05) translateY(-2px);
-      box-shadow: 
-        0 8px 32px rgba(81, 138, 255, 0.4),
-        0 0 0 0.5px rgba(255, 255, 255, 0.3),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.4);
-    }
-    
-    .bv-floating-button:active {
-      transform: scale(0.98);
-    }
-    
-    .bv-floating-button .material-icons {
-      font-size: 26px;
-    }
-    
-    #bv-barcode-control-panel.minimized ~ .bv-floating-button {
-      display: flex;
-    }
-    
-    /* 面板標題 - Apple 風格 */
-    .bv-panel-header {
-      padding: 20px 24px;
-      border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(30px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-      cursor: move;
-      user-select: none;
-    }
-    
-    .bv-header-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex: 1;
-    }
-    
-    .bv-icon-wrapper {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      box-shadow: 
-        0 2px 8px rgba(81, 138, 255, 0.2),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
-    }
-    
-    .bv-icon-wrapper .material-icons {
-      font-size: 22px;
-    }
-    
-    .bv-title-group {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    
-    .bv-panel-title {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: #000;
-      letter-spacing: -0.02em;
-    }
-    
-    .bv-panel-subtitle {
-      font-size: 13px;
-      color: rgba(0, 0, 0, 0.5);
-      font-weight: 400;
-    }
-    
-    /* 當前樣式顯示 */
-    .bv-current-style {
-      font-size: 12px;
-      color: rgba(0, 0, 0, 0.5);
-      margin-top: 4px;
-    }
-    
-    .bv-current-style-name {
-      color: #518aff;
-      font-weight: 500;
-    }
-    
-    /* Glass 按鈕 - Apple 風格 */
-    .bv-glass-button {
-      width: 32px;
-      height: 32px;
-      background: rgba(0, 0, 0, 0.05);
-      backdrop-filter: blur(20px);
-      border: 0.5px solid rgba(0, 0, 0, 0.08);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      color: rgba(0, 0, 0, 0.8);
-    }
-    
-    .bv-glass-button:hover {
-      background: rgba(0, 0, 0, 0.08);
-      transform: scale(1.04);
-    }
-    
-    .bv-glass-button:active {
-      transform: scale(0.96);
-    }
-    
-    .bv-glass-button .material-icons {
-      font-size: 20px;
-    }
-    
-    .bv-glass-button.bv-primary {
-      background: rgba(81, 138, 255, 0.08);
-      color: #518aff;
-      border-color: rgba(81, 138, 255, 0.15);
-    }
-    
-    .bv-glass-button.bv-primary:hover {
-      background: rgba(81, 138, 255, 0.12);
-    }
-    
-    /* 內容區域 - Apple 風格 */
-    .bv-panel-content-wrapper {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: hidden;
-    }
-    
-    .bv-panel-body {
-      padding: 24px;
-      overflow-y: auto;
-      flex: 1;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    /* 主要操作區 - Apple 風格 */
-    .bv-primary-section {
-      margin-bottom: 28px;
-    }
-    
-    .bv-reset-button {
-      width: 100%;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      box-shadow: 
-        0 3px 12px rgba(16, 185, 129, 0.25),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 20px;
-      color: white;
-      margin-bottom: 16px;
-    }
-    
-    .bv-reset-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 
-        0 6px 20px rgba(16, 185, 129, 0.35),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
-    }
-    
-    .bv-reset-button:active {
-      transform: translateY(0);
-    }
-    
-    .bv-button-icon {
-      width: 44px;
-      height: 44px;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(20px);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    
-    .bv-button-icon .material-icons {
-      font-size: 26px;
-    }
-    
-    .bv-button-content {
-      flex: 1;
-      text-align: left;
-    }
-    
-    .bv-button-title {
-      display: block;
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 2px;
-      letter-spacing: -0.01em;
-    }
-    
-    .bv-button-subtitle {
-      display: block;
-      font-size: 13px;
-      opacity: 0.8;
-    }
-    
-    /* 設定卡片 - Apple 風格 */
-    .bv-settings-card {
-      background: rgba(0, 0, 0, 0.03);
-      backdrop-filter: blur(20px);
-      border: 0.5px solid rgba(0, 0, 0, 0.05);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-      transition: all 0.3s ease;
-    }
-    
-    .bv-settings-card.collapsed {
-      padding-bottom: 20px;
-    }
-    
-    .bv-settings-card.collapsed .bv-card-content {
-      display: none;
-    }
-    
-    .bv-card-title {
-      margin: 0 0 20px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #000;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      user-select: none;
-    }
-    
-    .bv-settings-card.collapsed .bv-card-title {
-      margin-bottom: 0;
-    }
-    
-    .bv-card-title .material-icons {
-      font-size: 18px;
-      color: rgba(0, 0, 0, 0.5);
-    }
-    
-    .bv-card-title .bv-collapse-icon {
-      margin-left: auto;
-      transition: transform 0.3s ease;
-    }
-    
-    .bv-settings-card.collapsed .bv-card-title .bv-collapse-icon {
-      transform: rotate(-90deg);
-    }
-    
-    .bv-card-content {
-      animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    /* 預設尺寸按鈕 */
-    .bv-preset-sizes {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    
-    .bv-preset-size-btn {
-      flex: 1;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.8);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: center;
-    }
-    
-    .bv-preset-size-btn:hover {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(0, 0, 0, 0.16);
-      color: #518aff;
-    }
-    
-    .bv-preset-size-btn.active {
-      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
-      color: white;
-      border-color: transparent;
-      box-shadow: 
-        0 2px 8px rgba(81, 138, 255, 0.25),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
-    }
-    
-    /* Glass Slider - Apple 風格 */
-    .bv-slider-group {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    
-    .bv-slider-item {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .bv-slider-item.disabled {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    
-    .bv-slider-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      color: #000;
-    }
-    
-    .bv-value-label {
-      background: rgba(81, 138, 255, 0.08);
-      color: #518aff;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', monospace;
-      min-width: 48px;
-      text-align: center;
-    }
-    
-    .bv-glass-slider {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 6px;
-      background: rgba(0, 0, 0, 0.08);
-      border-radius: 3px;
-      outline: none;
-      position: relative;
-      cursor: pointer;
-      margin: 12px 0;
-    }
-    
-    .bv-glass-slider:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-    
-    .bv-glass-slider:before {
-      content: '';
-      position: absolute;
-      height: 6px;
-      border-radius: 3px;
-      background: #518aff;
-      width: var(--value, 0%);
-      pointer-events: none;
-    }
-    
-    .bv-glass-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 
-        0 1px 4px rgba(0, 0, 0, 0.15),
-        0 0 0 0.5px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .bv-glass-slider:disabled::-webkit-slider-thumb {
-      cursor: not-allowed;
-    }
-    
-    .bv-glass-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.1);
-      box-shadow: 
-        0 2px 8px rgba(0, 0, 0, 0.2),
-        0 0 0 0.5px rgba(0, 0, 0, 0.08);
-    }
-    
-    .bv-glass-slider:disabled::-webkit-slider-thumb:hover {
-      transform: scale(1);
-    }
-    
-    .bv-glass-slider::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      background: white;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-      transition: all 0.2s ease;
-      border: none;
-    }
-    
-    /* Glass Select - Apple 風格 */
-    .bv-glass-select {
-      width: 100%;
-      height: 36px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      border-radius: 8px;
-      padding: 0 12px;
-      font-size: 14px;
-      color: #000;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23666666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 32px;
-    }
-    
-    .bv-glass-select:hover {
-      background-color: rgba(255, 255, 255, 0.9);
-      border-color: rgba(0, 0, 0, 0.16);
-    }
-    
-    .bv-glass-select:focus {
-      background-color: white;
-      border-color: #518aff;
-      box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
-    }
-    
-    /* 粗體按鈕 */
-    .bv-bold-button {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      border-radius: 8px;
-      padding: 8px 16px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 16px;
-      font-weight: 700;
-      color: rgba(0, 0, 0, 0.5);
-      user-select: none;
-      min-width: 40px;
-    }
-    
-    .bv-bold-button:hover {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(0, 0, 0, 0.16);
-      color: #518aff;
-    }
-    
-    .bv-bold-button.active {
-      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
-      color: white;
-      border-color: transparent;
-      box-shadow: 
-        0 2px 8px rgba(81, 138, 255, 0.25),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
-    }
-    
-    .bv-bold-button.active:hover {
-      transform: scale(1.05);
-      box-shadow: 
-        0 4px 12px rgba(81, 138, 255, 0.35),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
-    }
-    
-    /* 設定項目 */
-    .bv-setting-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 0;
-      border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
-    }
-    
-    .bv-setting-item:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-    
-    .bv-setting-item:first-child {
-      padding-top: 0;
-    }
-    
-    .bv-setting-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-    }
-    
-    .bv-setting-label {
-      font-size: 14px;
-      font-weight: 500;
-      color: #000;
-      letter-spacing: -0.01em;
-    }
-    
-    /* 預設管理 */
-    .bv-preset-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    
-    .bv-preset-select-wrapper {
-      flex: 1;
-    }
-    
-    .bv-preset-buttons {
-      display: flex;
-      gap: 4px;
-    }
-    
-    .bv-preset-save-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    
-    .bv-glass-input {
-      flex: 1;
-      height: 36px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(20px);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      border-radius: 8px;
-      padding: 0 12px;
-      font-size: 14px;
-      color: #000;
-      transition: all 0.2s ease;
-    }
-    
-    .bv-glass-input::placeholder {
-      color: rgba(0, 0, 0, 0.4);
-    }
-    
-    .bv-glass-input:hover {
-      background-color: rgba(255, 255, 255, 0.9);
-      border-color: rgba(0, 0, 0, 0.16);
-    }
-    
-    .bv-glass-input:focus {
-      background-color: white;
-      border-color: #518aff;
-      box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
-    }
-    
-    /* 底部區域 */
-    .bv-panel-footer {
-      padding: 16px 24px 24px;
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(30px);
-      border-top: 0.5px solid rgba(0, 0, 0, 0.08);
-      flex-shrink: 0;
-    }
-    
-    .bv-glass-action-button {
-      width: 100%;
-      height: 48px;
-      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      box-shadow: 
-        0 3px 12px rgba(81, 138, 255, 0.25),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
-      letter-spacing: -0.01em;
-    }
-    
-    .bv-glass-action-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 
-        0 6px 20px rgba(81, 138, 255, 0.35),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
-    }
-    
-    .bv-glass-action-button:active {
-      transform: translateY(0);
-    }
-    
-    .bv-glass-action-button .material-icons {
-      font-size: 22px;
-    }
-    
-    /* 滾動條 */
-    .bv-panel-body::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    .bv-panel-body::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    .bv-panel-body::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 6px;
-      transition: background 0.2s ease;
-    }
-    
-    .bv-panel-body::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
-    
-    /* 通知 - Apple 風格 */
-    .bv-notification {
-      position: fixed;
-      top: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(50px) saturate(180%);
-      -webkit-backdrop-filter: blur(50px) saturate(180%);
-      padding: 16px 24px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.12),
-        0 0 0 0.5px rgba(0, 0, 0, 0.05),
-        inset 0 0 0 0.5px rgba(255, 255, 255, 0.9);
-      z-index: 100001;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      animation: slideDown 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      letter-spacing: -0.01em;
-    }
-    
-    .bv-notification.success {
-      color: #248A3D;
-    }
-    
-    .bv-notification.warning {
-      color: #C04C00;
-    }
-    
-    .bv-notification .material-icons {
-      font-size: 20px;
-    }
-    
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translate(-50%, -20px);
-      }
-      to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-    }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-      to {
-        opacity: 0;
-        transform: translate(-50%, -20px);
-      }
-    }
-    
-    /* 底圖上傳樣式 - Apple 風格 */
-    .bv-logo-upload-area {
-      border: 2px dashed rgba(0, 0, 0, 0.12);
-      border-radius: 12px;
-      padding: 32px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: rgba(0, 0, 0, 0.02);
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .bv-logo-upload-area:hover {
-      border-color: #518aff;
-      background: rgba(81, 138, 255, 0.04);
-    }
-    
-    .bv-logo-upload-area.has-logo {
-      border-style: solid;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.6);
-    }
-    
-    .bv-logo-upload-area .material-icons {
-      vertical-align: middle;
-      line-height: 1;
-    }
-    
-    .bv-logo-preview {
-      max-width: 100%;
-      max-height: 120px;
-      margin: 0 auto;
-      display: block;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    }
-    
-    .bv-upload-hint {
-      color: rgba(0, 0, 0, 0.5);
-      font-size: 14px;
-      margin-top: 12px;
-      font-weight: 500;
-    }
-    
-    .bv-logo-controls {
-      display: none;
-    }
-    
-    .bv-logo-controls.active {
-      display: block;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    .bv-remove-logo-btn {
-      background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 20px;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      letter-spacing: -0.01em;
-    }
-    
-    .bv-remove-logo-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4);
-    }
-    
-    .bv-remove-logo-btn .material-icons {
-      font-size: 18px;
-      vertical-align: middle;
-      line-height: 1;
-    }
-    
-    /* 底圖在標籤上的樣式 */
-    .label-background-logo {
-      position: absolute !important;
-      z-index: 1 !important;
-      pointer-events: none;
-      object-fit: contain !important;
-    }
-    
-    /* 防止選取 */
-    .print_sample * {
-      -webkit-touch-callout: none !important;
-      -webkit-user-select: none !important;
-      user-select: none !important;
     }
   `;
   document.head.appendChild(style);
-
-  /* 包裝預覽區域 */
-  const printBarcodeArea = document.querySelector('.print_barcode_area');
-  if (printBarcodeArea) {
-    const previewContainer = document.createElement('div');
-    previewContainer.className = 'bv-preview-container';
-    printBarcodeArea.parentNode.insertBefore(previewContainer, printBarcodeArea);
-    previewContainer.appendChild(printBarcodeArea);
-  }
-
+  
+  /* 建立動態樣式元素 */
+  const dynamicStyle = document.createElement('style');
+  document.head.appendChild(dynamicStyle);
+  
+  /* Logo 相關變數 */
+  let logoDataUrl = null;
+  let logoAspectRatio = 1;
+  
+  /* 防止列印時的重複執行 */
+  let isPrinting = false;
+  window.addEventListener('beforeprint', () => {
+    if (!window.allowPrint) {
+      if (!isPrinting) {
+        isPrinting = true;
+        setTimeout(() => { isPrinting = false; }, 100);
+        alert('請使用編輯器內的列印按鈕');
+      }
+      return false;
+    }
+    window.allowPrint = false;
+  });
+  
+  /* 控制面板收摺狀態 */
+  let collapsedSections = {};
+  let isPanelMinimized = false;
+  
   /* 建立控制面板 */
   setTimeout(() => {
-    // 偵測原始樣式
-    originalLayout = detectOriginalLayout();
-    currentLayout = originalLayout;
-    
-    // 抓取產品資料
-    extractProductData();
-    
     const panel = document.createElement('div');
-    panel.id = 'bv-barcode-control-panel';
     panel.innerHTML = `
-      <div class="bv-glass-panel">
+      <style>
+        #bv-barcode-control-panel {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          width: 380px;
+          max-height: 90vh;
+          z-index: 99999;
+          background: rgba(255, 255, 255, 0.98);
+          backdrop-filter: blur(20px) saturate(180%);
+          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          border-radius: 16px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+          padding: 0;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 13px;
+          overflow: hidden;
+          transform: translateX(0);
+          transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          will-change: transform;
+        }
+        
+        #bv-barcode-control-panel.minimized {
+          transform: translateX(calc(100% - 48px));
+        }
+        
+        #bv-barcode-control-panel.minimized .bv-panel-header h3,
+        #bv-barcode-control-panel.minimized .bv-panel-body,
+        #bv-barcode-control-panel.minimized .bv-panel-footer {
+          opacity: 0;
+          pointer-events: none;
+        }
+        
+        #bv-barcode-control-panel.minimized .bv-minimize-btn {
+          right: 8px;
+        }
+        
+        /* 毛玻璃效果 */
+        .bv-glass-effect {
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .bv-panel-header {
+          background: linear-gradient(135deg, #518aff 0%, #4371fb 100%);
+          color: white;
+          padding: 16px 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          position: relative;
+          cursor: move;
+          user-select: none;
+        }
+        
+        .bv-panel-header h3 {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .bv-current-style-name {
+          background: rgba(255, 255, 255, 0.2);
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+        
+        .bv-minimize-btn {
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+        
+        .bv-minimize-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .bv-minimize-btn .material-icons {
+          font-size: 20px;
+          color: white;
+        }
+        
+        .bv-panel-body {
+          padding: 0;
+          overflow-y: auto;
+          max-height: calc(90vh - 138px);
+          scroll-behavior: smooth;
+        }
+        
+        .bv-panel-body::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        .bv-panel-body::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .bv-panel-body::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 4px;
+        }
+        
+        .bv-panel-body::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .bv-panel-footer {
+          padding: 16px 20px;
+          border-top: 1px solid rgba(0, 0, 0, 0.06);
+          background: rgba(248, 249, 250, 0.5);
+        }
+        
+        .bv-glass-action-button {
+          width: 100%;
+          background: linear-gradient(135deg, #518aff 0%, #4371fb 100%);
+          color: white;
+          border: none;
+          padding: 12px 20px;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 4px 12px rgba(81, 138, 255, 0.3);
+        }
+        
+        .bv-glass-action-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(81, 138, 255, 0.4);
+        }
+        
+        .bv-glass-action-button:active {
+          transform: translateY(0);
+        }
+        
+        /* 設定卡片 */
+        .bv-settings-card {
+          background: rgba(255, 255, 255, 0.6);
+          margin: 16px;
+          border-radius: 12px;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        
+        .bv-settings-card.collapsed .bv-card-content {
+          max-height: 0;
+          opacity: 0;
+          padding: 0 20px;
+        }
+        
+        .bv-settings-card.collapsed .bv-collapse-icon {
+          transform: rotate(-90deg);
+        }
+        
+        .bv-card-title {
+          padding: 16px 20px;
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1a1a1a;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.2s ease;
+          position: relative;
+        }
+        
+        .bv-card-title:hover {
+          background: rgba(0, 0, 0, 0.02);
+        }
+        
+        .bv-card-title .material-icons {
+          font-size: 20px;
+          color: #518aff;
+        }
+        
+        .bv-collapse-icon {
+          margin-left: auto;
+          color: #86868b;
+          transition: transform 0.3s ease;
+        }
+        
+        .bv-card-content {
+          padding: 0 20px 20px 20px;
+          max-height: 600px;
+          opacity: 1;
+          transition: all 0.3s ease;
+        }
+        
+        /* 設定項目 */
+        .bv-setting-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 0;
+          border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        .bv-setting-item:last-child {
+          border-bottom: none;
+        }
+        
+        .bv-setting-info {
+          flex: 1;
+        }
+        
+        .bv-setting-label {
+          font-size: 13px;
+          color: #1a1a1a;
+          font-weight: 500;
+        }
+        
+        /* 粗體按鈕 */
+        .bv-bold-button {
+          background: rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 6px;
+          padding: 4px 12px;
+          font-size: 14px;
+          font-weight: 700;
+          color: #86868b;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .bv-bold-button:hover:not(:disabled) {
+          background: rgba(0, 0, 0, 0.08);
+          color: #1a1a1a;
+        }
+        
+        .bv-bold-button.active {
+          background: #518aff;
+          color: white;
+          border-color: transparent;
+        }
+        
+        .bv-bold-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        /* 滑桿樣式 */
+        .bv-slider-group {
+          padding: 8px 0;
+        }
+        
+        .bv-slider-item {
+          margin-bottom: 20px;
+          transition: opacity 0.3s ease;
+        }
+        
+        .bv-slider-item.disabled {
+          opacity: 0.5;
+          pointer-events: none;
+        }
+        
+        .bv-slider-item:last-child {
+          margin-bottom: 0;
+        }
+        
+        .bv-slider-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        
+        .bv-slider-header span:first-child {
+          font-size: 12px;
+          color: #1a1a1a;
+          font-weight: 500;
+        }
+        
+        .bv-value-label {
+          background: rgba(81, 138, 255, 0.1);
+          color: #518aff;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 600;
+          font-family: 'SF Mono', Monaco, monospace;
+          min-width: 40px;
+          text-align: center;
+        }
+        
+        .bv-glass-slider {
+          -webkit-appearance: none;
+          width: 100%;
+          height: 6px;
+          border-radius: 3px;
+          background: rgba(0, 0, 0, 0.08);
+          outline: none;
+          position: relative;
+          transition: background 0.2s ease;
+        }
+        
+        .bv-glass-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.08);
+          transition: all 0.2s ease;
+        }
+        
+        .bv-glass-slider::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bv-glass-slider::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          border: none;
+          transition: all 0.2s ease;
+        }
+        
+        .bv-glass-slider:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .bv-glass-slider:disabled::-webkit-slider-thumb {
+          cursor: not-allowed;
+        }
+        
+        /* 選擇器 */
+        .bv-glass-select {
+          width: 100%;
+          padding: 10px 12px;
+          background: rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 8px;
+          font-size: 13px;
+          color: #1a1a1a;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          appearance: none;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+          background-repeat: no-repeat;
+          background-position: right 8px center;
+          background-size: 16px;
+        }
+        
+        .bv-glass-select:hover {
+          background-color: rgba(0, 0, 0, 0.08);
+          border-color: rgba(0, 0, 0, 0.12);
+        }
+        
+        .bv-glass-select:focus {
+          outline: none;
+          border-color: #518aff;
+          box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
+        }
+        
+        /* 尺寸預設按鈕 */
+        .bv-preset-sizes {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 16px;
+          flex-wrap: wrap;
+        }
+        
+        .bv-preset-size-btn {
+          background: rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 20px;
+          padding: 6px 16px;
+          font-size: 12px;
+          color: #1a1a1a;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+          font-weight: 500;
+        }
+        
+        .bv-preset-size-btn:hover {
+          background: rgba(0, 0, 0, 0.08);
+          border-color: rgba(0, 0, 0, 0.12);
+        }
+        
+        .bv-preset-size-btn.active {
+          background: #518aff;
+          color: white;
+          border-color: transparent;
+        }
+        
+        /* Logo 上傳區域 */
+        .bv-logo-upload-area {
+          border: 2px dashed rgba(0, 0, 0, 0.12);
+          border-radius: 10px;
+          padding: 24px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          background: rgba(0, 0, 0, 0.02);
+          margin-bottom: 16px;
+        }
+        
+        .bv-logo-upload-area:hover {
+          border-color: #518aff;
+          background: rgba(81, 138, 255, 0.05);
+        }
+        
+        .bv-logo-upload-area.has-logo {
+          border-style: solid;
+          padding: 16px;
+          background: transparent;
+        }
+        
+        .bv-logo-preview {
+          max-width: 100%;
+          max-height: 80px;
+          display: block;
+          margin: 0 auto;
+        }
+        
+        .bv-upload-hint {
+          color: #86868b;
+          font-size: 12px;
+          margin-top: 8px;
+        }
+        
+        .bv-logo-controls {
+          display: none;
+        }
+        
+        .bv-logo-controls.active {
+          display: block;
+        }
+        
+        .bv-remove-logo-btn {
+          background: #ff3b30;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          margin-top: 12px;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .bv-remove-logo-btn:hover {
+          background: #e63329;
+        }
+        
+        .bv-remove-logo-btn .material-icons {
+          font-size: 16px;
+        }
+        
+        /* 按鈕組 */
+        .bv-button-group {
+          display: flex;
+          gap: 8px;
+          margin-top: 12px;
+          justify-content: flex-end;
+        }
+        
+        .bv-glass-button {
+          background: rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 6px;
+          padding: 6px 12px;
+          font-size: 12px;
+          color: #1a1a1a;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-weight: 500;
+        }
+        
+        .bv-glass-button:hover {
+          background: rgba(0, 0, 0, 0.08);
+          border-color: rgba(0, 0, 0, 0.12);
+        }
+        
+        .bv-glass-button .material-icons {
+          font-size: 16px;
+        }
+        
+        .bv-glass-button.bv-reset {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          border-color: transparent;
+        }
+        
+        .bv-glass-button.bv-reset:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        
+        .bv-glass-button.bv-primary {
+          background: #518aff;
+          color: white;
+          border-color: transparent;
+        }
+        
+        .bv-glass-button.bv-primary:hover {
+          background: #4371fb;
+        }
+        
+        /* 預設管理 */
+        .bv-preset-controls {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+        
+        .bv-preset-select-wrapper {
+          flex: 1;
+        }
+        
+        .bv-preset-buttons {
+          display: flex;
+          gap: 6px;
+        }
+        
+        .bv-preset-save-row {
+          display: flex;
+          gap: 8px;
+          margin-top: 12px;
+          align-items: center;
+        }
+        
+        .bv-glass-input {
+          flex: 1;
+          padding: 8px 12px;
+          background: rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 6px;
+          font-size: 13px;
+          color: #1a1a1a;
+          transition: all 0.2s ease;
+        }
+        
+        .bv-glass-input:focus {
+          outline: none;
+          border-color: #518aff;
+          box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
+        }
+        
+        /* 浮動按鈕 */
+        .bv-floating-button {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          width: 56px;
+          height: 56px;
+          background: linear-gradient(135deg, #518aff 0%, #4371fb 100%);
+          border: none;
+          border-radius: 50%;
+          box-shadow: 0 4px 12px rgba(81, 138, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.08);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          z-index: 99998;
+        }
+        
+        .bv-floating-button:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 20px rgba(81, 138, 255, 0.5), 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bv-floating-button:active {
+          transform: translateY(-1px);
+        }
+        
+        .bv-floating-button .material-icons {
+          color: white;
+          font-size: 24px;
+        }
+        
+        /* 通知訊息 */
+        .bv-notification {
+          position: fixed;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 100000;
+          background: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          animation: slideDown 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .bv-notification.success {
+          color: #059669;
+        }
+        
+        .bv-notification.warning {
+          color: #d97706;
+        }
+        
+        .bv-notification .material-icons {
+          font-size: 18px;
+        }
+        
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+          }
+        }
+      </style>
+      
+      <div id="bv-barcode-control-panel">
         <div class="bv-panel-header">
-          <div class="bv-header-content">
-            <div class="bv-icon-wrapper">
-              <span class="material-icons">label</span>
-            </div>
-            <div class="bv-title-group">
-              <h3 class="bv-panel-title">BV SHOP 條碼列印</h3>
-              <span class="bv-panel-subtitle">排版控制面板</span>
-              <div class="bv-current-style">
-                當前樣式：<span class="bv-current-style-name">${layoutTemplates[currentLayout].name}</span>
-              </div>
-            </div>
-          </div>
-          <button class="bv-glass-button bv-minimize-btn" id="bv-minimize-btn">
+          <h3>
+            BV 條碼編輯器
+            <span class="bv-current-style-name">${layoutTemplates[currentLayout].name}</span>
+          </h3>
+          <button class="bv-minimize-btn" id="bv-minimize-btn">
             <span class="material-icons">remove</span>
           </button>
         </div>
         
-        <div class="bv-panel-content-wrapper">
-          <div class="bv-panel-body">
-            <!-- 主要操作區 -->
-            <div class="bv-primary-section">
-              <button id="bv-reset-format" class="bv-reset-button">
-                <div class="bv-button-icon">
+        <div class="bv-panel-body">
+          <div class="bv-settings-card" id="paper-settings-card" data-section="paper">
+            <h4 class="bv-card-title">
+              <span class="material-icons">description</span>
+              標籤紙張設定
+              <span class="material-icons bv-collapse-icon">expand_more</span>
+            </h4>
+            
+            <div class="bv-card-content">
+              <div class="bv-preset-sizes">
+                <button class="bv-preset-size-btn" data-width="42" data-height="29">42×29mm</button>
+                <button class="bv-preset-size-btn active" data-width="40" data-height="30">40×30mm</button>
+                <button class="bv-preset-size-btn" data-width="60" data-height="30">60×30mm</button>
+              </div>
+              
+              <div class="bv-slider-group">
+                <div class="bv-slider-item">
+                  <div class="bv-slider-header">
+                    <span>標籤寬度</span>
+                    <span class="bv-value-label" id="label-width">40mm</span>
+                  </div>
+                  <input type="range" id="label-width-slider" min="30" max="60" value="40" class="bv-glass-slider">
+                </div>
+                
+                <div class="bv-slider-item">
+                  <div class="bv-slider-header">
+                    <span>標籤高度</span>
+                    <span class="bv-value-label" id="label-height">30mm</span>
+                  </div>
+                  <input type="range" id="label-height-slider" min="20" max="60" value="30" class="bv-glass-slider">
+                </div>
+                
+                <div class="bv-slider-item">
+                  <div class="bv-slider-header">
+                    <span>內部邊距</span>
+                    <span class="bv-value-label" id="label-padding">3mm</span>
+                  </div>
+                  <input type="range" id="label-padding-slider" min="0" max="5" step="0.5" value="3" class="bv-glass-slider">
+                </div>
+              </div>
+              
+              <div class="bv-slider-item" style="margin-top: 16px;">
+                <div class="bv-slider-header">
+                  <span>字體類型</span>
+                </div>
+                <select id="font-family-select" class="bv-glass-select">
+                  ${fontOptions.map(font => `<option value="${font.value}">${font.name}</option>`).join('')}
+                </select>
+              </div>
+              
+              <div class="bv-button-group">
+                <button class="bv-glass-button bv-reset" id="bv-reset-format">
                   <span class="material-icons">restart_alt</span>
-                </div>
-                <div class="bv-button-content">
-                  <span class="bv-button-title">還原預設值</span>
-                  <span class="bv-button-subtitle">回復 BV 原始設定</span>
-                </div>
-              </button>
-            </div>
-            
-            <!-- 基本設定區塊 -->
-            <div class="bv-settings-card" data-section="basic">
-              <h4 class="bv-card-title">
-                <span class="material-icons">tune</span>
-                基本設定
-                <span class="material-icons bv-collapse-icon">expand_more</span>
-              </h4>
-              
-              <div class="bv-card-content">
-                <!-- 預設尺寸按鈕 -->
-                <div class="bv-preset-sizes">
-                  ${presetSizes.map(size => `
-                    <button class="bv-preset-size-btn" data-width="${size.width}" data-height="${size.height}">
-                      ${size.name}
-                    </button>
-                  `).join('')}
-                </div>
-                
-                <!-- 標籤尺寸 -->
-                <div class="bv-slider-group">
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>標籤寬度</span>
-                      <span class="bv-value-label" id="label-width">40mm</span>
-                    </div>
-                    <input type="range" id="label-width-slider" min="30" max="60" value="40" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>標籤高度</span>
-                      <span class="bv-value-label" id="label-height">30mm</span>
-                    </div>
-                    <input type="range" id="label-height-slider" min="20" max="60" value="30" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>內部邊距</span>
-                      <span class="bv-value-label" id="label-padding">3mm</span>
-                    </div>
-                    <input type="range" id="label-padding-slider" min="0" max="5" step="0.5" value="3" class="bv-glass-slider">
-                  </div>
-                </div>
-                
-                <!-- 字體設定 -->
-                <div style="margin-top: 20px;">
-                  <div class="bv-setting-item" style="padding-bottom: 10px;">
-                    <span class="bv-setting-label">字體類型</span>
-                  </div>
-                  <select id="font-family-select" class="bv-glass-select">
-                    ${fontOptions.map(font => `<option value="${font.value}">${font.name}</option>`).join('')}
-                  </select>
-                </div>
+                  還原 BV 預設值
+                </button>
               </div>
             </div>
+          </div>
+          
+          <!-- 文字設定 -->
+          <div class="bv-settings-card" id="text-settings-card" data-section="text">
+            <h4 class="bv-card-title">
+              <span class="material-icons">text_fields</span>
+              文字設定
+              <span class="material-icons bv-collapse-icon">expand_more</span>
+            </h4>
             
-            <!-- 文字設定區塊 -->
-            <div class="bv-settings-card" id="text-settings-card" data-section="text">
-              <h4 class="bv-card-title">
-                <span class="material-icons">text_fields</span>
-                文字設定
-                <span class="material-icons bv-collapse-icon">expand_more</span>
-              </h4>
-              
-              <div class="bv-card-content">
-                <div class="bv-slider-group">
-                  <!-- 商品名稱 -->
-                  <div class="bv-setting-item" id="main-text-setting">
-                    <div class="bv-setting-info">
-                      <span class="bv-setting-label">商品名稱</span>
-                    </div>
-                    <button class="bv-bold-button active" id="main-bold-btn" title="粗體">B</button>
+            <div class="bv-card-content">
+              <div class="bv-slider-group">
+                <!-- 商品名稱 -->
+                <div class="bv-setting-item" id="main-text-setting">
+                  <div class="bv-setting-info">
+                    <span class="bv-setting-label">商品名稱</span>
                   </div>
-                  
-                  <div class="bv-slider-item" id="main-size-setting">
-                    <div class="bv-slider-header">
-                      <span>文字大小</span>
-                      <span class="bv-value-label" id="main-size">10px</span>
-                    </div>
-                    <input type="range" id="main-slider" min="8" max="20" value="10" class="bv-glass-slider">
+                  <button class="bv-bold-button active" id="main-bold-btn" title="粗體">B</button>
+                </div>
+                
+                <div class="bv-slider-item" id="main-size-setting">
+                  <div class="bv-slider-header">
+                    <span>文字大小</span>
+                    <span class="bv-value-label" id="main-size">10px</span>
                   </div>
+                  <input type="range" id="main-slider" min="8" max="20" value="10" class="bv-glass-slider">
+                </div>
 
-                  <div class="bv-slider-item" id="main-line-height-setting">
-                    <div class="bv-slider-header">
-                      <span>行高</span>
-                      <span class="bv-value-label" id="main-line-height">11px</span>
-                    </div>
-                    <input type="range" id="main-line-height-slider" min="8" max="30" value="11" class="bv-glass-slider">
+                <div class="bv-slider-item" id="main-line-height-setting">
+                  <div class="bv-slider-header">
+                    <span>行高</span>
+                    <span class="bv-value-label" id="main-line-height">11px</span>
                   </div>
-                  
-                  <div class="bv-slider-item" id="main-gap-setting">
-                    <div class="bv-slider-header">
-                      <span>商品名稱與其他資訊間距</span>
-                      <span class="bv-value-label" id="main-gap">0px</span>
-                    </div>
-                    <input type="range" id="main-gap-slider" min="0" max="10" step="0.5" value="0" class="bv-glass-slider">
-                  </div>
-                  
-                  <!-- 分隔線 -->
-                  <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
-                  
-                  <!-- 規格/編號/價格 -->
-                  <div class="bv-setting-item">
-                    <div class="bv-setting-info">
-                      <span class="bv-setting-label">規格/編號/價格</span>
-                    </div>
-                    <button class="bv-bold-button active" id="sub-bold-btn" title="粗體">B</button>
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>文字大小</span>
-                      <span class="bv-value-label" id="sub-size">8px</span>
-                    </div>
-                    <input type="range" id="sub-slider" min="6" max="16" value="8" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>行高</span>
-                      <span class="bv-value-label" id="sub-line-height">9px</span>
-                    </div>
-                    <input type="range" id="sub-line-height-slider" min="6" max="20" value="9" class="bv-glass-slider">
-                  </div>
-                  
-                  <!-- 分隔線 -->
-                  <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
-                  
-                  <!-- 條碼數字 -->
-                  <div class="bv-setting-item">
-                    <div class="bv-setting-info">
-                      <span class="bv-setting-label">條碼數字</span>
-                    </div>
-                    <button class="bv-bold-button active" id="barcode-text-bold-btn" title="粗體">B</button>
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>文字大小</span>
-                      <span class="bv-value-label" id="barcode-text-size">8px</span>
-                    </div>
-                    <input type="range" id="barcode-text-slider" min="6" max="16" value="8" class="bv-glass-slider">
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 條碼圖片設定 -->
-            <div class="bv-settings-card" id="barcode-settings-card" data-section="barcode">
-              <h4 class="bv-card-title">
-                <span class="material-icons">qr_code_2</span>
-                條碼圖片設定
-                <span class="material-icons bv-collapse-icon">expand_more</span>
-              </h4>
-              
-              <div class="bv-card-content">
-                <div class="bv-slider-group">
-                  <div class="bv-slider-item" id="barcode-height-setting">
-                    <div class="bv-slider-header">
-                      <span>條碼圖片高度（Y軸拉伸）</span>
-                      <span class="bv-value-label" id="barcode-height">100%</span>
-                    </div>
-                    <input type="range" id="barcode-height-slider" min="50" max="200" value="100" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item" id="barcode-width-setting">
-                    <div class="bv-slider-header">
-                      <span>條碼圖片寬度（X軸拉伸）</span>
-                      <span class="bv-value-label" id="barcode-width">100%</span>
-                    </div>
-                    <input type="range" id="barcode-width-slider" min="50" max="150" value="100" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item" id="barcode-y-position-setting">
-                    <div class="bv-slider-header">
-                      <span>條碼垂直位置</span>
-                      <span class="bv-value-label" id="barcode-y-position">70%</span>
-                    </div>
-                    <input type="range" id="barcode-y-position-slider" min="0" max="100" value="70" class="bv-glass-slider">
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 底圖設定區塊 -->
-            <div class="bv-settings-card" data-section="logo">
-              <h4 class="bv-card-title">
-                <span class="material-icons">image</span>
-                底圖設定
-                <span class="material-icons bv-collapse-icon">expand_more</span>
-              </h4>
-              
-              <div class="bv-card-content">
-                <div class="bv-logo-upload-area" id="logo-upload-area">
-                  <input type="file" id="logo-input" accept="image/png,image/jpeg,image/jpg" style="display:none;">
-                  <img id="logo-preview" class="bv-logo-preview" style="display:none;">
-                  <div id="upload-prompt">
-                    <span class="material-icons" style="font-size:36px; color: #86868b;">add_photo_alternate</span>
-                    <div class="bv-upload-hint">點擊上傳底圖（支援 PNG/JPG）</div>
-                  </div>
+                  <input type="range" id="main-line-height-slider" min="8" max="30" value="11" class="bv-glass-slider">
                 </div>
                 
-                <div class="bv-logo-controls" id="logo-controls">
-                  <div class="bv-slider-group">
-                    <div class="bv-slider-item">
-                      <div class="bv-slider-header">
-                        <span>底圖大小</span>
-                        <span class="bv-value-label" id="logo-size">30%</span>
-                      </div>
-                      <input type="range" id="logo-size-slider" min="10" max="100" value="30" class="bv-glass-slider">
-                    </div>
-                    
-                    <div class="bv-slider-item">
-                      <div class="bv-slider-header">
-                        <span>水平位置</span>
-                        <span class="bv-value-label" id="logo-x">50%</span>
-                      </div>
-                      <input type="range" id="logo-x-slider" min="0" max="100" value="50" class="bv-glass-slider">
-                    </div>
-                    
-                    <div class="bv-slider-item">
-                      <div class="bv-slider-header">
-                        <span>垂直位置</span>
-                        <span class="bv-value-label" id="logo-y">50%</span>
-                      </div>
-                      <input type="range" id="logo-y-slider" min="0" max="100" value="50" class="bv-glass-slider">
-                    </div>
-                    
-                    <div class="bv-slider-item">
-                      <div class="bv-slider-header">
-                        <span>淡化程度</span>
-                        <span class="bv-value-label" id="logo-opacity">20%</span>
-                      </div>
-                      <input type="range" id="logo-opacity-slider" min="0" max="100" value="20" class="bv-glass-slider">
-                    </div>
+                <div class="bv-slider-item" id="main-gap-setting">
+                  <div class="bv-slider-header">
+                    <span>商品名稱與其他資訊間距</span>
+                    <span class="bv-value-label" id="main-gap">0px</span>
                   </div>
-                  
-                  <button class="bv-remove-logo-btn" id="remove-logo-btn">
-                    <span class="material-icons">delete</span>
-                    移除底圖
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 預設管理 - 移到最下面 -->
-            <div class="bv-settings-card" data-section="presets">
-              <h4 class="bv-card-title">
-                <span class="material-icons">bookmark</span>
-                預設管理
-                <span class="material-icons bv-collapse-icon">expand_more</span>
-              </h4>
-              
-              <div class="bv-card-content">
-                <div class="bv-preset-controls">
-                  <div class="bv-preset-select-wrapper">
-                    <select id="bv-preset-select" class="bv-glass-select">
-                      <option value="">選擇預設...</option>
-                    </select>
-                  </div>
-                  <div class="bv-preset-buttons">
-                    <button class="bv-glass-button" id="bv-save-preset" title="儲存">
-                      <span class="material-icons">save</span>
-                    </button>
-                    <button class="bv-glass-button" id="bv-delete-preset" title="刪除">
-                      <span class="material-icons">delete</span>
-                    </button>
-                  </div>
+                  <input type="range" id="main-gap-slider" min="0" max="10" step="0.5" value="0" class="bv-glass-slider">
                 </div>
                 
-                <div class="bv-preset-save-row" id="bv-save-preset-row" style="display:none;">
-                  <input type="text" id="bv-new-preset-name" class="bv-glass-input" placeholder="輸入預設名稱...">
-                  <div class="bv-preset-buttons">
-                    <button class="bv-glass-button bv-primary" id="bv-confirm-save">
-                      <span class="material-icons">check</span>
-                    </button>
-                    <button class="bv-glass-button" id="bv-cancel-save">
-                      <span class="material-icons">close</span>
-                    </button>
+                <!-- 分隔線 -->
+                <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
+                
+                <!-- 規格/編號/價格 -->
+                <div class="bv-setting-item" id="sub-text-setting">
+                  <div class="bv-setting-info">
+                    <span class="bv-setting-label">規格/編號/價格</span>
                   </div>
+                  <button class="bv-bold-button active" id="sub-bold-btn" title="粗體">B</button>
+                </div>
+                
+                <div class="bv-slider-item" id="sub-size-setting">
+                  <div class="bv-slider-header">
+                    <span>文字大小</span>
+                    <span class="bv-value-label" id="sub-size">8px</span>
+                  </div>
+                  <input type="range" id="sub-slider" min="6" max="16" value="8" class="bv-glass-slider">
+                </div>
+                
+                <div class="bv-slider-item" id="sub-line-height-setting">
+                  <div class="bv-slider-header">
+                    <span>行高</span>
+                    <span class="bv-value-label" id="sub-line-height">9px</span>
+                  </div>
+                  <input type="range" id="sub-line-height-slider" min="6" max="20" value="9" class="bv-glass-slider">
+                </div>
+                
+                <!-- 分隔線 -->
+                <div style="height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 20px 0;"></div>
+                
+                <!-- 條碼數字 -->
+                <div class="bv-setting-item">
+                  <div class="bv-setting-info">
+                    <span class="bv-setting-label">條碼數字</span>
+                  </div>
+                  <button class="bv-bold-button active" id="barcode-text-bold-btn" title="粗體">B</button>
+                </div>
+                
+                <div class="bv-slider-item">
+                  <div class="bv-slider-header">
+                    <span>文字大小</span>
+                    <span class="bv-value-label" id="barcode-text-size">8px</span>
+                  </div>
+                  <input type="range" id="barcode-text-slider" min="6" max="16" value="8" class="bv-glass-slider">
                 </div>
               </div>
             </div>
           </div>
           
-          <div class="bv-panel-footer">
-            <button class="bv-glass-action-button" id="bv-apply-print">
-              <span class="material-icons">print</span>
-              <span>套用並列印</span>
-            </button>
+          <!-- 條碼圖片設定 -->
+          <div class="bv-settings-card" id="barcode-settings-card" data-section="barcode">
+            <h4 class="bv-card-title">
+              <span class="material-icons">qr_code_2</span>
+              條碼圖片設定
+              <span class="material-icons bv-collapse-icon">expand_more</span>
+            </h4>
+            
+            <div class="bv-card-content">
+              <div class="bv-slider-group">
+                <div class="bv-slider-item" id="barcode-height-setting">
+                  <div class="bv-slider-header">
+                    <span>條碼圖片高度（Y軸拉伸）</span>
+                    <span class="bv-value-label" id="barcode-height">100%</span>
+                  </div>
+                  <input type="range" id="barcode-height-slider" min="50" max="200" value="100" class="bv-glass-slider">
+                </div>
+                
+                <div class="bv-slider-item" id="barcode-width-setting">
+                  <div class="bv-slider-header">
+                    <span>條碼圖片寬度（X軸拉伸）</span>
+                    <span class="bv-value-label" id="barcode-width">100%</span>
+                  </div>
+                  <input type="range" id="barcode-width-slider" min="50" max="100" value="100" class="bv-glass-slider">
+                </div>
+                
+                <div class="bv-slider-item" id="barcode-y-position-setting">
+                  <div class="bv-slider-header">
+                    <span>條碼垂直位置</span>
+                    <span class="bv-value-label" id="barcode-y-position">70%</span>
+                  </div>
+                  <input type="range" id="barcode-y-position-slider" min="0" max="100" value="70" class="bv-glass-slider">
+                </div>
+              </div>
+            </div>
           </div>
+          
+          <!-- 底圖設定區塊 -->
+          <div class="bv-settings-card" data-section="logo">
+            <h4 class="bv-card-title">
+              <span class="material-icons">image</span>
+              底圖設定
+              <span class="material-icons bv-collapse-icon">expand_more</span>
+            </h4>
+            
+            <div class="bv-card-content">
+              <div class="bv-logo-upload-area" id="logo-upload-area">
+                <input type="file" id="logo-input" accept="image/png,image/jpeg,image/jpg" style="display:none;">
+                <img id="logo-preview" class="bv-logo-preview" style="display:none;">
+                <div id="upload-prompt">
+                  <span class="material-icons" style="font-size:36px; color: #86868b;">add_photo_alternate</span>
+                  <div class="bv-upload-hint">點擊上傳底圖（支援 PNG/JPG）</div>
+                </div>
+              </div>
+              
+              <div class="bv-logo-controls" id="logo-controls">
+                <div class="bv-slider-group">
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>底圖大小</span>
+                      <span class="bv-value-label" id="logo-size">30%</span>
+                    </div>
+                    <input type="range" id="logo-size-slider" min="10" max="100" value="30" class="bv-glass-slider">
+                  </div>
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>水平位置</span>
+                      <span class="bv-value-label" id="logo-x">50%</span>
+                    </div>
+                    <input type="range" id="logo-x-slider" min="0" max="100" value="50" class="bv-glass-slider">
+                  </div>
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>垂直位置</span>
+                      <span class="bv-value-label" id="logo-y">50%</span>
+                    </div>
+                    <input type="range" id="logo-y-slider" min="0" max="100" value="50" class="bv-glass-slider">
+                  </div>
+                  
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>淡化程度</span>
+                      <span class="bv-value-label" id="logo-opacity">20%</span>
+                    </div>
+                    <input type="range" id="logo-opacity-slider" min="0" max="100" value="20" class="bv-glass-slider">
+                  </div>
+                </div>
+                
+                <button class="bv-remove-logo-btn" id="remove-logo-btn">
+                  <span class="material-icons">delete</span>
+                  移除底圖
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 預設管理 - 移到最下面 -->
+          <div class="bv-settings-card" data-section="presets">
+            <h4 class="bv-card-title">
+              <span class="material-icons">bookmark</span>
+              預設管理
+              <span class="material-icons bv-collapse-icon">expand_more</span>
+            </h4>
+            
+            <div class="bv-card-content">
+              <div class="bv-preset-controls">
+                <div class="bv-preset-select-wrapper">
+                  <select id="bv-preset-select" class="bv-glass-select">
+                    <option value="">選擇預設...</option>
+                  </select>
+                </div>
+                <div class="bv-preset-buttons">
+                  <button class="bv-glass-button" id="bv-save-preset" title="儲存">
+                    <span class="material-icons">save</span>
+                  </button>
+                  <button class="bv-glass-button" id="bv-delete-preset" title="刪除">
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="bv-preset-save-row" id="bv-save-preset-row" style="display:none;">
+                <input type="text" id="bv-new-preset-name" class="bv-glass-input" placeholder="輸入預設名稱...">
+                <div class="bv-preset-buttons">
+                  <button class="bv-glass-button bv-primary" id="bv-confirm-save">
+                    <span class="material-icons">check</span>
+                  </button>
+                  <button class="bv-glass-button" id="bv-cancel-save">
+                    <span class="material-icons">close</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bv-panel-footer">
+          <button class="bv-glass-action-button" id="bv-apply-print">
+            <span class="material-icons">print</span>
+            <span>套用並列印</span>
+          </button>
         </div>
       </div>
     `;
@@ -2876,7 +2520,8 @@ javascript:(function(){
           }
         }
       });
-            /* 載入上次設定或預設設定 */
+      
+      /* 載入上次設定或預設設定 */
       function loadInitialSettings() {
         const lastSelected = getSettingsFromLocal('lastSelectedPreset');
         if (lastSelected) {
