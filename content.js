@@ -43,8 +43,8 @@ javascript:(function(){
             <ul>
               <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
               <li class="sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub">售價 ${data.price || '$1,234'}</li>
-              <li class="sub">特價 ${data.specialPrice || '$1,111'}</li>
+              <li class="sub">${data.price || '$1,234'}</li>
+              <li class="sub">${data.specialPrice || '$1,111'}</li>
             </ul>
           </div>
           <div class="spec_barcode">
