@@ -299,104 +299,50 @@ javascript:(function(){
   let logoDataUrl = null;
   let logoAspectRatio = 1;
 
-  /* 偵測原始樣式 - 改進版（基於新程式碼的邏輯） */
+  /* 偵測原始樣式 - 基於參考程式碼的正確邏輯 */
   function detectOriginalLayout() {
     const firstSample = document.querySelector('.print_sample');
     if (!firstSample) return 'style1';
     
     const specInfo = firstSample.querySelector('.spec_info');
     const specBarcode = firstSample.querySelector('.spec_barcode');
-    const allSubElements = firstSample.querySelectorAll('.sub');
-    const mainElement = firstSample.querySelector('.main');
     
-    // 檢查是否為純條碼（樣式8）
-    // 改進：檢查更多可能的純條碼特徵
-    if (!specInfo && hasSpecBarcode) {
+    // 樣式八：純條碼（print_sample 有 flex 樣式）
+    if (firstSample.style.display === 'flex' && firstSample.style.justifyContent === 'center') {
+      console.log('偵測到樣式8：純條碼');
       return 'style8';
     }
     
-    // 檢查 inline style 中的 flex 屬性
-    if (firstSample.style.display === 'flex' && 
-        firstSample.style.justifyContent === 'center' && 
-        firstSample.style.alignItems === 'center') {
-      return 'style8';
+    // 樣式三、四：條碼在 spec_info 內的 ul 裡面
+    if (specInfo && specInfo.querySelector('ul .spec_barcode')) {
+      const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+      console.log(`偵測到樣式${hasSpecialPrice ? '3' : '4'}：條碼在文字區內`);
+      return hasSpecialPrice ? 'style3' : 'style4';
     }
     
-    // 檢查是否有特殊容器（樣式6、7）
-    const style6Container = firstSample.querySelector('.style6-container');
-    const style7Container = firstSample.querySelector('.style7-container');
-    
-    if (style6Container) return 'style6';
-    if (style7Container) return 'style7';
-    
-    // 檢查是否有 flex 容器且無 spec_info（樣式6、7的另一種形式）
-    const hasFlexContainer = Array.from(firstSample.querySelectorAll('div')).some(div => {
-      const style = div.getAttribute('style') || '';
-      return style.includes('display: flex') && style.includes('flex-direction: column');
-    });
-    
-    if (hasFlexContainer && !specInfo) {
-      // 檢查是否有 SKU 文字
-      let hasSKU = false;
-      allSubElements.forEach(sub => {
-        if (sub.classList.contains('sku-text') || 
-            (sub.parentElement && sub.parentElement.style.fontSize === '7px') ||
-            (sub.getAttribute('style') && sub.getAttribute('style').includes('font-size: 7px'))) {
-          hasSKU = true;
-        }
-      });
-      return hasSKU ? 'style7' : 'style6';
+    // 樣式六：條碼在 spec_info 內，但有 <br> 標籤
+    if (specInfo && specInfo.querySelector('.spec_barcode') && specInfo.innerHTML.includes('<br>')) {
+      console.log('偵測到樣式6：特殊間距版本');
+      return 'style6';
     }
     
-    // 檢查價格是否置右（樣式5）
-    const priceRight = firstSample.querySelector('.price-right');
-    const hasAbsolutePrice = Array.from(firstSample.querySelectorAll('div')).some(div => {
-      const style = div.getAttribute('style') || '';
-      return style.includes('position: absolute') && 
-             (style.includes('text-align: right') || style.includes('right: 0'));
-    });
-    
-    if (priceRight || hasAbsolutePrice) {
-      return 'style5';
+    // 樣式五、七：價格在條碼區
+    if (specBarcode && specBarcode.querySelector('span.sub b')) {
+      const hasProductCode = specInfo && (
+        specInfo.innerHTML.includes('cat-') || 
+        specInfo.querySelector('.sub:last-child')?.textContent?.includes('-')
+      );
+      console.log(`偵測到樣式${hasProductCode ? '7' : '5'}：價格在條碼區`);
+      return hasProductCode ? 'style7' : 'style5';
     }
     
-    // 檢查條碼是否內嵌（樣式3、4）
-    if (specInfo && specBarcode) {
-      // 檢查條碼是否在 spec_info 內部
-      if (specInfo.contains(specBarcode)) {
-        // 檢查是否有特價
-        let hasSpecialPrice = allSubElements.forEach(sub => 
-          sub.textContent.includes('特價')
-        );
-        return hasSpecialPrice ? 'style3' : 'style4';
-      }
-      
-      // 檢查條碼是否在 ul 裡面
-      const ulElement = specInfo.querySelector('ul');
-      if (ulElement && ulElement.querySelector('.spec_barcode')) {
-        let hasSpecialPrice = false;
-        allSubElements.forEach(sub => {
-          if (sub.textContent.includes('特價')) {
-            hasSpecialPrice = true;
-          }
-        });
-        return hasSpecialPrice ? 'style3' : 'style4';
-      }
-    }
-    
-    // 標準版判斷（樣式1、2）
-    if (specInfo && specBarcode && !specInfo.contains(specBarcode)) {
-      // 檢查是否有特價
-      let hasSpecialPrice = false;
-      allSubElements.forEach(sub => {
-        if (sub.textContent.includes('特價')) {
-          hasSpecialPrice = true;
-        }
-      });
+    // 樣式一、二：標準版
+    if (specInfo) {
+      const hasSpecialPrice = specInfo.innerHTML.includes('特價');
+      console.log(`偵測到樣式${hasSpecialPrice ? '1' : '2'}：標準版`);
       return hasSpecialPrice ? 'style1' : 'style2';
     }
     
-    // 預設返回樣式1
     console.log('使用預設樣式1');
     return 'style1';
   }
