@@ -1772,6 +1772,19 @@ javascript:(function(){
             overflow: hidden !important;
           }
           
+          /* 移除ul的預設樣式 */
+          .print_barcode_area .print_sample ul {
+            margin: 0 !important;
+            padding: 0 !important;
+            list-style: none !important;
+          }
+          
+          .print_barcode_area .print_sample li {
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: inherit !important;
+          }
+          
           /* 文字區域樣式 */
           .print_barcode_area .print_sample .spec_info {
             font-family: ${fontFamily.value} !important;
@@ -1784,7 +1797,8 @@ javascript:(function(){
           }
           
           /* 商品名稱 */
-          .print_barcode_area .print_sample .spec_info .main {
+          .print_barcode_area .print_sample .spec_info .main,
+          .print_barcode_area .print_sample .main {
             font-size: ${mainSize.value}px !important;
             line-height: ${validatedMainLineHeight}px !important;
             font-weight: ${mainFontWeight} !important;
@@ -1796,7 +1810,8 @@ javascript:(function(){
           }
           
           /* 規格/價格/編號 */
-          .print_barcode_area .print_sample .spec_info .sub {
+          .print_barcode_area .print_sample .spec_info .sub,
+          .print_barcode_area .print_sample .sub {
             font-size: ${subSize.value}px !important;
             line-height: ${validatedSubLineHeight}px !important;
             font-weight: ${subFontWeight} !important;
@@ -1804,6 +1819,7 @@ javascript:(function(){
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             letter-spacing: unset !important;
+            display: block !important;
           }
           
           /* 條碼區域樣式 */
@@ -1814,43 +1830,117 @@ javascript:(function(){
             height: auto !important;
             position: relative !important;
             z-index: 2 !important;
+            align-items: center !important;
           }
           
           /* 條碼圖片樣式 */
-          .print_barcode_area .print_sample .spec_barcode img {
+          .print_barcode_area .print_sample .spec_barcode > img,
+          .print_barcode_area .print_sample > div > .spec_barcode > img {
             height: ${barcodeHeightMM}mm !important;
             width: auto !important;
             max-width: ${barcodeWidthMM}mm !important;
             object-fit: fill !important;
             margin: 0 auto !important;
+            display: block !important;
           }
           
           /* 條碼文字樣式 */
-          .print_barcode_area .print_sample .spec_barcode .sub,
-          .print_barcode_area .print_sample .spec_barcode b .sub {
+          .print_barcode_area .print_sample .spec_barcode > span.sub,
+          .print_barcode_area .print_sample .spec_barcode > b > span.sub,
+          .print_barcode_area .print_sample .spec_barcode > .sub {
             font-size: ${barcodeTextSize.value}px !important;
             font-weight: ${barcodeTextFontWeight} !important;
             font-family: ${fontFamily.value} !important;
             line-height: 1.2 !important;
             margin-top: 2px !important;
+            display: block !important;
           }
           
-          /* 內嵌條碼（樣式3、4）特殊樣式 */
+          /* 樣式3、4 - 內嵌條碼特殊樣式 */
           .print_barcode_area .print_sample .spec_info .spec_barcode {
             margin: 5px 0 !important;
             text-align: center !important;
+            display: block !important;
+            flex-direction: column !important;
+            align-items: center !important;
           }
           
           .print_barcode_area .print_sample .spec_info .spec_barcode img {
+            height: 10mm !important;
+            width: auto !important;
+            max-width: 90% !important;
+            object-fit: contain !important;
+            display: block !important;
+            margin: 0 auto !important;
+          }
+          
+          .print_barcode_area .print_sample .spec_info .spec_barcode .sub {
+            font-size: ${barcodeTextSize.value}px !important;
+            margin-top: 1px !important;
+            display: block !important;
+          }
+          
+          /* 樣式5 - 價格置右特殊處理 */
+          .print_barcode_area .print_sample .spec_barcode > div[style*="text-align: right"] {
+            position: absolute !important;
+            right: 0 !important;
+            top: -20px !important;
+            font-size: ${subSize.value}px !important;
+            z-index: 3 !important;
+          }
+          
+          .print_barcode_area .print_sample .spec_barcode > div[style*="text-align: right"] .sub {
+            white-space: nowrap !important;
+          }
+          
+          /* 樣式6、7 - 緊湊排版 */
+          .print_barcode_area .print_sample > div[style*="display: flex"] {
+            height: 100% !important;
+            box-sizing: border-box !important;
+            padding: 0 !important;
+          }
+          
+          .print_barcode_area .print_sample > div[style*="display: flex"] .main {
+            font-size: ${mainSize.value}px !important;
+            line-height: ${validatedMainLineHeight}px !important;
+            font-weight: ${mainFontWeight} !important;
+            margin-bottom: ${mainGap.value}px !important;
+          }
+          
+          .print_barcode_area .print_sample > div[style*="display: flex"] .sub {
+            font-size: ${subSize.value}px !important;
+            line-height: ${validatedSubLineHeight}px !important;
+            font-weight: ${subFontWeight} !important;
+          }
+          
+          .print_barcode_area .print_sample > div[style*="display: flex"] img {
             height: 8mm !important;
+            width: auto !important;
+          }
+          
+          /* 樣式7 - 帶SKU特殊處理 */
+          .print_barcode_area .print_sample div[style*="font-size: 7px"] {
+            font-size: ${Math.max(subSize.value - 1, 6)}px !important;
+          }
+          
+          /* 樣式8 - 純條碼置中 */
+          .print_barcode_area .print_sample .spec_barcode[style*="height: 100%"] {
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+          }
+          
+          .print_barcode_area .print_sample .spec_barcode[style*="height: 100%"] img {
+            height: 15mm !important;
             width: auto !important;
             max-width: 90% !important;
           }
           
-          /* 樣式8 - 純條碼置中 */
-          .print_barcode_area .print_sample[style*="display: flex"][style*="justify-content: center"] {
-            justify-content: center !important;
-            align-items: center !important;
+          .print_barcode_area .print_sample .spec_barcode[style*="height: 100%"] .sub {
+            font-size: ${barcodeTextSize.value}px !important;
+            margin-top: 3px !important;
           }
           
           /* 底圖樣式 */
@@ -1873,6 +1963,23 @@ javascript:(function(){
             color: inherit !important;
             pointer-events: none !important;
           }
+          
+          /* 確保文字不會溢出 */
+          .print_barcode_area .print_sample * {
+            max-width: 100% !important;
+          }
+          
+          /* 移除樣式6、7、8可能的內建樣式 */
+          .print_barcode_area .print_sample div[style] {
+            font-family: ${fontFamily.value} !important;
+          }
+          
+          /* 特殊情況：當條碼垂直位置調整時 */
+          ${currentLayout !== 'style8' ? `
+          .print_barcode_area .print_sample .spec_barcode {
+            margin-top: ${(barcodeYPercent - 70) * 0.5}mm !important;
+          }
+          ` : ''}
         `;
         
         /* 更新所有標籤的底圖 */
