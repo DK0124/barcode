@@ -279,7 +279,7 @@ javascript:(function(){
     barcodeYPosition: 70,
     labelWidth: 40,
     labelHeight: 30,
-    labelPadding: 2, // 預設內距改為 2mm
+    labelPadding: 3,
     fontFamily: 'Arial, sans-serif',
     logoSize: 30,
     logoX: 50,
@@ -299,38 +299,95 @@ javascript:(function(){
   let logoDataUrl = null;
   let logoAspectRatio = 1;
 
-  /* 偵測原始樣式 */
+  /* 偵測原始樣式 - 改進版 */
   function detectOriginalLayout() {
     const firstSample = document.querySelector('.print_sample');
     if (!firstSample) return 'style1';
     
-    const html = firstSample.innerHTML;
+    // 檢查關鍵 DOM 結構特徵
+    const hasSpecInfo = firstSample.querySelector('.spec_info');
+    const hasSpecBarcode = firstSample.querySelector('.spec_barcode');
+    const allSubElements = firstSample.querySelectorAll('.sub');
+    const mainElement = firstSample.querySelector('.main');
     
-    // 根據特徵判斷樣式
-    if (html.includes('height: 100%') && html.includes('justify-content: center') && !html.includes('spec_info')) {
-      return 'style8'; // 純條碼
-    } else if (html.includes('font-size: 7px') || html.includes('sku-text')) {
-      return 'style7'; // 帶SKU
-    } else if (html.includes('display: flex') && html.includes('flex-direction: column')) {
-      return 'style6'; // 簡約版
-    } else if (html.includes('text-align: right') && html.includes('position: absolute')) {
-      return 'style5'; // 價格置右
-    } else if (html.includes('spec_barcode') && html.includes('spec_info') && html.includes('margin:')) {
-      // 內嵌條碼
-      if (html.includes('特價')) {
-        return 'style3';
-      } else {
-        return 'style4';
-      }
-    } else {
-      // 標準版
-      if (html.includes('特價')) {
-        return 'style1';
-      } else {
-        return 'style2';
+    // 檢查是否為純條碼（樣式8）
+    if (!hasSpecInfo && hasSpecBarcode) {
+      const barcodeParent = hasSpecBarcode.parentElement;
+      if (barcodeParent && barcodeParent.style.cssText.includes('justify-content: center') && 
+          barcodeParent.style.cssText.includes('align-items: center')) {
+        return 'style8';
       }
     }
-  }
+    
+    // 檢查是否有特殊容器（樣式6、7）
+    const style6Container = firstSample.querySelector('.style6-container');
+    const style7Container = firstSample.querySelector('.style7-container');
+    
+    if (style6Container) return 'style6';
+    if (style7Container) return 'style7';
+    
+    // 檢查是否有 flex 容器且無 spec_info（樣式6、7的另一種形式）
+    const flexContainer = firstSample.querySelector('div[style*="display: flex"][style*="flex-direction: column"]');
+    if (flexContainer && !hasSpecInfo) {
+      // 檢查是否有 SKU 文字
+      let hasSKU = false;
+      allSubElements.forEach(sub => {
+        if (sub.classList.contains('sku-text') || 
+            (sub.parentElement && sub.parentElement.style.fontSize === '7px')) {
+          hasSKU = true;
+        }
+      });
+      return hasSKU ? 'style7' : 'style6';
+    }
+    
+    // 檢查價格是否置右（樣式5）
+    const priceRight = firstSample.querySelector('.price-right');
+    const absolutePrice = firstSample.querySelector('div[style*="position: absolute"][style*="text-align: right"]');
+    if (priceRight || absolutePrice) {
+      return 'style5';
+    }
+    
+    // 檢查條碼是否內嵌（樣式3、4）
+    if (hasSpecInfo && hasSpecBarcode) {
+      // 檢查條碼是否在 spec_info 內部
+      if (hasSpecInfo.contains(hasSpecBarcode)) {
+        // 檢查是否有特價
+        let hasSpecialPrice = false;
+        allSubElements.forEach(sub => {
+          if (sub.textContent.includes('特價')) {
+            hasSpecialPrice = true;
+          }
+        });
+        return hasSpecialPrice ? 'style3' : 'style4';
+      }
+      
+      // 檢查條碼是否有內嵌樣式類別
+      if (hasSpecBarcode.classList.contains('embedded-barcode')) {
+        let hasSpecialPrice = false;
+        allSubElements.forEach(sub => {
+          if (sub.textContent.includes('特價')) {
+            hasSpecialPrice = true;
+          }
+        });
+        return hasSpecialPrice ? 'style3' : 'style4';
+      }
+    }
+    
+    // 標準版判斷（樣式1、2）
+    if (hasSpecInfo && hasSpecBarcode && !hasSpecInfo.contains(hasSpecBarcode)) {
+      // 檢查是否有特價
+      let hasSpecialPrice = false;
+      allSubElements.forEach(sub => {
+        if (sub.textContent.includes('特價')) {
+          hasSpecialPrice = true;
+        }
+      });
+      return hasSpecialPrice ? 'style1' : 'style2';
+    }
+    
+    // 預設返回樣式1
+    return 'style1';
+}
 
   /* 抓取頁面資料 - 改進版 */
   function extractProductData() {
@@ -1484,9 +1541,9 @@ javascript:(function(){
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>內部邊距</span>
-                      <span class="bv-value-label" id="label-padding">2mm</span>
+                      <span class="bv-value-label" id="label-padding">3mm</span>
                     </div>
-                    <input type="range" id="label-padding-slider" min="0" max="5" step="0.5" value="2" class="bv-glass-slider">
+                    <input type="range" id="label-padding-slider" min="0" max="5" step="0.5" value="3" class="bv-glass-slider">
                   </div>
                 </div>
                 
