@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 八種樣式模板版本 */
+  /* BV SHOP 條碼列印排版器 - 八種樣式模板版本（修正版） */
   
   /* 檢查是否為行動裝置 */
   const userAgent = navigator.userAgent;
@@ -162,19 +162,14 @@ javascript:(function(){
 
   /* 儲存原始資料 */
   let productData = [];
-
-  /* 建立動態樣式元素 - 移到全域作用域 */
+  
+  /* 建立動態樣式元素 */
   const dynamicStyle = document.createElement('style');
   document.head.appendChild(dynamicStyle);
 
-  /* Logo 相關變數 - 移到全域作用域 */
+  /* Logo 相關變數 */
   let logoDataUrl = null;
   let logoAspectRatio = 1;
-
-  /* 全域更新樣式函數 - 在最外層定義 */
-  window.updateStylesGlobal = function() {
-    // 稍後會被真正的 updateStyles 函數覆蓋
-  };
 
   /* 抓取頁面資料 */
   function extractProductData() {
@@ -256,130 +251,6 @@ javascript:(function(){
     return Math.round(size * 1.1);
   }
   
-  /* 為 range input 添加動態值更新 */
-  function updateRangeProgress(input) {
-    const value = (input.value - input.min) / (input.max - input.min) * 100;
-    input.style.setProperty('--value', value + '%');
-    input.style.background = `linear-gradient(to right, #518aff 0%, #7289DA ${value}%, rgba(0, 0, 0, 0.1) ${value}%, rgba(0, 0, 0, 0.1) 100%)`;
-  }
-  
-  /* 重新建立標籤內容 */
-  function rebuildLabels() {
-    document.querySelectorAll('.print_sample').forEach((sample, index) => {
-      // 清空原始內容
-      sample.innerHTML = '';
-      
-      // 建立新的內容容器
-      const contentWrapper = document.createElement('div');
-      contentWrapper.className = 'bv-label-content';
-      
-      const template = layoutTemplates[currentLayout];
-      const data = productData[index] || {};
-      
-      // 根據樣式建立內容
-      if (template.showProductName || template.showSpec || template.showPrice || template.showProductCode) {
-        const textInfo = document.createElement('div');
-        textInfo.className = 'bv-text-info';
-        
-        // 商品名稱
-        if (template.showProductName && data.productName) {
-          const productName = document.createElement('div');
-          productName.className = 'bv-product-name';
-          productName.textContent = data.productName;
-          textInfo.appendChild(productName);
-        }
-        
-        // 規格
-        if (template.showSpec && data.spec) {
-          const spec = document.createElement('div');
-          spec.className = 'bv-product-spec';
-          spec.textContent = `規格: ${data.spec}`;
-          textInfo.appendChild(spec);
-        }
-        
-        // 價格（如果不在條碼區域顯示）
-        if (template.showPrice && !template.priceInBarcode) {
-          if (template.showSpecialPrice && data.specialPrice) {
-            const specialPrice = document.createElement('div');
-            specialPrice.className = 'bv-product-price';
-            specialPrice.textContent = `特價: ${data.specialPrice}`;
-            textInfo.appendChild(specialPrice);
-          } else if (data.price) {
-            const price = document.createElement('div');
-            price.className = 'bv-product-price';
-            price.textContent = `售價: ${data.price}`;
-            textInfo.appendChild(price);
-          }
-        }
-        
-        // 產品編號
-        if (template.showProductCode && data.productCode) {
-          const productCode = document.createElement('div');
-          productCode.className = 'bv-product-code';
-          productCode.textContent = data.productCode;
-          textInfo.appendChild(productCode);
-        }
-        
-        // 內嵌條碼（樣式三、四）
-        if (template.barcodePosition === 'inline' && template.showBarcode && data.barcodeImage) {
-          const barcodeArea = document.createElement('div');
-          barcodeArea.className = 'bv-barcode-area bv-inline-barcode';
-          
-          const barcodeImg = document.createElement('img');
-          barcodeImg.className = 'bv-barcode-image';
-          barcodeImg.src = data.barcodeImage;
-          barcodeArea.appendChild(barcodeImg);
-          
-          if (data.barcodeNumber) {
-            const barcodeText = document.createElement('div');
-            barcodeText.className = 'bv-barcode-text';
-            barcodeText.textContent = data.barcodeNumber;
-            barcodeArea.appendChild(barcodeText);
-          }
-          
-          textInfo.appendChild(barcodeArea);
-        }
-        
-        contentWrapper.appendChild(textInfo);
-      }
-      
-      // 底部或中間條碼
-      if ((template.barcodePosition === 'bottom' || template.barcodePosition === 'middle' || template.barcodePosition === 'center') 
-          && template.showBarcode && data.barcodeImage) {
-        const barcodeArea = document.createElement('div');
-        barcodeArea.className = 'bv-barcode-area';
-        
-        const barcodeImg = document.createElement('img');
-        barcodeImg.className = 'bv-barcode-image';
-        barcodeImg.src = data.barcodeImage;
-        barcodeArea.appendChild(barcodeImg);
-        
-        if (data.barcodeNumber) {
-          const barcodeText = document.createElement('div');
-          barcodeText.className = 'bv-barcode-text';
-          
-          // 如果價格顯示在條碼區域
-          if (template.priceInBarcode && data.price) {
-            barcodeText.innerHTML = `${data.barcodeNumber}<br><b>${data.price}</b>`;
-          } else {
-            barcodeText.textContent = data.barcodeNumber;
-          }
-          
-          barcodeArea.appendChild(barcodeText);
-        }
-        
-        contentWrapper.appendChild(barcodeArea);
-      }
-      
-      sample.appendChild(contentWrapper);
-    });
-    
-    // 使用全域的 updateStyles 函數
-    if (window.updateStylesGlobal) {
-      window.updateStylesGlobal();
-    }
-  }
-  
   /* 建立基本樣式 */
   const style = document.createElement('style');
   style.innerHTML = `
@@ -417,20 +288,6 @@ javascript:(function(){
     /* 隱藏原本的列印按鈕 */
     body > button.no-print {
       display: none !important;
-    }
-    
-    /* 隱藏原始內容 */
-    .print_barcode_area .print_sample > * {
-      display: none !important;
-    }
-    
-    /* 新的標籤容器 */
-    .bv-label-content {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      position: relative;
     }
     
     /* 為每個標籤添加效果 */
@@ -1307,36 +1164,6 @@ javascript:(function(){
       pointer-events: none !important;
     }
     
-    /* 標籤內容區域 */
-    .bv-text-info {
-      position: relative;
-      z-index: 2;
-      padding: 0;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .bv-product-name {
-      font-weight: 700;
-      margin-bottom: 0;
-    }
-    
-    .bv-product-spec,
-    .bv-product-price,
-    .bv-product-code {
-      font-weight: 400;
-    }
-    
-    .bv-barcode-area {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    
     /* 防止選取 */
     .print_sample * {
       -webkit-touch-callout: none !important;
@@ -1666,7 +1493,6 @@ javascript:(function(){
                       <span class="bv-value-label" id="logo-opacity">20%</span>
                     </div>
                     <input type="range" id="logo-opacity-slider" min="0" max="100" value="20" class="bv-glass-slider">
-                  </div>
                 </div>
                 
                 <button class="bv-remove-logo-btn" id="remove-logo-btn">
@@ -1695,51 +1521,12 @@ javascript:(function(){
     floatingButton.innerHTML = '<span class="material-icons">print</span>';
     document.body.appendChild(floatingButton);
     
-    /* 樣式選擇事件 */
-    document.querySelectorAll('.bv-layout-option').forEach(option => {
-      option.addEventListener('click', function() {
-        // 移除所有 active 類
-        document.querySelectorAll('.bv-layout-option').forEach(opt => opt.classList.remove('active'));
-        // 添加 active 到當前選項
-        this.classList.add('active');
-        
-        // 更新當前樣式
-        currentLayout = this.dataset.layout;
-        
-        // 更新文字設定區塊的顯示狀態
-        const template = layoutTemplates[currentLayout];
-        const mainTextSetting = document.getElementById('main-text-setting');
-        const mainSizeSetting = document.getElementById('main-size-setting');
-        const mainLineHeightSetting = document.getElementById('main-line-height-setting');
-        const mainGapSetting = document.getElementById('main-gap-setting');
-        const textSettingsCard = document.getElementById('text-settings-card');
-        
-        if (template.showProductName) {
-          mainTextSetting.style.display = '';
-          mainSizeSetting.style.display = '';
-          mainLineHeightSetting.style.display = '';
-          mainGapSetting.style.display = '';
-        } else {
-          mainTextSetting.style.display = 'none';
-          mainSizeSetting.style.display = 'none';
-          mainLineHeightSetting.style.display = 'none';
-          mainGapSetting.style.display = 'none';
-        }
-        
-        // 如果是純條碼樣式，隱藏整個文字設定區塊
-        if (currentLayout === 'style8') {
-          textSettingsCard.style.display = 'none';
-        } else {
-          textSettingsCard.style.display = '';
-        }
-        
-        // 重建標籤
-        rebuildLabels();
-        
-        // 顯示通知
-        showNotification(`已切換至${template.name.split('：')[0]}`);
-      });
-    });
+    /* 為 range input 添加動態值更新 */
+    function updateRangeProgress(input) {
+      const value = (input.value - input.min) / (input.max - input.min) * 100;
+      input.style.setProperty('--value', value + '%');
+      input.style.background = `linear-gradient(to right, #518aff 0%, #7289DA ${value}%, rgba(0, 0, 0, 0.1) ${value}%, rgba(0, 0, 0, 0.1) 100%)`;
+    }
     
     /* 延遲初始化所有控制項 */
     setTimeout(() => {
@@ -2126,7 +1913,7 @@ javascript:(function(){
         updateStyles();
       }
 
-      /* 更新樣式函數 */
+      /* 更新樣式函數 - 修正版本，保持原始內容可見 */
       function updateStyles() {
         if (!mainSize || !subSize) return;
         
@@ -2195,7 +1982,7 @@ javascript:(function(){
           }
         });
         
-        /* 套用樣式 */
+        /* 套用樣式 - 保持原始內容 */
         dynamicStyle.innerHTML = `
           /* 調整條碼標籤整體尺寸 */
           .print_barcode_area {
@@ -2209,71 +1996,49 @@ javascript:(function(){
             padding: ${paddingValue}mm !important;
             box-sizing: border-box !important;
             position: relative !important;
-          }
-          
-          /* 標籤內容容器 */
-          .bv-label-content {
-            justify-content: ${template.barcodePosition === 'center' ? 'center' : 'space-between'} !important;
-            align-items: ${template.barcodePosition === 'center' ? 'center' : 'stretch'} !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            overflow: hidden !important;
           }
           
           /* 文字區域樣式 */
-          .bv-text-info {
+          .print_barcode_area .print_sample .spec_info {
             font-family: ${fontFamily.value} !important;
             text-align: left !important;
-            ${template.barcodePosition === 'middle' ? 'margin-bottom: 2mm;' : ''}
+            display: block !important;
+            height: auto !important;
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 2 !important;
           }
           
           /* 商品名稱 */
-          .bv-product-name {
+          .print_barcode_area .print_sample .spec_info .main {
             font-size: ${mainSize.value}px !important;
             line-height: ${validatedMainLineHeight}px !important;
             font-weight: ${mainFontWeight} !important;
             margin-bottom: ${mainGap.value}px !important;
             word-break: break-all !important;
+            white-space: normal !important;
+            display: block !important;
+            letter-spacing: unset !important;
           }
           
           /* 規格/價格/編號 */
-          .bv-product-spec,
-          .bv-product-price,
-          .bv-product-code {
+          .print_barcode_area .print_sample .spec_info .sub {
             font-size: ${subSize.value}px !important;
             line-height: ${validatedSubLineHeight}px !important;
             font-weight: ${subFontWeight} !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
+            letter-spacing: unset !important;
           }
           
-          /* 條碼區域 */
-          .bv-barcode-area {
-            text-align: center !important;
-            ${template.barcodePosition === 'middle' ? 'margin-top: 2mm;' : ''}
-          }
-          
-          /* 內嵌條碼樣式 */
-          .bv-inline-barcode {
-            margin: 3px 0 !important;
-          }
-          
-          .bv-inline-barcode .bv-barcode-image {
-            height: 8mm !important;
-            width: auto !important;
-            max-width: 90% !important;
-          }
-          
-          /* 條碼圖片 - 使用獨立圖層 */
-          .bv-barcode-image {
+          /* 隱藏原始條碼區域 */
+          .print_barcode_area .print_sample .spec_barcode {
             display: none !important;
-          }
-          
-          /* 條碼文字 */
-          .bv-barcode-text {
-            font-size: ${barcodeTextSize.value}px !important;
-            font-weight: ${barcodeTextFontWeight} !important;
-            font-family: ${fontFamily.value} !important;
-            line-height: 1.2 !important;
-            margin-top: 2px !important;
           }
           
           /* 條碼獨立圖層 */
@@ -2285,7 +2050,6 @@ javascript:(function(){
             height: ${barcodeHeightMM}mm !important;
             max-width: none !important;
             max-height: none !important;
-            display: ${template.showBarcode && template.barcodePosition !== 'inline' ? 'block' : 'none'} !important;
           }
           
           /* 條碼文字圖層 */
@@ -2297,7 +2061,6 @@ javascript:(function(){
             font-weight: ${barcodeTextFontWeight} !important;
             font-family: ${fontFamily.value} !important;
             color: black !important;
-            display: ${template.showBarcode && template.barcodePosition !== 'inline' ? 'block' : 'none'} !important;
           }
           
           /* 底圖樣式 - 保持原始寬高比 */
@@ -2332,7 +2095,6 @@ javascript:(function(){
         
         // 為每個標籤添加圖層
         document.querySelectorAll('.print_sample').forEach((sample, index) => {
-          const template = layoutTemplates[currentLayout];
           const data = productData[index] || {};
           
           // 添加底圖
@@ -2343,33 +2105,69 @@ javascript:(function(){
             sample.insertBefore(logo, sample.firstChild);
           }
           
-          // 添加條碼圖片（獨立圖層，非內嵌）
-          if (template.showBarcode && template.barcodePosition !== 'inline' && data.barcodeImage) {
+          // 添加條碼圖片
+          if (data.barcodeImage) {
             const barcode = document.createElement('img');
             barcode.className = 'label-barcode-layer';
             barcode.src = data.barcodeImage;
             sample.appendChild(barcode);
-            
-            // 添加條碼文字
-            if (data.barcodeNumber) {
-              const barcodeText = document.createElement('div');
-              barcodeText.className = 'label-barcode-text';
-              
-              // 如果價格顯示在條碼區域
-              if (template.priceInBarcode && data.price) {
-                barcodeText.innerHTML = `${data.barcodeNumber}<br><b>${data.price}</b>`;
-              } else {
-                barcodeText.textContent = data.barcodeNumber;
-              }
-              
-              sample.appendChild(barcodeText);
-            }
+          }
+          
+          // 添加條碼文字
+          if (data.barcodeNumber) {
+            const barcodeText = document.createElement('div');
+            barcodeText.className = 'label-barcode-text';
+            barcodeText.textContent = data.barcodeNumber;
+            sample.appendChild(barcodeText);
           }
         });
       }
       
-      // 將 updateStyles 函數覆蓋全域函數
-      window.updateStylesGlobal = updateStyles;
+      /* 樣式選擇事件 */
+      document.querySelectorAll('.bv-layout-option').forEach(option => {
+        option.addEventListener('click', function() {
+          // 移除所有 active 類
+          document.querySelectorAll('.bv-layout-option').forEach(opt => opt.classList.remove('active'));
+          // 添加 active 到當前選項
+          this.classList.add('active');
+          
+          // 更新當前樣式
+          currentLayout = this.dataset.layout;
+          
+          // 更新文字設定區塊的顯示狀態
+          const template = layoutTemplates[currentLayout];
+          const mainTextSetting = document.getElementById('main-text-setting');
+          const mainSizeSetting = document.getElementById('main-size-setting');
+          const mainLineHeightSetting = document.getElementById('main-line-height-setting');
+          const mainGapSetting = document.getElementById('main-gap-setting');
+          const textSettingsCard = document.getElementById('text-settings-card');
+          
+          if (template.showProductName) {
+            mainTextSetting.style.display = '';
+            mainSizeSetting.style.display = '';
+            mainLineHeightSetting.style.display = '';
+            mainGapSetting.style.display = '';
+          } else {
+            mainTextSetting.style.display = 'none';
+            mainSizeSetting.style.display = 'none';
+            mainLineHeightSetting.style.display = 'none';
+            mainGapSetting.style.display = 'none';
+          }
+          
+          // 如果是純條碼樣式，隱藏整個文字設定區塊
+          if (currentLayout === 'style8') {
+            textSettingsCard.style.display = 'none';
+          } else {
+            textSettingsCard.style.display = '';
+          }
+          
+          // 更新樣式
+          updateStyles();
+          
+          // 顯示通知
+          showNotification(`已切換至${template.name.split('：')[0]}`);
+        });
+      });
       
       /* 添加事件監聽器 */
       const controls = [
@@ -2418,6 +2216,15 @@ javascript:(function(){
             
             if (mainLineHeightSlider) mainLineHeightSlider.dataset.userModified = 'false';
             if (subLineHeightSlider) subLineHeightSlider.dataset.userModified = 'false';
+            
+            // 還原預設樣式
+            currentLayout = 'style1';
+            document.querySelectorAll('.bv-layout-option').forEach(opt => {
+              opt.classList.remove('active');
+              if (opt.dataset.layout === currentLayout) {
+                opt.classList.add('active');
+              }
+            });
             
             applySavedSettings(completeDefaultSettings);
             
@@ -2480,7 +2287,32 @@ javascript:(function(){
               opt.classList.add('active');
             }
           });
-          rebuildLabels();
+          
+          // 更新文字設定區塊的顯示狀態
+          const template = layoutTemplates[currentLayout];
+          const mainTextSetting = document.getElementById('main-text-setting');
+          const mainSizeSetting = document.getElementById('main-size-setting');
+          const mainLineHeightSetting = document.getElementById('main-line-height-setting');
+          const mainGapSetting = document.getElementById('main-gap-setting');
+          const textSettingsCard = document.getElementById('text-settings-card');
+          
+          if (template.showProductName) {
+            mainTextSetting.style.display = '';
+            mainSizeSetting.style.display = '';
+            mainLineHeightSetting.style.display = '';
+            mainGapSetting.style.display = '';
+          } else {
+            mainTextSetting.style.display = 'none';
+            mainSizeSetting.style.display = 'none';
+            mainLineHeightSetting.style.display = 'none';
+            mainGapSetting.style.display = 'none';
+          }
+          
+          if (currentLayout === 'style8') {
+            textSettingsCard.style.display = 'none';
+          } else {
+            textSettingsCard.style.display = '';
+          }
         }
         
         mainSize.value = settings.mainSize !== undefined ? settings.mainSize : completeDefaultSettings.mainSize;
@@ -2800,7 +2632,6 @@ javascript:(function(){
       /* 初始化 */
       initPresetSystem();
       loadInitialSettings();
-      rebuildLabels();
       
       /* 將函數掛載到 window 物件 */
       window.barcodeEditor = {
@@ -2913,28 +2744,4 @@ javascript:(function(){
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
   }
-  
-  /* 顯示通知訊息 - 全域函數 */
-  window.showNotification = function(message, type = 'success') {
-    const existingNotification = document.querySelector('.bv-notification');
-    if (existingNotification) {
-      existingNotification.remove();
-    }
-    
-    const notification = document.createElement('div');
-    notification.className = `bv-notification ${type}`;
-    
-    const icon = document.createElement('span');
-    icon.className = 'material-icons';
-    icon.textContent = type === 'success' ? 'check_circle' : 'warning';
-    
-    notification.appendChild(icon);
-    notification.appendChild(document.createTextNode(message));
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.style.animation = 'slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-      setTimeout(() => notification.remove(), 400);
-    }, 3000);
-  };
 })();
