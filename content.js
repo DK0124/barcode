@@ -510,7 +510,7 @@ javascript:(function(){
   
   /* 驗證行高合理性 */
   function validateLineHeight(fontSize, lineHeight) {
-    const minLineHeight = Math.ceil(fontSize * 1.0);
+    const minLineHeight = Math.ceil(fontSize * 0.1);
     return Math.max(parseInt(lineHeight), minLineHeight);
   }
   
