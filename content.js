@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - Brother 標籤機優化版 v2 */
+  /* BV SHOP 條碼列印排版器 - Brother 標籤機優化版 v3 */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -24,7 +24,7 @@ javascript:(function(){
     { name: '蘋方體', value: 'PingFang TC, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif' }
   ];
 
-  /* 預設尺寸選項及對應的優化設定 */
+  /* 預設尺寸選項及對應的優化設定 - 調整順序 */
   const presetSizes = [
     { 
       name: '40×30mm', 
@@ -35,10 +35,27 @@ javascript:(function(){
         mainSize: 10,
         subSize: 8,
         barcodeTextSize: 8,
+        barcodeTextLineHeight: 10,
         barcodeHeight: 100,
         barcodeWidth: 90,
         mainLineHeight: 11,
         subLineHeight: 9
+      }
+    },
+    { 
+      name: '60×30mm', 
+      width: 60, 
+      height: 30,
+      type: 'standard',
+      settings: {
+        mainSize: 11,
+        subSize: 9,
+        barcodeTextSize: 9,
+        barcodeTextLineHeight: 11,
+        barcodeHeight: 100,
+        barcodeWidth: 95,
+        mainLineHeight: 12,
+        subLineHeight: 10
       }
     },
     { 
@@ -50,6 +67,7 @@ javascript:(function(){
         mainSize: 10,
         subSize: 8,
         barcodeTextSize: 8,
+        barcodeTextLineHeight: 10,
         barcodeHeight: 110,
         barcodeWidth: 90,
         mainLineHeight: 11,
@@ -65,25 +83,11 @@ javascript:(function(){
         mainSize: 8,
         subSize: 7,
         barcodeTextSize: 7,
+        barcodeTextLineHeight: 8,
         barcodeHeight: 80,
         barcodeWidth: 85,
         mainLineHeight: 9,
         subLineHeight: 8
-      }
-    },
-    { 
-      name: '60×30mm', 
-      width: 60, 
-      height: 30,
-      type: 'standard',
-      settings: {
-        mainSize: 11,
-        subSize: 9,
-        barcodeTextSize: 9,
-        barcodeHeight: 100,
-        barcodeWidth: 95,
-        mainLineHeight: 12,
-        subLineHeight: 10
       }
     }
   ];
@@ -355,6 +359,7 @@ javascript:(function(){
     subLineHeight: 9,
     barcodeTextSize: 8,
     barcodeTextBold: true,
+    barcodeTextLineHeight: 10,
     barcodeHeight: 100,
     barcodeWidth: 90,
     barcodeYPosition: 70,
@@ -512,7 +517,7 @@ javascript:(function(){
   /* 計算建議的行高 */
   function calculateSuggestedLineHeight(fontSize) {
     const size = parseInt(fontSize);
-    return Math.round(size * 1.1);
+    return Math.round(size * 1.2);
   }
   
   /* 建立基本樣式 */
@@ -1765,6 +1770,15 @@ javascript:(function(){
                     </div>
                     <input type="range" id="barcode-text-slider" min="6" max="16" value="8" class="bv-glass-slider">
                   </div>
+                  
+                  <!-- 新增：條碼數字行高 -->
+                  <div class="bv-slider-item">
+                    <div class="bv-slider-header">
+                      <span>行高</span>
+                      <span class="bv-value-label" id="barcode-text-line-height">10px</span>
+                    </div>
+                    <input type="range" id="barcode-text-line-height-slider" min="6" max="20" value="10" class="bv-glass-slider">
+                  </div>
                 </div>
               </div>
             </div>
@@ -2003,6 +2017,7 @@ javascript:(function(){
       
       const barcodeTextSize = document.getElementById('barcode-text-slider');
       const barcodeTextBoldBtn = document.getElementById('barcode-text-bold-btn');
+      const barcodeTextLineHeightSlider = document.getElementById('barcode-text-line-height-slider'); // 新增
       const barcodeHeight = document.getElementById('barcode-height-slider');
       const barcodeWidth = document.getElementById('barcode-width-slider');
       const barcodeYPosition = document.getElementById('barcode-y-position-slider');
@@ -2097,9 +2112,11 @@ javascript:(function(){
         const template = layoutTemplates[currentLayout];
         const mainLineHeight = mainLineHeightSlider ? mainLineHeightSlider.value : 11;
         const subLineHeight = subLineHeightSlider ? subLineHeightSlider.value : 9;
+        const barcodeTextLineHeight = barcodeTextLineHeightSlider ? barcodeTextLineHeightSlider.value : 10; // 新增
         
         const validatedMainLineHeight = validateLineHeight(mainSize.value, mainLineHeight);
         const validatedSubLineHeight = validateLineHeight(subSize.value, subLineHeight);
+        const validatedBarcodeTextLineHeight = validateLineHeight(barcodeTextSize.value, barcodeTextLineHeight); // 新增
         
         const mainFontWeight = mainBoldBtn && mainBoldBtn.classList.contains('active') ? 700 : 400;
         const subFontWeight = subBoldBtn && subBoldBtn.classList.contains('active') ? 700 : 400;
@@ -2155,6 +2172,9 @@ javascript:(function(){
         if (document.getElementById('sub-line-height')) {
           document.getElementById('sub-line-height').textContent = validatedSubLineHeight + 'px';
         }
+        if (document.getElementById('barcode-text-line-height')) {
+          document.getElementById('barcode-text-line-height').textContent = validatedBarcodeTextLineHeight + 'px';
+        }
         
         if (logoSizeSlider) {
           document.getElementById('logo-size').textContent = logoSizeSlider.value + '%';
@@ -2168,7 +2188,7 @@ javascript:(function(){
         
         /* 更新所有滑桿的進度條 */
         [mainSize, mainGap, mainLineHeightSlider, subSize, subLineHeightSlider, 
-         barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
+         barcodeTextSize, barcodeTextLineHeightSlider, barcodeHeight, barcodeWidth, barcodeYPosition,
          labelWidth, labelHeight,
          logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider].forEach(control => {
           if (control && control.type === 'range') {
@@ -2303,7 +2323,7 @@ javascript:(function(){
             max-width: ${(totalWidth - paddingValue * 2) * 0.95 * barcodeWidthScale}mm !important;
           }
           
-          /* 條碼文字樣式 */
+          /* 條碼文字樣式 - 更新行高 */
           .print_barcode_area .print_sample .spec_barcode > span.sub,
           .print_barcode_area .print_sample .spec_barcode > b > span.sub,
           .print_barcode_area .print_sample .spec_barcode > .sub,
@@ -2311,7 +2331,7 @@ javascript:(function(){
             font-size: ${barcodeTextSize.value}px !important;
             font-weight: ${barcodeTextFontWeight} !important;
             font-family: ${fontFamily.value} !important;
-            line-height: 1.2 !important;
+            line-height: ${validatedBarcodeTextLineHeight}px !important;
             margin-top: 2px !important;
             display: block !important;
           }
@@ -2425,6 +2445,7 @@ javascript:(function(){
             if (mainSize) mainSize.value = preset.settings.mainSize;
             if (subSize) subSize.value = preset.settings.subSize;
             if (barcodeTextSize) barcodeTextSize.value = preset.settings.barcodeTextSize;
+            if (barcodeTextLineHeightSlider) barcodeTextLineHeightSlider.value = preset.settings.barcodeTextLineHeight;
             if (barcodeHeight) barcodeHeight.value = preset.settings.barcodeHeight;
             if (barcodeWidth) barcodeWidth.value = preset.settings.barcodeWidth;
             if (mainLineHeightSlider) mainLineHeightSlider.value = preset.settings.mainLineHeight;
@@ -2638,6 +2659,28 @@ javascript:(function(){
         });
       }
 
+      // 條碼文字大小改變時，自動調整行高
+      if (barcodeTextSize) {
+        barcodeTextSize.addEventListener('input', function() {
+          if (barcodeTextLineHeightSlider && !barcodeTextLineHeightSlider.disabled) {
+            const suggestedLineHeight = calculateSuggestedLineHeight(this.value);
+            
+            if (!barcodeTextLineHeightSlider.dataset.userModified) {
+              barcodeTextLineHeightSlider.value = suggestedLineHeight;
+              updateRangeProgress(barcodeTextLineHeightSlider);
+            }
+            
+            const minLineHeight = Math.ceil(this.value * 1.1);
+            barcodeTextLineHeightSlider.min = minLineHeight;
+            if (parseInt(barcodeTextLineHeightSlider.value) < minLineHeight) {
+              barcodeTextLineHeightSlider.value = minLineHeight;
+              updateRangeProgress(barcodeTextLineHeightSlider);
+            }
+          }
+          updateStyles();
+        });
+      }
+
       // 標記使用者手動調整過行高
       if (mainLineHeightSlider) {
         mainLineHeightSlider.addEventListener('input', function() {
@@ -2648,6 +2691,14 @@ javascript:(function(){
 
       if (subLineHeightSlider) {
         subLineHeightSlider.addEventListener('input', function() {
+          this.dataset.userModified = 'true';
+          updateStyles();
+        });
+      }
+
+      // 標記使用者手動調整過條碼文字行高
+      if (barcodeTextLineHeightSlider) {
+        barcodeTextLineHeightSlider.addEventListener('input', function() {
           this.dataset.userModified = 'true';
           updateStyles();
         });
@@ -2673,7 +2724,7 @@ javascript:(function(){
       const controls = [
         mainSize, mainGap, mainLineHeightSlider,
         subSize, subLineHeightSlider,
-        barcodeTextSize, barcodeHeight, barcodeWidth, barcodeYPosition,
+        barcodeTextSize, barcodeTextLineHeightSlider, barcodeHeight, barcodeWidth, barcodeYPosition,
         labelWidth, labelHeight, fontFamily,
         logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider
       ];
@@ -2722,6 +2773,7 @@ javascript:(function(){
             
             if (mainLineHeightSlider) mainLineHeightSlider.dataset.userModified = 'false';
             if (subLineHeightSlider) subLineHeightSlider.dataset.userModified = 'false';
+            if (barcodeTextLineHeightSlider) barcodeTextLineHeightSlider.dataset.userModified = 'false';
             
             // 套用完整預設值
             const defaultsWithOriginalLayout = {
@@ -2761,6 +2813,7 @@ javascript:(function(){
           subLineHeight: subLineHeightSlider ? subLineHeightSlider.value : 9,
           barcodeTextSize: barcodeTextSize.value,
           barcodeTextBold: barcodeTextBoldBtn ? barcodeTextBoldBtn.classList.contains('active') : false,
+          barcodeTextLineHeight: barcodeTextLineHeightSlider ? barcodeTextLineHeightSlider.value : 10,
           barcodeHeight: barcodeHeight.value,
           barcodeWidth: barcodeWidth.value,
           barcodeYPosition: barcodeYPosition ? barcodeYPosition.value : 70,
@@ -2814,6 +2867,9 @@ javascript:(function(){
         barcodeTextSize.value = settings.barcodeTextSize !== undefined ? settings.barcodeTextSize : completeDefaultSettings.barcodeTextSize;
         if (barcodeTextBoldBtn) {
           barcodeTextBoldBtn.classList.toggle('active', settings.barcodeTextBold !== undefined ? settings.barcodeTextBold : completeDefaultSettings.barcodeTextBold);
+        }
+        if (barcodeTextLineHeightSlider) {
+          barcodeTextLineHeightSlider.value = settings.barcodeTextLineHeight !== undefined ? settings.barcodeTextLineHeight : completeDefaultSettings.barcodeTextLineHeight;
         }
         
         barcodeHeight.value = settings.barcodeHeight !== undefined ? settings.barcodeHeight : completeDefaultSettings.barcodeHeight;
