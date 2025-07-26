@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 修正版 */
+  /* BV SHOP 條碼列印排版器 - Brother 標籤機優化版 */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -24,11 +24,12 @@ javascript:(function(){
     { name: '蘋方體', value: 'PingFang TC, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif' }
   ];
 
-  /* 預設尺寸選項 */
+  /* 預設尺寸選項 - 加入 Brother 標籤機規格 */
   const presetSizes = [
-    { name: '42×29mm', width: 42, height: 29 },
-    { name: '40×30mm', width: 40, height: 30 },
-    { name: '60×30mm', width: 60, height: 30 }
+    { name: 'Brother大標籤', width: 42, height: 29, type: 'brother' },
+    { name: 'Brother小標籤', width: 29, height: 20, type: 'brother' },
+    { name: '40×30mm', width: 40, height: 30, type: 'standard' },
+    { name: '60×30mm', width: 60, height: 30, type: 'standard' }
   ];
 
   /* 八種內建樣式模板 - 根據 BV SHOP 官方樣式 */
@@ -303,7 +304,7 @@ javascript:(function(){
     barcodeYPosition: 70,
     labelWidth: 40,
     labelHeight: 30,
-    labelScale: 100, // 新增：整體縮放百分比
+    labelScale: 100,
     fontFamily: 'Arial, sans-serif',
     logoSize: 30,
     logoX: 50,
@@ -913,10 +914,12 @@ javascript:(function(){
       display: flex;
       gap: 8px;
       margin-bottom: 16px;
+      flex-wrap: wrap;
     }
     
     .bv-preset-size-btn {
       flex: 1;
+      min-width: calc(50% - 4px);
       padding: 8px 12px;
       background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(20px);
@@ -930,10 +933,21 @@ javascript:(function(){
       text-align: center;
     }
     
+    .bv-preset-size-btn[data-type="brother"] {
+      background: rgba(103, 58, 183, 0.08);
+      border-color: rgba(103, 58, 183, 0.15);
+      color: #673ab7;
+    }
+    
     .bv-preset-size-btn:hover {
       background: rgba(255, 255, 255, 0.9);
       border-color: rgba(0, 0, 0, 0.16);
       color: #518aff;
+    }
+    
+    .bv-preset-size-btn[data-type="brother"]:hover {
+      background: rgba(103, 58, 183, 0.12);
+      border-color: rgba(103, 58, 183, 0.2);
     }
     
     .bv-preset-size-btn.active {
@@ -942,6 +956,13 @@ javascript:(function(){
       border-color: transparent;
       box-shadow: 
         0 2px 8px rgba(81, 138, 255, 0.25),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+    }
+    
+    .bv-preset-size-btn[data-type="brother"].active {
+      background: linear-gradient(135deg, #673ab7 0%, #512da8 100%);
+      box-shadow: 
+        0 2px 8px rgba(103, 58, 183, 0.25),
         inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
     }
     
@@ -1426,6 +1447,26 @@ javascript:(function(){
       -webkit-user-select: none !important;
       user-select: none !important;
     }
+    
+    /* 條碼提示訊息 */
+    .bv-barcode-warning {
+      background: rgba(255, 193, 7, 0.1);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #b7791f;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .bv-barcode-warning .material-icons {
+      font-size: 18px;
+      color: #ff9800;
+      flex-shrink: 0;
+    }
   `;
   document.head.appendChild(style);
 
@@ -1471,38 +1512,40 @@ javascript:(function(){
               <span class="material-icons">label</span>
             </div>
             <div class="bv-title-group">
-              <h3 class="bv-panel-title">BV SHOP 條碼列印</h3>
-              <span class="bv-panel-subtitle">排版控制面板</span>
+              <h3 class="bv-panel-title">BV 條碼標籤控制面板</h3>
+              <div class="bv-panel-subtitle">精準控制每個印刷細節</div>
               <div class="bv-current-style">
-                當前樣式：<span class="bv-current-style-name">${layoutTemplates[currentLayout].name}</span>
+                目前使用：<span class="bv-current-style-name">${layoutTemplates[currentLayout].name}</span>
               </div>
             </div>
           </div>
-          <button class="bv-glass-button bv-minimize-btn" id="bv-minimize-btn">
-            <span class="material-icons">remove</span>
-          </button>
+          <div style="display: flex; gap: 4px;">
+            <button class="bv-glass-button bv-minimize-btn" id="bv-minimize-btn" title="最小化">
+              <span class="material-icons">remove</span>
+            </button>
+          </div>
         </div>
         
         <div class="bv-panel-content-wrapper">
           <div class="bv-panel-body">
             <!-- 主要操作區 -->
             <div class="bv-primary-section">
-              <button id="bv-reset-format" class="bv-reset-button">
+              <button class="bv-reset-button" id="bv-reset-format">
                 <div class="bv-button-icon">
                   <span class="material-icons">restart_alt</span>
                 </div>
                 <div class="bv-button-content">
-                  <span class="bv-button-title">還原預設值</span>
-                  <span class="bv-button-subtitle">回復 BV 原始設定</span>
+                  <span class="bv-button-title">清除格式</span>
+                  <span class="bv-button-subtitle">還原為 BV 原始預設值</span>
                 </div>
               </button>
             </div>
             
-            <!-- 基本設定區塊 -->
-            <div class="bv-settings-card" data-section="basic">
+            <!-- 標籤設定區塊 -->
+            <div class="bv-settings-card" data-section="general">
               <h4 class="bv-card-title">
-                <span class="material-icons">tune</span>
-                基本設定
+                <span class="material-icons">settings</span>
+                標籤設定
                 <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
@@ -1510,20 +1553,22 @@ javascript:(function(){
                 <!-- 預設尺寸按鈕 -->
                 <div class="bv-preset-sizes">
                   ${presetSizes.map(size => `
-                    <button class="bv-preset-size-btn" data-width="${size.width}" data-height="${size.height}">
+                    <button class="bv-preset-size-btn" 
+                            data-width="${size.width}" 
+                            data-height="${size.height}"
+                            data-type="${size.type}">
                       ${size.name}
                     </button>
                   `).join('')}
                 </div>
                 
-                <!-- 標籤尺寸 -->
                 <div class="bv-slider-group">
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>標籤寬度</span>
                       <span class="bv-value-label" id="label-width">40mm</span>
                     </div>
-                    <input type="range" id="label-width-slider" min="30" max="60" value="40" class="bv-glass-slider">
+                    <input type="range" id="label-width-slider" min="19" max="60" value="40" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
@@ -1531,7 +1576,7 @@ javascript:(function(){
                       <span>標籤高度</span>
                       <span class="bv-value-label" id="label-height">30mm</span>
                     </div>
-                    <input type="range" id="label-height-slider" min="20" max="60" value="30" class="bv-glass-slider">
+                    <input type="range" id="label-height-slider" min="19" max="60" value="30" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
@@ -1655,7 +1700,14 @@ javascript:(function(){
               </h4>
               
               <div class="bv-card-content">
-                <div class="bv-slider-group">
+                <div class="bv-barcode-warning">
+                  <span class="material-icons">info</span>
+                  <div>
+                    <strong>重要提示：</strong>為確保條碼可正常掃描，建議只調整高度，寬度保持 100%。過度壓縮寬度可能導致掃描困難。
+                  </div>
+                </div>
+                
+                <div class="bv-slider-group" style="margin-top: 16px;">
                   <div class="bv-slider-item" id="barcode-height-setting">
                     <div class="bv-slider-header">
                       <span>條碼圖片高度（Y軸拉伸）</span>
@@ -1669,7 +1721,7 @@ javascript:(function(){
                       <span>條碼圖片寬度（X軸拉伸）</span>
                       <span class="bv-value-label" id="barcode-width">100%</span>
                     </div>
-                    <input type="range" id="barcode-width-slider" min="50" max="100" value="100" class="bv-glass-slider">
+                    <input type="range" id="barcode-width-slider" min="80" max="100" value="100" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item" id="barcode-y-position-setting">
@@ -1829,7 +1881,7 @@ javascript:(function(){
       
       const labelWidth = document.getElementById('label-width-slider');
       const labelHeight = document.getElementById('label-height-slider');
-      const labelScale = document.getElementById('label-scale-slider'); // 新增
+      const labelScale = document.getElementById('label-scale-slider');
       const fontFamily = document.getElementById('font-family-select');
       
       /* Logo 上傳功能 */
@@ -2574,7 +2626,7 @@ javascript:(function(){
           barcodeYPosition: barcodeYPosition ? barcodeYPosition.value : 70,
           labelWidth: labelWidth.value,
           labelHeight: labelHeight.value,
-          labelScale: labelScale ? labelScale.value : 100, // 新增
+          labelScale: labelScale ? labelScale.value : 100,
           fontFamily: fontFamily.value,
           logoDataUrl: logoDataUrl,
           logoSize: logoSizeSlider ? logoSizeSlider.value : 30,
