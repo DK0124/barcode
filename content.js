@@ -80,18 +80,18 @@ javascript:(function(){
       height: 20,
       type: 'brother',
       settings: {
-        mainSize: 8,
-        subSize: 7,
-        barcodeTextSize: 7,
-        barcodeTextLineHeight: 8,
-        barcodeHeight: 80,
+        mainSize: 6,        // 改小
+        subSize: 5,         // 改小
+        barcodeTextSize: 5, // 改小
+        barcodeTextLineHeight: 6, // 改小
+        barcodeHeight: 70,  // 調低一點
         barcodeWidth: 85,
-        mainLineHeight: 9,
-        subLineHeight: 8
+        mainLineHeight: 7,  // 改小
+        subLineHeight: 6    // 改小
       }
     }
   ];
-
+  
   /* 八種內建樣式模板 - 根據 BV SHOP 官方樣式 */
   const layoutTemplates = {
     style1: {
@@ -510,14 +510,21 @@ javascript:(function(){
   
   /* 驗證行高合理性 */
   function validateLineHeight(fontSize, lineHeight) {
-    const minLineHeight = Math.ceil(fontSize * 1.1);
+    const minLineHeight = Math.ceil(fontSize * 1.0);
     return Math.max(parseInt(lineHeight), minLineHeight);
   }
   
   /* 計算建議的行高 */
   function calculateSuggestedLineHeight(fontSize) {
     const size = parseInt(fontSize);
-    return Math.round(size * 1.2);
+    // 小字體用較小的倍數
+    if (size <= 6) {
+      return Math.round(size * 1.1);
+    } else if (size <= 8) {
+      return Math.round(size * 1.15);
+    } else {
+      return Math.round(size * 1.2);
+    }
   }
   
   /* 建立基本樣式 */
@@ -1706,7 +1713,7 @@ javascript:(function(){
                       <span>文字大小</span>
                       <span class="bv-value-label" id="main-size">10px</span>
                     </div>
-                    <input type="range" id="main-slider" min="8" max="20" value="10" class="bv-glass-slider">
+                    <input type="range" id="main-slider" min="6" max="20" value="10" class="bv-glass-slider">
                   </div>
 
                   <div class="bv-slider-item" id="main-line-height-setting">
@@ -1714,7 +1721,7 @@ javascript:(function(){
                       <span>行高</span>
                       <span class="bv-value-label" id="main-line-height">11px</span>
                     </div>
-                    <input type="range" id="main-line-height-slider" min="8" max="30" value="11" class="bv-glass-slider">
+                    <input type="range" id="main-line-height-slider" min="6" max="30" value="11" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item" id="main-gap-setting">
@@ -1741,7 +1748,7 @@ javascript:(function(){
                       <span>文字大小</span>
                       <span class="bv-value-label" id="sub-size">8px</span>
                     </div>
-                    <input type="range" id="sub-slider" min="6" max="16" value="8" class="bv-glass-slider">
+                    <input type="range" id="sub-slider" min="5" max="16" value="8" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
@@ -1749,7 +1756,7 @@ javascript:(function(){
                       <span>行高</span>
                       <span class="bv-value-label" id="sub-line-height">9px</span>
                     </div>
-                    <input type="range" id="sub-line-height-slider" min="6" max="20" value="9" class="bv-glass-slider">
+                    <input type="range" id="sub-line-height-slider" min="5" max="20" value="9" class="bv-glass-slider">
                   </div>
                   
                   <!-- 分隔線 -->
@@ -1768,7 +1775,7 @@ javascript:(function(){
                       <span>文字大小</span>
                       <span class="bv-value-label" id="barcode-text-size">8px</span>
                     </div>
-                    <input type="range" id="barcode-text-slider" min="6" max="16" value="8" class="bv-glass-slider">
+                    <input type="range" id="barcode-text-slider" min="5" max="16" value="8" class="bv-glass-slider">
                   </div>
                   
                   <!-- 新增：條碼數字行高 -->
@@ -1777,7 +1784,7 @@ javascript:(function(){
                       <span>行高</span>
                       <span class="bv-value-label" id="barcode-text-line-height">10px</span>
                     </div>
-                    <input type="range" id="barcode-text-line-height-slider" min="6" max="20" value="10" class="bv-glass-slider">
+                    <input type="range" id="barcode-text-line-height-slider" min="5" max="20" value="10" class="bv-glass-slider">
                   </div>
                 </div>
               </div>
@@ -2627,7 +2634,8 @@ javascript:(function(){
               updateRangeProgress(mainLineHeightSlider);
             }
             
-            const minLineHeight = Math.ceil(this.value * 1.1);
+            // 調整最小值計算
+            const minLineHeight = Math.ceil(this.value * 1.0); // 改為 1.0
             mainLineHeightSlider.min = minLineHeight;
             if (parseInt(mainLineHeightSlider.value) < minLineHeight) {
               mainLineHeightSlider.value = minLineHeight;
