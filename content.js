@@ -1784,7 +1784,7 @@ javascript:(function(){
                       <span>行高</span>
                       <span class="bv-value-label" id="barcode-text-line-height">10px</span>
                     </div>
-                    <input type="range" id="barcode-text-line-height-slider" min="0" max="20" value="10" class="bv-glass-slider">
+                    <input type="range" id="barcode-text-line-height-slider" min="0" max="15" value="10" class="bv-glass-slider">
                   </div>
                 </div>
               </div>
