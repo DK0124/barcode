@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼列印排版器 - 完整版（含旋轉功能） */
+  /* BV SHOP 條碼列印排版器 - 修正版 */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -24,13 +24,11 @@ javascript:(function(){
     { name: '蘋方體', value: 'PingFang TC, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif' }
   ];
 
-  /* 預設尺寸選項 - 更新為包含29mm連續紙選項 */
+  /* 預設尺寸選項 */
   const presetSizes = [
     { name: '42×29mm', width: 42, height: 29 },
     { name: '40×30mm', width: 40, height: 30 },
-    { name: '60×30mm', width: 60, height: 30 },
-    { name: '29mm橫向', width: 40, height: 29 },
-    { name: '29mm直向', width: 29, height: 40 }
+    { name: '60×30mm', width: 60, height: 30 }
   ];
 
   /* 八種內建樣式模板 - 根據 BV SHOP 官方樣式 */
@@ -305,8 +303,7 @@ javascript:(function(){
     barcodeYPosition: 70,
     labelWidth: 40,
     labelHeight: 30,
-    labelScale: 100,
-    labelRotate: false, // 新增：旋轉開關
+    labelScale: 100, // 新增：整體縮放百分比
     fontFamily: 'Arial, sans-serif',
     logoSize: 30,
     logoX: 50,
@@ -916,12 +913,10 @@ javascript:(function(){
       display: flex;
       gap: 8px;
       margin-bottom: 16px;
-      flex-wrap: wrap;
     }
     
     .bv-preset-size-btn {
       flex: 1;
-      min-width: calc(33.333% - 6px);
       padding: 8px 12px;
       background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(20px);
@@ -1159,37 +1154,6 @@ javascript:(function(){
       font-weight: 500;
       color: #000;
       letter-spacing: -0.01em;
-    }
-    
-    /* 旋轉開關 - Apple 風格 */
-    .bv-toggle-switch {
-      position: relative;
-      width: 51px;
-      height: 31px;
-      background: rgba(0, 0, 0, 0.16);
-      border-radius: 31px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    
-    .bv-toggle-switch.active {
-      background: #34C759;
-    }
-    
-    .bv-toggle-switch .toggle-thumb {
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 27px;
-      height: 27px;
-      background: white;
-      border-radius: 50%;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .bv-toggle-switch.active .toggle-thumb {
-      transform: translateX(20px);
     }
     
     /* 預設管理 */
@@ -1529,33 +1493,37 @@ javascript:(function(){
                 </div>
                 <div class="bv-button-content">
                   <span class="bv-button-title">還原預設值</span>
-                  <span class="bv-button-subtitle">將所有設定還原為 BV 原始預設值</span>
+                  <span class="bv-button-subtitle">回復 BV 原始設定</span>
                 </div>
               </button>
             </div>
             
-            <!-- 標籤設定區塊 -->
-            <div class="bv-settings-card" data-section="label">
+            <!-- 基本設定區塊 -->
+            <div class="bv-settings-card" data-section="basic">
               <h4 class="bv-card-title">
-                <span class="material-icons">settings</span>
-                標籤設定
+                <span class="material-icons">tune</span>
+                基本設定
                 <span class="material-icons bv-collapse-icon">expand_more</span>
               </h4>
               
               <div class="bv-card-content">
+                <!-- 預設尺寸按鈕 -->
                 <div class="bv-preset-sizes">
-                  ${presetSizes.map(size => 
-                    `<button class="bv-preset-size-btn" data-width="${size.width}" data-height="${size.height}">${size.name}</button>`
-                  ).join('')}
+                  ${presetSizes.map(size => `
+                    <button class="bv-preset-size-btn" data-width="${size.width}" data-height="${size.height}">
+                      ${size.name}
+                    </button>
+                  `).join('')}
                 </div>
                 
+                <!-- 標籤尺寸 -->
                 <div class="bv-slider-group">
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>標籤寬度</span>
                       <span class="bv-value-label" id="label-width">40mm</span>
                     </div>
-                    <input type="range" id="label-width-slider" min="20" max="80" value="40" class="bv-glass-slider">
+                    <input type="range" id="label-width-slider" min="30" max="60" value="40" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
@@ -1563,7 +1531,7 @@ javascript:(function(){
                       <span>標籤高度</span>
                       <span class="bv-value-label" id="label-height">30mm</span>
                     </div>
-                    <input type="range" id="label-height-slider" min="20" max="80" value="30" class="bv-glass-slider">
+                    <input type="range" id="label-height-slider" min="20" max="60" value="30" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
@@ -1572,16 +1540,6 @@ javascript:(function(){
                       <span class="bv-value-label" id="label-scale">100%</span>
                     </div>
                     <input type="range" id="label-scale-slider" min="50" max="150" value="100" class="bv-glass-slider">
-                  </div>
-                </div>
-                
-                <!-- 旋轉開關 -->
-                <div class="bv-setting-item" style="margin-top: 20px;">
-                  <div class="bv-setting-info">
-                    <span class="bv-setting-label">標籤旋轉 90°（橫印/直印）</span>
-                  </div>
-                  <div class="bv-toggle-switch" id="label-rotate-toggle">
-                    <div class="toggle-thumb"></div>
                   </div>
                 </div>
                 
@@ -1871,8 +1829,7 @@ javascript:(function(){
       
       const labelWidth = document.getElementById('label-width-slider');
       const labelHeight = document.getElementById('label-height-slider');
-      const labelScale = document.getElementById('label-scale-slider');
-      const labelRotateToggle = document.getElementById('label-rotate-toggle'); // 新增
+      const labelScale = document.getElementById('label-scale-slider'); // 新增
       const fontFamily = document.getElementById('font-family-select');
       
       /* Logo 上傳功能 */
@@ -1972,7 +1929,6 @@ javascript:(function(){
         const totalWidth = parseFloat(labelWidth.value);
         const totalHeight = parseFloat(labelHeight.value);
         const scalePercent = labelScale ? parseFloat(labelScale.value) : 100;
-        const isRotated = labelRotateToggle && labelRotateToggle.classList.contains('active'); // 新增
         const paddingValue = 1.5; // 固定為 1.5mm
         
         const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 70;
@@ -2042,9 +1998,8 @@ javascript:(function(){
           /* 調整條碼標籤整體尺寸 */
           .print_barcode_area {
             width: ${labelWidth.value}mm !important;
-            transform: scale(${scalePercent / 100}) ${isRotated ? 'rotate(90deg)' : ''} !important;
+            transform: scale(${scalePercent / 100}) !important;
             transform-origin: top left !important;
-            ${isRotated ? `margin-left: ${labelHeight.value}mm !important;` : ''}
           }
           
           /* 調整單個標籤的尺寸 */
@@ -2239,16 +2194,10 @@ javascript:(function(){
           }
           ` : ''}
           
-          /* 列印時不縮放也不旋轉 */
+          /* 列印時不縮放 */
           @media print {
             .print_barcode_area {
-              transform: scale(1) ${isRotated ? 'rotate(90deg)' : ''} !important;
-              ${isRotated ? `
-                position: relative !important;
-                left: 0 !important;
-                top: 0 !important;
-                margin-left: ${labelHeight.value}mm !important;
-              ` : ''}
+              transform: scale(1) !important;
             }
           }
         `;
@@ -2316,15 +2265,6 @@ javascript:(function(){
           } else {
             btn.classList.remove('active');
           }
-        });
-      }
-      
-      /* 旋轉開關事件 */
-      if (labelRotateToggle) {
-        labelRotateToggle.addEventListener('click', function() {
-          this.classList.toggle('active');
-          updateStyles();
-          showNotification(this.classList.contains('active') ? '已開啟旋轉 90°' : '已關閉旋轉');
         });
       }
       
@@ -2634,8 +2574,7 @@ javascript:(function(){
           barcodeYPosition: barcodeYPosition ? barcodeYPosition.value : 70,
           labelWidth: labelWidth.value,
           labelHeight: labelHeight.value,
-          labelScale: labelScale ? labelScale.value : 100,
-          labelRotate: labelRotateToggle ? labelRotateToggle.classList.contains('active') : false, // 新增
+          labelScale: labelScale ? labelScale.value : 100, // 新增
           fontFamily: fontFamily.value,
           logoDataUrl: logoDataUrl,
           logoSize: logoSizeSlider ? logoSizeSlider.value : 30,
@@ -2696,9 +2635,6 @@ javascript:(function(){
         labelHeight.value = settings.labelHeight !== undefined ? settings.labelHeight : completeDefaultSettings.labelHeight;
         if (labelScale) {
           labelScale.value = settings.labelScale !== undefined ? settings.labelScale : completeDefaultSettings.labelScale;
-        }
-        if (labelRotateToggle) {
-          labelRotateToggle.classList.toggle('active', settings.labelRotate !== undefined ? settings.labelRotate : completeDefaultSettings.labelRotate);
         }
         
         fontFamily.value = settings.fontFamily || completeDefaultSettings.fontFamily;
