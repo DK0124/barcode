@@ -1775,7 +1775,7 @@ javascript:(function(){
                       <span>文字大小</span>
                       <span class="bv-value-label" id="barcode-text-size">8px</span>
                     </div>
-                    <input type="range" id="barcode-text-slider" min="4" max="16" value="8" class="bv-glass-slider">
+                    <input type="range" id="barcode-text-slider" min="1" max="16" value="8" class="bv-glass-slider">
                   </div>
                   
                   <!-- 新增：條碼數字行高 -->
