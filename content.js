@@ -659,8 +659,8 @@ javascript:(function(){
             if (subItems[0]) data.spec = subItems[0].textContent?.trim() || '';
             if (subItems[1]) data.productNumber = subItems[1].textContent?.trim() || '';
             
-            // SKU 在 div.sub 中
-            const skuDiv = specInfo7.querySelector('ul > div.sub');
+            // SKU 在 div.sub 中 - 修正選擇器
+            const skuDiv = specInfo7.querySelector('div.sub');
             if (skuDiv) {
               data.sku = skuDiv.textContent?.trim() || '';
             }
