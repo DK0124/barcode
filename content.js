@@ -423,7 +423,7 @@ javascript:(function(){
   let logoDataUrl = null;
   let logoAspectRatio = 1;
 
-  /* 偵測原始樣式 - 完全重寫版 */
+  /* 偵測原始樣式 */
   function detectOriginalLayout() {
     const firstSample = document.querySelector('.print_sample');
     if (!firstSample) return 'style1';
@@ -438,15 +438,9 @@ javascript:(function(){
     const specInfo = firstSample.querySelector('.spec_info');
     const specBarcode = firstSample.querySelector('.spec_barcode');
     
-    // 檢查是否有內嵌條碼（樣式3、4、6、7）
+    // 檢查是否有內嵌條碼（樣式3、4、6）
     const embeddedBarcode = firstSample.querySelector('.spec_info .spec_barcode');
     if (embeddedBarcode) {
-      // 檢查是否有 SKU (div.sub)
-      const skuDiv = firstSample.querySelector('.spec_info > ul > div.sub');
-      if (skuDiv) {
-        return 'style7'; // 有SKU
-      }
-      
       // 檢查是否有 <br> 標籤（樣式6）
       const hasBr = firstSample.querySelectorAll('.spec_info br').length > 0;
       if (hasBr) {
@@ -465,11 +459,17 @@ javascript:(function(){
       return hasSpecialPrice ? 'style3' : 'style4';
     }
     
-    // 樣式5：價格在右側
+    // 樣式5 vs 樣式7：價格在右側的樣式
     if (specBarcode) {
       const priceSpan = specBarcode.querySelector('span[style*="text-align: right"]');
       if (priceSpan) {
-        return 'style5';
+        // 關鍵差異：檢查是否有 SKU (div.sub)
+        const skuDiv = firstSample.querySelector('.spec_info div.sub');
+        if (skuDiv) {
+          return 'style7'; // 有SKU是樣式7
+        } else {
+          return 'style5'; // 沒有SKU是樣式5
+        }
       }
     }
     
@@ -488,7 +488,7 @@ javascript:(function(){
     
     return 'style1'; // 預設
   }
-
+  
   /* 抓取產品資料函數 */
   function extractProductData() {
     productData = [];
