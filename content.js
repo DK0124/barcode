@@ -1836,7 +1836,7 @@ javascript:(function(){
                       <span>價格與條碼間距</span>
                       <span class="bv-value-label" id="price-gap">0mm</span>
                     </div>
-                    <input type="range" id="price-gap-slider" min="-5" max="10" value="0" class="bv-glass-slider">
+                    <input type="range" id="price-gap-slider" min="-10" max="10" value="0" class="bv-glass-slider">
                   </div>
                 </div>
               </div>
