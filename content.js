@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼標籤自由編輯器 v8.1 - 完整修正版 */
+  /* BV SHOP 條碼標籤自由編輯器 v9 - 增強資料抓取版 */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -37,6 +37,7 @@ javascript:(function(){
   let collapsedSections = {};
   let selectedElement = null;
   let draggedFieldData = null;
+  let draggedElement = null;
   let isDragging = false;
   let startX = 0;
   let startY = 0;
@@ -65,10 +66,33 @@ javascript:(function(){
   let logoDataUrl = null;
   let logoAspectRatio = 1;
 
-  /* 抓取頁面資料 - 更完整的版本 */
+  /* 抓取頁面資料 - 增強版，從原始資料抓取 */
   function extractProductData() {
     productData = [];
     
+    // 先嘗試從頁面上的隱藏資料抓取
+    // BV 可能會在某處儲存完整的產品資料
+    const scriptTags = document.querySelectorAll('script');
+    let foundData = false;
+    
+    scriptTags.forEach(script => {
+      if (script.textContent.includes('product') || script.textContent.includes('barcode')) {
+        try {
+          // 嘗試解析可能的 JSON 資料
+          const matches = script.textContent.match(/(\{[^}]*product[^}]*\})/gi);
+          if (matches) {
+            matches.forEach(match => {
+              try {
+                const data = JSON.parse(match);
+                console.log('找到產品資料:', data);
+              } catch (e) {}
+            });
+          }
+        } catch (e) {}
+      }
+    });
+    
+    // 抓取每個標籤的資料
     document.querySelectorAll('.print_sample').forEach((sample, index) => {
       const data = {
         productName: '',
@@ -78,51 +102,125 @@ javascript:(function(){
         productCode: '',
         sku: '',
         barcodeImage: '',
-        barcodeNumber: ''
+        barcodeNumber: '',
+        customText1: '',
+        customText2: '',
+        customText3: ''
       };
       
-      // 抓取商品名稱
-      const mainElement = sample.querySelector('.spec_info .main, .main');
-      if (mainElement) {
-        data.productName = mainElement.textContent.trim();
+      // 抓取商品名稱 - 更廣泛的選擇器
+      const nameSelectors = [
+        '.spec_info .main',
+        '.main',
+        '.product-name',
+        '.item-name',
+        'h3',
+        'h4',
+        'strong'
+      ];
+      
+      for (const selector of nameSelectors) {
+        const element = sample.querySelector(selector);
+        if (element && element.textContent.trim()) {
+          data.productName = element.textContent.trim();
+          break;
+        }
       }
       
       // 抓取條碼圖片
-      const barcodeImg = sample.querySelector('.spec_barcode img, img[alt="barcode"]');
+      const barcodeImg = sample.querySelector('.spec_barcode img, img[alt="barcode"], img[src*="barcode"]');
       if (barcodeImg) {
         data.barcodeImage = barcodeImg.src;
       }
       
-      // 抓取所有 sub 元素的文字
-      const subElements = sample.querySelectorAll('.sub');
-      subElements.forEach(elem => {
+      // 抓取所有文字元素
+      const textElements = sample.querySelectorAll('.sub, li, span, div, p');
+      const foundTexts = new Set();
+      
+      textElements.forEach(elem => {
         const text = elem.textContent.trim();
-        if (text) {
-          if (text.includes('售價') && !text.includes('特價')) {
+        if (text && !foundTexts.has(text) && text.length > 0) {
+          foundTexts.add(text);
+          
+          // 智能識別內容類型
+          if (text.includes('售價：') || text.match(/售價[：:]\s*[\$￥]\s*\d+/)) {
             data.price = text;
-          } else if (text.includes('特價')) {
+          } else if (text.includes('特價：') || text.match(/特價[：:]\s*[\$￥]\s*\d+/)) {
             data.specialPrice = text;
-          } else if (/^\d{5,}$/.test(text)) {
+          } else if (text.match(/^\d{8,13}$/)) {
+            // 8-13位純數字可能是條碼
             data.barcodeNumber = text;
-          } else if (text.includes('/')) {
+          } else if (text.includes('/') && !text.includes('$') && text.length < 30) {
+            // 包含斜線的短文字可能是規格
             data.spec = text;
-          } else if (text.match(/^[A-Za-z0-9\-_]{3,20}$/)) {
-            data.sku = text;
-            data.productCode = text;
+          } else if (text.match(/^[A-Za-z0-9\-_]{3,20}$/) && !text.match(/^[0-9]+$/)) {
+            // 英數混合可能是SKU
+            if (!data.sku) data.sku = text;
+            if (!data.productCode) data.productCode = text;
+          } else if (text.includes('SKU') || text.includes('貨號')) {
+            // 明確標示的SKU
+            const skuMatch = text.match(/[：:]\s*([A-Za-z0-9\-_]+)/);
+            if (skuMatch) {
+              data.sku = skuMatch[1];
+              data.productCode = skuMatch[1];
+            }
           }
         }
       });
       
-      // 如果沒有找到條碼號碼，嘗試從條碼區域找
-      if (!data.barcodeNumber) {
-        const barcodeText = sample.querySelector('.spec_barcode .sub, .spec_barcode span');
-        if (barcodeText) {
-          data.barcodeNumber = barcodeText.textContent.trim();
-        }
+      // 檢查是否有 data attributes
+      const dataAttributes = sample.dataset;
+      if (dataAttributes) {
+        if (dataAttributes.productName) data.productName = dataAttributes.productName;
+        if (dataAttributes.sku) data.sku = dataAttributes.sku;
+        if (dataAttributes.barcode) data.barcodeNumber = dataAttributes.barcode;
+        if (dataAttributes.price) data.price = dataAttributes.price;
+      }
+      
+      // 檢查父元素的 data attributes
+      const parentElement = sample.closest('.print_barcode_item, .barcode-item, .product-item');
+      if (parentElement && parentElement.dataset) {
+        const parentData = parentElement.dataset;
+        if (parentData.productName && !data.productName) data.productName = parentData.productName;
+        if (parentData.sku && !data.sku) data.sku = parentData.sku;
+        if (parentData.barcode && !data.barcodeNumber) data.barcodeNumber = parentData.barcode;
+      }
+      
+      // 嘗試從表格結構抓取
+      const table = sample.querySelector('table');
+      if (table) {
+        const cells = table.querySelectorAll('td');
+        cells.forEach(cell => {
+          const text = cell.textContent.trim();
+          if (text.includes('品名') && cell.nextElementSibling) {
+            data.productName = cell.nextElementSibling.textContent.trim();
+          } else if (text.includes('規格') && cell.nextElementSibling) {
+            data.spec = cell.nextElementSibling.textContent.trim();
+          } else if (text.includes('SKU') && cell.nextElementSibling) {
+            data.sku = cell.nextElementSibling.textContent.trim();
+          }
+        });
       }
       
       productData.push(data);
     });
+    
+    // 如果第一個產品缺少某些資料，嘗試從 URL 參數或 localStorage 獲取
+    if (productData.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('sku') && !productData[0].sku) {
+        productData[0].sku = urlParams.get('sku');
+      }
+      
+      // 檢查 localStorage
+      try {
+        const storedData = localStorage.getItem('bv_current_products');
+        if (storedData) {
+          const parsed = JSON.parse(storedData);
+          console.log('從 localStorage 找到產品資料:', parsed);
+        }
+      } catch (e) {}
+    }
     
     console.log('抓取到的產品資料:', productData);
   }
@@ -145,7 +243,7 @@ javascript:(function(){
       },
       barcode: {
         height: 40,
-        width: 80,
+        widthPercent: 80,
         textSize: 8
       }
     };
@@ -174,7 +272,21 @@ javascript:(function(){
       const barcodeImg = element.querySelector('.bv-element-barcode');
       const barcodeText = element.querySelector('.bv-element-barcode-text');
       barcodeImg.style.height = `${styles.height}px`;
-      barcodeImg.style.width = `${styles.width}px`;
+      
+      // 計算條碼寬度
+      if (element.parentElement) {
+        const marginIndicator = element.parentElement.querySelector('.bv-margin-indicator');
+        if (marginIndicator) {
+          const marginRect = marginIndicator.getBoundingClientRect();
+          const parentRect = element.parentElement.getBoundingClientRect();
+          const availableWidth = (marginRect.width / PREVIEW_SCALE) - 4;
+          const actualWidth = availableWidth * (styles.widthPercent / 100);
+          barcodeImg.style.width = `${actualWidth}px`;
+        } else {
+          barcodeImg.style.width = `${styles.widthPercent}%`;
+        }
+      }
+      
       barcodeText.style.fontSize = `${styles.textSize}px`;
     }
     
@@ -226,6 +338,85 @@ javascript:(function(){
     }
   }
 
+  /* 對齊檢測 */
+  function checkAlignment(draggedElement, currentX, currentY) {
+    const SNAP_THRESHOLD = 5; // 吸附閾值
+    const parent = draggedElement.parentElement;
+    const alignmentLines = [];
+    let snapX = currentX;
+    let snapY = currentY;
+    
+    // 獲取所有其他元素
+    const otherElements = parent.querySelectorAll('.bv-label-element:not(.dragging)');
+    
+    otherElements.forEach(element => {
+      const rect = element.getBoundingClientRect();
+      const parentRect = parent.getBoundingClientRect();
+      const elemX = (rect.left - parentRect.left) / PREVIEW_SCALE;
+      const elemY = (rect.top - parentRect.top) / PREVIEW_SCALE;
+      const elemRight = elemX + element.offsetWidth;
+      const elemBottom = elemY + element.offsetHeight;
+      
+      const draggedWidth = draggedElement.offsetWidth;
+      const draggedHeight = draggedElement.offsetHeight;
+      
+      // 檢查垂直對齊
+      if (Math.abs(currentX - elemX) < SNAP_THRESHOLD) {
+        snapX = elemX;
+        alignmentLines.push({ type: 'vertical', position: elemX });
+      }
+      if (Math.abs(currentX + draggedWidth - elemRight) < SNAP_THRESHOLD) {
+        snapX = elemRight - draggedWidth;
+        alignmentLines.push({ type: 'vertical', position: elemRight });
+      }
+      if (Math.abs(currentX + draggedWidth/2 - (elemX + element.offsetWidth/2)) < SNAP_THRESHOLD) {
+        snapX = elemX + element.offsetWidth/2 - draggedWidth/2;
+        alignmentLines.push({ type: 'vertical', position: elemX + element.offsetWidth/2 });
+      }
+      
+      // 檢查水平對齊
+      if (Math.abs(currentY - elemY) < SNAP_THRESHOLD) {
+        snapY = elemY;
+        alignmentLines.push({ type: 'horizontal', position: elemY });
+      }
+      if (Math.abs(currentY + draggedHeight - elemBottom) < SNAP_THRESHOLD) {
+        snapY = elemBottom - draggedHeight;
+        alignmentLines.push({ type: 'horizontal', position: elemBottom });
+      }
+      if (Math.abs(currentY + draggedHeight/2 - (elemY + element.offsetHeight/2)) < SNAP_THRESHOLD) {
+        snapY = elemY + element.offsetHeight/2 - draggedHeight/2;
+        alignmentLines.push({ type: 'horizontal', position: elemY + element.offsetHeight/2 });
+      }
+    });
+    
+    // 顯示對齊線
+    showAlignmentLines(parent, alignmentLines);
+    
+    return { x: snapX, y: snapY };
+  }
+
+  /* 顯示對齊線 */
+  function showAlignmentLines(parent, lines) {
+    // 清除現有對齊線
+    parent.querySelectorAll('.bv-alignment-line').forEach(line => line.remove());
+    
+    lines.forEach(line => {
+      const lineElement = document.createElement('div');
+      lineElement.className = `bv-alignment-line ${line.type}`;
+      if (line.type === 'vertical') {
+        lineElement.style.left = line.position + 'px';
+      } else {
+        lineElement.style.top = line.position + 'px';
+      }
+      parent.appendChild(lineElement);
+    });
+    
+    // 1秒後自動隱藏
+    setTimeout(() => {
+      parent.querySelectorAll('.bv-alignment-line').forEach(line => line.remove());
+    }, 1000);
+  }
+
   /* 建立基本樣式 */
   const style = document.createElement('style');
   style.innerHTML = `
@@ -258,7 +449,7 @@ javascript:(function(){
     }
     
     /* 隱藏原始的標籤內容 */
-    .print_sample > *:not(.bv-margin-indicator):not(.bv-label-element):not(.label-background-logo) {
+    .print_sample > *:not(.bv-margin-indicator):not(.bv-label-element):not(.label-background-logo):not(.bv-preview-hint):not(.bv-alignment-line) {
       display: none !important;
     }
     
@@ -292,7 +483,6 @@ javascript:(function(){
     
     .bv-label-element.dragging {
       opacity: 0.8;
-      z-index: 1000;
       cursor: grabbing;
       outline: 2px solid #0071e3;
     }
@@ -397,6 +587,18 @@ javascript:(function(){
       opacity: 0.5;
     }
     
+    .bv-field-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: rgba(240, 240, 240, 0.5);
+    }
+    
+    .bv-field-item.disabled:hover {
+      transform: none;
+      background: rgba(240, 240, 240, 0.5);
+      border-color: rgba(0, 0, 0, 0.08);
+    }
+    
     .bv-field-icon {
       font-size: 20px;
       color: #666;
@@ -422,12 +624,50 @@ javascript:(function(){
       text-overflow: ellipsis;
     }
     
+    .bv-field-empty {
+      color: #ccc;
+      font-style: italic;
+    }
+    
     /* 邊界指示器 */
     .bv-margin-indicator {
       position: absolute;
       border: 1px dashed #ff3b30;
       pointer-events: none;
       opacity: 0.5;
+    }
+    
+    /* 對齊線 */
+    .bv-alignment-line {
+      position: absolute;
+      background: #0071e3;
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: 999;
+    }
+    
+    .bv-alignment-line.horizontal {
+      height: 1px;
+      left: 0;
+      right: 0;
+    }
+    
+    .bv-alignment-line.vertical {
+      width: 1px;
+      top: 0;
+      bottom: 0;
+    }
+    
+    /* 預覽提示 */
+    .bv-preview-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ccc;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 1;
     }
     
     /* 垃圾桶區域 */
@@ -495,7 +735,9 @@ javascript:(function(){
       .bv-fields-panel,
       #bv-barcode-control-panel,
       .bv-floating-button,
-      .bv-notification {
+      .bv-notification,
+      .bv-alignment-line,
+      .bv-preview-hint {
         display: none !important;
       }
     }
@@ -1103,6 +1345,10 @@ javascript:(function(){
       margin-bottom: 12px;
     }
     
+    .bv-property-row:last-child {
+      margin-bottom: 0;
+    }
+    
     .bv-property-label {
       font-size: 13px;
       font-weight: 500;
@@ -1206,34 +1452,45 @@ javascript:(function(){
 
   /* 初始化標籤 */
   function initializeLabels() {
-    // 只初始化第一個標籤作為編輯區
-    const firstSample = document.querySelector('.print_sample');
-    if (firstSample) {
-      // 清空原始內容
-      firstSample.innerHTML = '';
-      
-      // 添加邊界指示器
-      const marginIndicator = document.createElement('div');
-      marginIndicator.className = 'bv-margin-indicator';
-      
-      // 計算邊界
-      const labelWidth = parseFloat(window.getComputedStyle(firstSample).width);
-      const labelHeight = parseFloat(window.getComputedStyle(firstSample).height);
-      const isBrother = labelWidth < 120; // 小於120px可能是Brother標籤
-      const leftMargin = isBrother ? 15 : 11; // 4mm : 3mm (約略值)
-      const otherMargin = 11; // 3mm
-      
-      marginIndicator.style.top = `${otherMargin}px`;
-      marginIndicator.style.left = `${leftMargin}px`;
-      marginIndicator.style.right = `${otherMargin}px`;
-      marginIndicator.style.bottom = `${otherMargin}px`;
-      
-      firstSample.appendChild(marginIndicator);
-    }
+    // 顯示前3個標籤作為預覽
+    const previewCount = Math.min(3, productData.length);
     
-    // 隱藏其他標籤
-    document.querySelectorAll('.print_sample:not(:first-child)').forEach(sample => {
-      sample.style.display = 'none';
+    document.querySelectorAll('.print_sample').forEach((sample, index) => {
+      if (index < previewCount) {
+        // 清空原始內容
+        sample.innerHTML = '';
+        
+        // 添加邊界指示器
+        const marginIndicator = document.createElement('div');
+        marginIndicator.className = 'bv-margin-indicator';
+        
+        // 計算邊界
+        const labelWidth = parseFloat(window.getComputedStyle(sample).width);
+        const labelHeight = parseFloat(window.getComputedStyle(sample).height);
+        const isBrother = labelWidth < 120;
+        const leftMargin = isBrother ? 15 : 11;
+        const otherMargin = 11;
+        
+        marginIndicator.style.top = `${otherMargin}px`;
+        marginIndicator.style.left = `${leftMargin}px`;
+        marginIndicator.style.right = `${otherMargin}px`;
+        marginIndicator.style.bottom = `${otherMargin}px`;
+        
+        sample.appendChild(marginIndicator);
+        
+        // 添加預覽提示
+        if (index > 0) {
+          const previewHint = document.createElement('div');
+          previewHint.className = 'bv-preview-hint';
+          previewHint.textContent = `預覽 ${index + 1}`;
+          sample.appendChild(previewHint);
+        }
+        
+        sample.style.display = 'block';
+        sample.style.opacity = index === 0 ? '1' : '0.6';
+      } else {
+        sample.style.display = 'none';
+      }
     });
   }
 
@@ -1279,27 +1536,37 @@ javascript:(function(){
     
     // 生成欄位項目
     fields.forEach(field => {
-      if (product[field.key]) {
-        const fieldItem = document.createElement('div');
-        fieldItem.className = 'bv-field-item';
+      const fieldItem = document.createElement('div');
+      fieldItem.className = 'bv-field-item';
+      fieldItem.dataset.fieldKey = field.key;
+      fieldItem.dataset.fieldType = field.type;
+      
+      // 檢查欄位是否有資料
+      const hasData = product[field.key] && product[field.key].trim() !== '';
+      
+      if (!hasData) {
+        fieldItem.classList.add('disabled');
+      } else {
         fieldItem.draggable = true;
-        fieldItem.dataset.fieldKey = field.key;
-        fieldItem.dataset.fieldType = field.type;
-        
-        fieldItem.innerHTML = `
-          <span class="material-icons bv-field-icon">${field.icon}</span>
-          <div class="bv-field-content">
-            <div class="bv-field-label">${field.label}</div>
-            <div class="bv-field-value">${field.type === 'barcode' ? '條碼圖片' : product[field.key]}</div>
+      }
+      
+      fieldItem.innerHTML = `
+        <span class="material-icons bv-field-icon">${field.icon}</span>
+        <div class="bv-field-content">
+          <div class="bv-field-label">${field.label}</div>
+          <div class="bv-field-value ${!hasData ? 'bv-field-empty' : ''}">
+            ${hasData ? (field.type === 'barcode' ? '條碼圖片' : product[field.key]) : '無資料'}
           </div>
-        `;
-        
-        // 拖曳事件
+        </div>
+      `;
+      
+      // 只有有資料的欄位才能拖曳
+      if (hasData) {
         fieldItem.addEventListener('dragstart', handleFieldDragStart);
         fieldItem.addEventListener('dragend', handleFieldDragEnd);
-        
-        container.appendChild(fieldItem);
       }
+      
+      container.appendChild(fieldItem);
     });
   }
 
@@ -1323,10 +1590,10 @@ javascript:(function(){
   /* 處理欄位拖曳開始 */
   let dragGhost = null;
   function handleFieldDragStart(e) {
-    const fieldKey = e.target.dataset.fieldKey;
-    const fieldType = e.target.dataset.fieldType;
+    const fieldKey = e.currentTarget.dataset.fieldKey;
+    const fieldType = e.currentTarget.dataset.fieldType;
     
-    e.target.classList.add('dragging');
+    e.currentTarget.classList.add('dragging');
     
     // 儲存拖曳資料
     draggedFieldData = {
@@ -1357,7 +1624,7 @@ javascript:(function(){
 
   /* 處理欄位拖曳結束 */
   function handleFieldDragEnd(e) {
-    e.target.classList.remove('dragging');
+    e.currentTarget.classList.remove('dragging');
     trashArea.classList.remove('active', 'hover');
     
     // 移除幽靈圖片
@@ -1371,11 +1638,12 @@ javascript:(function(){
 
   /* 設定標籤可接受拖放 */
   function setupLabelDropZones() {
-    const firstSample = document.querySelector('.print_sample');
-    if (firstSample) {
-      firstSample.addEventListener('dragover', handleLabelDragOver);
-      firstSample.addEventListener('drop', handleLabelDrop);
-    }
+    document.querySelectorAll('.print_sample').forEach((sample, index) => {
+      if (index < 3) { // 只設定前3個預覽標籤
+        sample.addEventListener('dragover', handleLabelDragOver);
+        sample.addEventListener('drop', handleLabelDrop);
+      }
+    });
     
     // 垃圾桶事件
     trashArea.addEventListener('dragover', (e) => {
@@ -1389,20 +1657,6 @@ javascript:(function(){
     
     trashArea.addEventListener('drop', (e) => {
       e.preventDefault();
-      if (selectedElement && selectedElement.classList.contains('bv-label-element')) {
-        // 刪除元素
-        const elementId = selectedElement.dataset.elementId;
-        labelElements = labelElements.filter(el => el.id !== elementId);
-        selectedElement.remove();
-        selectedElement = null;
-        showNotification('元素已刪除');
-        
-        // 清空屬性面板
-        const propertiesContainer = document.getElementById('bv-element-properties');
-        if (propertiesContainer) {
-          propertiesContainer.innerHTML = '<p style="text-align: center; color: #999; font-size: 13px;">請選擇一個元素</p>';
-        }
-      }
       trashArea.classList.remove('hover');
     });
   }
@@ -1448,17 +1702,19 @@ javascript:(function(){
       element.style.left = `${x - element.offsetWidth / 2}px`;
       element.style.top = `${y - element.offsetHeight / 2}px`;
       
-      // 更新元素資料
-      const elementId = element.dataset.elementId;
-      labelElements.push({
-        id: elementId,
-        type: draggedFieldData.fieldType,
-        content: content,
-        fieldKey: draggedFieldData.fieldKey,
-        x: parseFloat(element.style.left),
-        y: parseFloat(element.style.top),
-        styles: JSON.parse(element.dataset.styles)
-      });
+      // 更新元素資料（只儲存第一個標籤的）
+      if (sample === document.querySelector('.print_sample')) {
+        const elementId = element.dataset.elementId;
+        labelElements.push({
+          id: elementId,
+          type: draggedFieldData.fieldType,
+          content: content,
+          fieldKey: draggedFieldData.fieldKey,
+          x: parseFloat(element.style.left),
+          y: parseFloat(element.style.top),
+          styles: JSON.parse(element.dataset.styles)
+        });
+      }
       
       // 綁定元素事件
       setupElementEvents(element);
@@ -1480,7 +1736,7 @@ javascript:(function(){
     });
   }
 
-  /* 處理元素拖曳 - 修正縮放問題 */
+  /* 處理元素拖曳 - 允許拖到垃圾桶 */
   function handleElementMouseDown(e) {
     if (e.button !== 0) return; // 只響應左鍵
     
@@ -1492,12 +1748,12 @@ javascript:(function(){
     element.classList.add('dragging');
     
     const rect = element.getBoundingClientRect();
-    const parentRect = element.parentElement.getBoundingClientRect();
     
-    startX = (e.clientX - rect.left) / PREVIEW_SCALE;
-    startY = (e.clientY - rect.top) / PREVIEW_SCALE;
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
     
     isDragging = true;
+    draggedElement = element;
     
     // 顯示垃圾桶
     trashArea.classList.add('active');
@@ -1506,37 +1762,29 @@ javascript:(function(){
     document.addEventListener('mouseup', handleElementDragEnd);
   }
 
-  /* 處理元素拖曳中 - 修正縮放問題 */
+  /* 處理元素拖曳中 - 允許拖出邊界到垃圾桶 */
   function handleElementDrag(e) {
     if (!isDragging || !selectedElement) return;
     
     e.preventDefault();
     
-    const parent = selectedElement.parentElement;
-    const parentRect = parent.getBoundingClientRect();
-    const marginIndicator = parent.querySelector('.bv-margin-indicator');
-    const marginRect = marginIndicator ? marginIndicator.getBoundingClientRect() : parentRect;
+    // 使用絕對定位，允許拖出標籤範圍
+    selectedElement.style.position = 'fixed';
+    selectedElement.style.left = (e.clientX - startX) + 'px';
+    selectedElement.style.top = (e.clientY - startY) + 'px';
+    selectedElement.style.zIndex = '10001';
     
-    let newX = (e.clientX - parentRect.left) / PREVIEW_SCALE - startX;
-    let newY = (e.clientY - parentRect.top) / PREVIEW_SCALE - startY;
+    // 檢查是否在垃圾桶上方
+    const trashRect = trashArea.getBoundingClientRect();
+    const elementRect = selectedElement.getBoundingClientRect();
     
-    // 限制在邊界內
-    const minX = (marginRect.left - parentRect.left) / PREVIEW_SCALE;
-    const minY = (marginRect.top - parentRect.top) / PREVIEW_SCALE;
-    const maxX = (marginRect.right - parentRect.left) / PREVIEW_SCALE - selectedElement.offsetWidth;
-    const maxY = (marginRect.bottom - parentRect.top) / PREVIEW_SCALE - selectedElement.offsetHeight;
-    
-    newX = Math.max(minX, Math.min(newX, maxX));
-    newY = Math.max(minY, Math.min(newY, maxY));
-    
-    selectedElement.style.left = newX + 'px';
-    selectedElement.style.top = newY + 'px';
-    
-    // 更新元素資料
-    const elementData = labelElements.find(el => el.id === selectedElement.dataset.elementId);
-    if (elementData) {
-      elementData.x = newX;
-      elementData.y = newY;
+    if (elementRect.left < trashRect.right &&
+        elementRect.right > trashRect.left &&
+        elementRect.top < trashRect.bottom &&
+        elementRect.bottom > trashRect.top) {
+      trashArea.classList.add('hover');
+    } else {
+      trashArea.classList.remove('hover');
     }
   }
 
@@ -1547,11 +1795,72 @@ javascript:(function(){
     isDragging = false;
     selectedElement.classList.remove('dragging');
     
-    // 隱藏垃圾桶
-    trashArea.classList.remove('active');
+    // 檢查是否在垃圾桶上
+    const trashRect = trashArea.getBoundingClientRect();
+    const elementRect = selectedElement.getBoundingClientRect();
     
-    // 儲存位置
-    saveElementsData();
+    if (elementRect.left < trashRect.right &&
+        elementRect.right > trashRect.left &&
+        elementRect.top < trashRect.bottom &&
+        elementRect.bottom > trashRect.top) {
+      // 刪除元素
+      const elementId = selectedElement.dataset.elementId;
+      labelElements = labelElements.filter(el => el.id !== elementId);
+      selectedElement.remove();
+      selectedElement = null;
+      showNotification('元素已刪除');
+      
+      // 清空屬性面板
+      const propertiesContainer = document.getElementById('bv-element-properties');
+      if (propertiesContainer) {
+        propertiesContainer.innerHTML = '<p style="text-align: center; color: #999; font-size: 13px;">請選擇一個元素</p>';
+      }
+      
+      saveElementsData();
+    } else {
+      // 放回原位
+      const parent = selectedElement.parentElement;
+      const parentRect = parent.getBoundingClientRect();
+      
+      selectedElement.style.position = 'absolute';
+      let newX = (e.clientX - parentRect.left) / PREVIEW_SCALE - startX / PREVIEW_SCALE;
+      let newY = (e.clientY - parentRect.top) / PREVIEW_SCALE - startY / PREVIEW_SCALE;
+      
+      // 檢查對齊
+      const aligned = checkAlignment(selectedElement, newX, newY);
+      newX = aligned.x;
+      newY = aligned.y;
+      
+      // 限制在邊界內
+      const marginIndicator = parent.querySelector('.bv-margin-indicator');
+      if (marginIndicator) {
+        const marginRect = marginIndicator.getBoundingClientRect();
+        const minX = (marginRect.left - parentRect.left) / PREVIEW_SCALE;
+        const minY = (marginRect.top - parentRect.top) / PREVIEW_SCALE;
+        const maxX = (marginRect.right - parentRect.left) / PREVIEW_SCALE - selectedElement.offsetWidth;
+        const maxY = (marginRect.bottom - parentRect.top) / PREVIEW_SCALE - selectedElement.offsetHeight;
+        
+        newX = Math.max(minX, Math.min(newX, maxX));
+        newY = Math.max(minY, Math.min(newY, maxY));
+      }
+      
+      selectedElement.style.left = newX + 'px';
+      selectedElement.style.top = newY + 'px';
+      selectedElement.style.zIndex = '10';
+      
+      // 更新元素資料（只更新第一個標籤的）
+      if (parent === document.querySelector('.print_sample')) {
+        const elementData = labelElements.find(el => el.id === selectedElement.dataset.elementId);
+        if (elementData) {
+          elementData.x = newX;
+          elementData.y = newY;
+        }
+        saveElementsData();
+      }
+    }
+    
+    // 隱藏垃圾桶
+    trashArea.classList.remove('active', 'hover');
     
     document.removeEventListener('mousemove', handleElementDrag);
     document.removeEventListener('mouseup', handleElementDragEnd);
@@ -1612,7 +1921,10 @@ javascript:(function(){
         </div>
         <div class="bv-property-row">
           <label class="bv-property-label">條碼寬度</label>
-          <input type="number" class="bv-property-input" id="prop-barcode-width" value="${styles.width || 80}" min="40" max="200">
+          <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+            <input type="range" class="bv-glass-slider" id="prop-barcode-width" value="${styles.widthPercent || 80}" min="50" max="100" style="flex: 1;">
+            <span class="bv-value-label">${styles.widthPercent || 80}%</span>
+          </div>
         </div>
         <div class="bv-property-row">
           <label class="bv-property-label">數字大小</label>
@@ -1640,7 +1952,7 @@ javascript:(function(){
           styles.fontSize = parseInt(e.target.value);
           element.dataset.styles = JSON.stringify(styles);
           element.querySelector('.bv-element-text').style.fontSize = `${styles.fontSize}px`;
-          saveElementsData();
+          updateElementData(element);
         });
       }
       
@@ -1652,7 +1964,7 @@ javascript:(function(){
           styles.fontWeight = fontBold.classList.contains('active') ? 700 : 400;
           element.dataset.styles = JSON.stringify(styles);
           element.querySelector('.bv-element-text').style.fontWeight = styles.fontWeight;
-          saveElementsData();
+          updateElementData(element);
         });
       }
       
@@ -1663,7 +1975,7 @@ javascript:(function(){
           styles.color = e.target.value;
           element.dataset.styles = JSON.stringify(styles);
           element.querySelector('.bv-element-text').style.color = styles.color;
-          saveElementsData();
+          updateElementData(element);
         });
       }
       
@@ -1674,7 +1986,7 @@ javascript:(function(){
           styles.fontFamily = e.target.value;
           element.dataset.styles = JSON.stringify(styles);
           element.querySelector('.bv-element-text').style.fontFamily = styles.fontFamily;
-          saveElementsData();
+          updateElementData(element);
         });
       }
     } else if (type === 'barcode') {
@@ -1685,7 +1997,7 @@ javascript:(function(){
           styles.height = parseInt(e.target.value);
           element.dataset.styles = JSON.stringify(styles);
           element.querySelector('.bv-element-barcode').style.height = `${styles.height}px`;
-          saveElementsData();
+          updateElementData(element);
         });
       }
       
@@ -1693,10 +2005,25 @@ javascript:(function(){
       const barcodeWidth = document.getElementById('prop-barcode-width');
       if (barcodeWidth) {
         barcodeWidth.addEventListener('input', (e) => {
-          styles.width = parseInt(e.target.value);
+          styles.widthPercent = parseInt(e.target.value);
           element.dataset.styles = JSON.stringify(styles);
-          element.querySelector('.bv-element-barcode').style.width = `${styles.width}px`;
-          saveElementsData();
+          
+          // 計算實際寬度
+          const parent = element.parentElement;
+          const marginIndicator = parent.querySelector('.bv-margin-indicator');
+          if (marginIndicator) {
+            const marginRect = marginIndicator.getBoundingClientRect();
+            const parentRect = parent.getBoundingClientRect();
+            const availableWidth = (marginRect.width / PREVIEW_SCALE) - 4; // 留一點邊距
+            const actualWidth = availableWidth * (styles.widthPercent / 100);
+            element.querySelector('.bv-element-barcode').style.width = `${actualWidth}px`;
+          }
+          
+          // 更新顯示值
+          const label = e.target.parentElement.querySelector('.bv-value-label');
+          if (label) label.textContent = `${styles.widthPercent}%`;
+          
+          updateElementData(element);
         });
       }
       
@@ -1710,15 +2037,21 @@ javascript:(function(){
           if (textElement) {
             textElement.style.fontSize = `${styles.textSize}px`;
           }
-          saveElementsData();
+          updateElementData(element);
         });
       }
     }
-    
-    // 更新 labelElements 陣列中的樣式
-    const elementData = labelElements.find(el => el.id === element.dataset.elementId);
-    if (elementData) {
-      elementData.styles = styles;
+  }
+
+  /* 更新元素資料 */
+  function updateElementData(element) {
+    // 只更新第一個標籤的資料
+    if (element.parentElement === document.querySelector('.print_sample')) {
+      const elementData = labelElements.find(el => el.id === element.dataset.elementId);
+      if (elementData) {
+        elementData.styles = JSON.parse(element.dataset.styles);
+        saveElementsData();
+      }
     }
   }
 
@@ -1769,41 +2102,43 @@ javascript:(function(){
       
       if (settings) {
         const savedSettings = JSON.parse(settings);
-        // 載入設定
-        const labelWidth = document.getElementById('label-width-slider');
-        const labelHeight = document.getElementById('label-height-slider');
-        const fontFamily = document.getElementById('font-family-select');
-        
-        if (labelWidth) labelWidth.value = savedSettings.labelWidth || 40;
-        if (labelHeight) labelHeight.value = savedSettings.labelHeight || 30;
-        if (fontFamily) fontFamily.value = savedSettings.fontFamily || 'Arial, sans-serif';
-        
-        // 載入底圖
-        if (savedSettings.logoDataUrl) {
-          logoDataUrl = savedSettings.logoDataUrl;
-          logoAspectRatio = savedSettings.logoAspectRatio || 1;
+        // 載入設定會在控制項初始化後進行
+        setTimeout(() => {
+          const labelWidth = document.getElementById('label-width-slider');
+          const labelHeight = document.getElementById('label-height-slider');
+          const fontFamily = document.getElementById('font-family-select');
           
-          const logoPreview = document.getElementById('logo-preview');
-          const uploadPrompt = document.getElementById('upload-prompt');
-          const logoControls = document.getElementById('logo-controls');
+          if (labelWidth) labelWidth.value = savedSettings.labelWidth || 40;
+          if (labelHeight) labelHeight.value = savedSettings.labelHeight || 30;
+          if (fontFamily) fontFamily.value = savedSettings.fontFamily || 'Arial, sans-serif';
           
-          if (logoPreview) {
-            logoPreview.src = logoDataUrl;
-            logoPreview.style.display = 'block';
+          // 載入底圖
+          if (savedSettings.logoDataUrl) {
+            logoDataUrl = savedSettings.logoDataUrl;
+            logoAspectRatio = savedSettings.logoAspectRatio || 1;
+            
+            const logoPreview = document.getElementById('logo-preview');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const logoControls = document.getElementById('logo-controls');
+            
+            if (logoPreview) {
+              logoPreview.src = logoDataUrl;
+              logoPreview.style.display = 'block';
+            }
+            if (uploadPrompt) uploadPrompt.style.display = 'none';
+            if (logoControls) logoControls.style.display = 'block';
+            
+            const logoSizeSlider = document.getElementById('logo-size-slider');
+            const logoXSlider = document.getElementById('logo-x-slider');
+            const logoYSlider = document.getElementById('logo-y-slider');
+            const logoOpacitySlider = document.getElementById('logo-opacity-slider');
+            
+            if (logoSizeSlider) logoSizeSlider.value = savedSettings.logoSize || 30;
+            if (logoXSlider) logoXSlider.value = savedSettings.logoX || 50;
+            if (logoYSlider) logoYSlider.value = savedSettings.logoY || 50;
+            if (logoOpacitySlider) logoOpacitySlider.value = savedSettings.logoOpacity || 20;
           }
-          if (uploadPrompt) uploadPrompt.style.display = 'none';
-          if (logoControls) logoControls.style.display = 'block';
-          
-          const logoSizeSlider = document.getElementById('logo-size-slider');
-          const logoXSlider = document.getElementById('logo-x-slider');
-          const logoYSlider = document.getElementById('logo-y-slider');
-          const logoOpacitySlider = document.getElementById('logo-opacity-slider');
-          
-          if (logoSizeSlider) logoSizeSlider.value = savedSettings.logoSize || 30;
-          if (logoXSlider) logoXSlider.value = savedSettings.logoX || 50;
-          if (logoYSlider) logoYSlider.value = savedSettings.logoY || 50;
-          if (logoOpacitySlider) logoOpacitySlider.value = savedSettings.logoOpacity || 20;
-        }
+        }, 200);
       }
     } catch (e) {
       console.error('無法載入資料：', e);
@@ -1827,32 +2162,33 @@ javascript:(function(){
     // 顯示所有標籤
     document.querySelectorAll('.print_sample').forEach(sample => {
       sample.style.display = 'block';
+      sample.style.opacity = '1';
     });
+    
+    // 移除預覽提示
+    document.querySelectorAll('.bv-preview-hint').forEach(hint => hint.remove());
     
     // 為每個標籤套用相同的佈局
     document.querySelectorAll('.print_sample').forEach((sample, sampleIndex) => {
       // 清空標籤（保留邊界指示器）
       sample.querySelectorAll('.bv-label-element').forEach(el => el.remove());
       
-      // 如果不是第一個標籤，添加邊界指示器
-      if (sampleIndex > 0) {
-        let marginIndicator = sample.querySelector('.bv-margin-indicator');
-        if (!marginIndicator) {
-          marginIndicator = document.createElement('div');
-          marginIndicator.className = 'bv-margin-indicator';
-          
-          const labelWidth = parseFloat(window.getComputedStyle(sample).width);
-          const isBrother = labelWidth < 120;
-          const leftMargin = isBrother ? 15 : 11;
-          const otherMargin = 11;
-          
-          marginIndicator.style.top = `${otherMargin}px`;
-          marginIndicator.style.left = `${leftMargin}px`;
-          marginIndicator.style.right = `${otherMargin}px`;
-          marginIndicator.style.bottom = `${otherMargin}px`;
-          
-          sample.appendChild(marginIndicator);
-        }
+      // 如果不是第一個標籤，確保有邊界指示器
+      if (!sample.querySelector('.bv-margin-indicator')) {
+        const marginIndicator = document.createElement('div');
+        marginIndicator.className = 'bv-margin-indicator';
+        
+        const labelWidth = parseFloat(window.getComputedStyle(sample).width);
+        const isBrother = labelWidth < 120;
+        const leftMargin = isBrother ? 15 : 11;
+        const otherMargin = 11;
+        
+        marginIndicator.style.top = `${otherMargin}px`;
+        marginIndicator.style.left = `${leftMargin}px`;
+        marginIndicator.style.right = `${otherMargin}px`;
+        marginIndicator.style.bottom = `${otherMargin}px`;
+        
+        sample.appendChild(marginIndicator);
       }
       
       const product = productData[sampleIndex] || productData[0];
@@ -1881,7 +2217,7 @@ javascript:(function(){
           element.style.left = `${layoutElement.x}px`;
           element.style.top = `${layoutElement.y}px`;
           
-          // 不需要為批次列印的元素綁定事件
+          // 批次列印的元素不需要綁定事件
           if (sampleIndex === 0) {
             setupElementEvents(element);
           }
