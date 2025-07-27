@@ -660,11 +660,10 @@ javascript:(function(){
             if (subItems[1]) data.productNumber = subItems[1].textContent?.trim() || '';
             
             // SKU 在 div.sub 中 - 修正選擇器
-            const skuDiv = specInfo7.querySelector('div.sub');
+            const skuDiv = sample.querySelector('.spec_info div.sub');
             if (skuDiv) {
               data.sku = skuDiv.textContent?.trim() || '';
             }
-          }
           
           if (specBarcode7) {
             // 價格處理（同樣式5）
