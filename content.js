@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼標籤自由編輯器 v10 - 完整修正版 */
+  /* BV SHOP 條碼標籤自由編輯器 v11 - 最終修正版 */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -49,8 +49,6 @@ javascript:(function(){
     labelWidth: 40,
     labelHeight: 30,
     fontFamily: 'Arial, sans-serif',
-    fontSize: 10,
-    fontWeight: 400,
     logoSize: 30,
     logoX: 50,
     logoY: 50,
@@ -68,7 +66,7 @@ javascript:(function(){
   let logoDataUrl = null;
   let logoAspectRatio = 1;
 
-  /* 抓取頁面資料 - 增強版 */
+  /* 抓取頁面資料 - 完整版 */
   function extractProductData() {
     productData = [];
     
@@ -82,71 +80,56 @@ javascript:(function(){
         productCode: '',
         sku: '',
         barcodeImage: '',
-        barcodeNumber: '',
-        customText1: '',
-        customText2: '',
-        customText3: ''
+        barcodeNumber: ''
       };
       
-      // 抓取商品名稱 - 更廣泛的選擇器
-      const nameSelectors = [
-        '.spec_info .main',
-        '.main',
-        '.product-name',
-        '.item-name',
-        'h3',
-        'h4',
-        'strong'
-      ];
+      // 抓取商品名稱 - 從 spec_info ul li.main
+      const mainElement = sample.querySelector('.spec_info ul li.main');
+      if (mainElement) {
+        data.productName = mainElement.textContent.trim();
+      }
       
-      for (const selector of nameSelectors) {
-        const element = sample.querySelector(selector);
-        if (element && element.textContent.trim()) {
-          data.productName = element.textContent.trim();
-          break;
+      // 抓取規格 - 第一個 .sub 通常是規格
+      const specElements = sample.querySelectorAll('.spec_info ul li.sub');
+      if (specElements.length > 0 && specElements[0].textContent.includes('/')) {
+        data.spec = specElements[0].textContent.trim();
+      }
+      
+      // 抓取 SKU/貨號 - spec_info 下的 div.sub
+      const skuElement = sample.querySelector('.spec_info div.sub');
+      if (skuElement) {
+        data.sku = skuElement.textContent.trim();
+        data.productCode = data.sku;
+      }
+      
+      // 抓取價格資訊 - spec_barcode 內的 span.sub b
+      const priceElement = sample.querySelector('.spec_barcode span.sub b');
+      if (priceElement) {
+        const priceText = priceElement.textContent.trim();
+        
+        // 分解售價和特價
+        const priceMatch = priceText.match(/售價\s*\$?([\d,]+)/);
+        const specialMatch = priceText.match(/特價\s*\$?([\d,]+)/);
+        
+        if (priceMatch) {
+          data.price = `售價 $${priceMatch[1]}`;
+        }
+        if (specialMatch) {
+          data.specialPrice = `特價 $${specialMatch[1]}`;
         }
       }
       
       // 抓取條碼圖片
-      const barcodeImg = sample.querySelector('.spec_barcode img, img[alt="barcode"], img[src*="barcode"]');
+      const barcodeImg = sample.querySelector('.spec_barcode img');
       if (barcodeImg) {
         data.barcodeImage = barcodeImg.src;
       }
       
-      // 抓取所有文字元素
-      const textElements = sample.querySelectorAll('.sub, li, span, div, p');
-      const foundTexts = new Set();
-      
-      textElements.forEach(elem => {
-        const text = elem.textContent.trim();
-        if (text && !foundTexts.has(text) && text.length > 0) {
-          foundTexts.add(text);
-          
-          // 智能識別內容類型
-          if (text.includes('售價：') || text.match(/售價[：:]\s*[\$￥]\s*\d+/)) {
-            data.price = text;
-          } else if (text.includes('特價：') || text.match(/特價[：:]\s*[\$￥]\s*\d+/)) {
-            data.specialPrice = text;
-          } else if (text.match(/^\d{8,13}$/)) {
-            // 8-13位純數字可能是條碼
-            data.barcodeNumber = text;
-          } else if (text.includes('/') && !text.includes('$') && text.length < 30) {
-            // 包含斜線的短文字可能是規格
-            data.spec = text;
-          } else if (text.match(/^[A-Za-z0-9\-_]{3,20}$/) && !text.match(/^[0-9]+$/)) {
-            // 英數混合可能是SKU
-            if (!data.sku) data.sku = text;
-            if (!data.productCode) data.productCode = text;
-          } else if (text.includes('SKU') || text.includes('貨號')) {
-            // 明確標示的SKU
-            const skuMatch = text.match(/[：:]\s*([A-Za-z0-9\-_]+)/);
-            if (skuMatch) {
-              data.sku = skuMatch[1];
-              data.productCode = skuMatch[1];
-            }
-          }
-        }
-      });
+      // 抓取條碼號碼 - spec_barcode 內的 div.sub b
+      const barcodeNumberElement = sample.querySelector('.spec_barcode div.sub b');
+      if (barcodeNumberElement) {
+        data.barcodeNumber = barcodeNumberElement.textContent.trim();
+      }
       
       productData.push(data);
     });
@@ -165,11 +148,12 @@ javascript:(function(){
     // 設定預設樣式
     const defaultStyles = {
       text: {
-        fontSize: defaultSettings.fontSize
+        fontSize: 10,
+        fontWeight: 400
       },
       barcode: {
         height: 40,
-        widthPercent: 80,
+        widthPercent: 100, // 預設100%
         textSize: 8
       }
     };
@@ -186,6 +170,7 @@ javascript:(function(){
       // 立即套用樣式
       const textSpan = element.querySelector('.bv-element-text');
       textSpan.style.fontSize = `${styles.fontSize}px`;
+      textSpan.style.fontWeight = styles.fontWeight;
     } else if (type === 'barcode') {
       element.innerHTML = `
         <img src="${content}" alt="barcode" class="bv-element-barcode">
@@ -271,8 +256,6 @@ javascript:(function(){
         labelWidth: document.getElementById('label-width-slider')?.value || 40,
         labelHeight: document.getElementById('label-height-slider')?.value || 30,
         fontFamily: document.getElementById('font-family-select')?.value || 'Arial, sans-serif',
-        fontSize: document.getElementById('font-size-slider')?.value || 10,
-        fontWeight: document.getElementById('font-weight-slider')?.value || 400,
         logoDataUrl: logoDataUrl,
         logoSize: document.getElementById('logo-size-slider')?.value || 30,
         logoX: document.getElementById('logo-x-slider')?.value || 50,
@@ -335,14 +318,10 @@ javascript:(function(){
         const labelWidth = document.getElementById('label-width-slider');
         const labelHeight = document.getElementById('label-height-slider');
         const fontFamily = document.getElementById('font-family-select');
-        const fontSize = document.getElementById('font-size-slider');
-        const fontWeight = document.getElementById('font-weight-slider');
         
         if (labelWidth) labelWidth.value = s.labelWidth || 40;
         if (labelHeight) labelHeight.value = s.labelHeight || 30;
         if (fontFamily) fontFamily.value = s.fontFamily || 'Arial, sans-serif';
-        if (fontSize) fontSize.value = s.fontSize || 10;
-        if (fontWeight) fontWeight.value = s.fontWeight || 400;
         
         // 載入底圖
         if (s.logoDataUrl) {
@@ -1385,16 +1364,6 @@ javascript:(function(){
       min-width: 60px;
     }
     
-    .bv-property-input {
-      flex: 1;
-      height: 32px;
-      background: white;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      border-radius: 6px;
-      padding: 0 8px;
-      font-size: 13px;
-    }
-    
     /* 底圖樣式 */
     .label-background-logo {
       position: absolute !important;
@@ -1434,6 +1403,14 @@ javascript:(function(){
     .bv-button-group .bv-action-button {
       flex: 1;
       margin-bottom: 0;
+    }
+    
+    /* 操作提示 */
+    .bv-help-text {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin-top: 8px;
     }
   `;
   document.head.appendChild(style);
@@ -1740,24 +1717,22 @@ javascript:(function(){
       selectElement(element);
     });
     
-    // 雙擊刪除
+    // 雙擊刪除（不需要對話框）
     element.addEventListener('dblclick', (e) => {
       e.stopPropagation();
-      if (confirm('確定要刪除此元素嗎？')) {
-        const elementId = element.dataset.elementId;
-        labelElements = labelElements.filter(el => el.id !== elementId);
-        element.remove();
-        selectedElement = null;
-        showNotification('元素已刪除');
-        
-        // 清空屬性面板
-        const propertiesContainer = document.getElementById('bv-element-properties');
-        if (propertiesContainer) {
-          propertiesContainer.innerHTML = '<p style="text-align: center; color: #999; font-size: 13px;">請選擇一個元素</p>';
-        }
-        
-        saveElementsData();
+      const elementId = element.dataset.elementId;
+      labelElements = labelElements.filter(el => el.id !== elementId);
+      element.remove();
+      selectedElement = null;
+      showNotification('元素已刪除');
+      
+      // 清空屬性面板
+      const propertiesContainer = document.getElementById('bv-element-properties');
+      if (propertiesContainer) {
+        propertiesContainer.innerHTML = '<p style="text-align: center; color: #999; font-size: 13px;">請選擇一個元素</p>';
       }
+      
+      saveElementsData();
     });
   }
 
@@ -1901,7 +1876,7 @@ javascript:(function(){
     let propertiesHTML = '';
     
     if (type === 'text') {
-      // 文字元素只顯示大小調整
+      // 文字元素只顯示大小和粗細調整
       propertiesHTML = `
         <div class="bv-property-row">
           <label class="bv-property-label">字體大小</label>
@@ -1913,9 +1888,17 @@ javascript:(function(){
             <input type="range" class="bv-glass-slider" id="element-font-size" value="${styles.fontSize || 10}" min="6" max="72">
           </div>
         </div>
-        <div style="margin-top: 10px; text-align: center; color: #999; font-size: 12px;">
-          提示：雙擊元素可刪除
+        <div class="bv-property-row">
+          <label class="bv-property-label">字體粗細</label>
+          <div style="flex: 1;">
+            <div class="bv-slider-header">
+              <span></span>
+              <span class="bv-value-label" id="element-font-weight-label">${styles.fontWeight || 400}</span>
+            </div>
+            <input type="range" class="bv-glass-slider" id="element-font-weight" value="${styles.fontWeight || 400}" min="100" max="900" step="100">
+          </div>
         </div>
+        <div class="bv-help-text">提示：雙擊元素可直接刪除</div>
       `;
     } else if (type === 'barcode') {
       propertiesHTML = `
@@ -1934,9 +1917,9 @@ javascript:(function(){
           <div style="flex: 1;">
             <div class="bv-slider-header">
               <span></span>
-              <span class="bv-value-label" id="element-barcode-width-label">${styles.widthPercent || 80}%</span>
+              <span class="bv-value-label" id="element-barcode-width-label">${styles.widthPercent || 100}%</span>
             </div>
-            <input type="range" class="bv-glass-slider" id="element-barcode-width" value="${styles.widthPercent || 80}" min="50" max="100">
+            <input type="range" class="bv-glass-slider" id="element-barcode-width" value="${styles.widthPercent || 100}" min="50" max="100">
           </div>
         </div>
         <div class="bv-property-row">
@@ -1949,9 +1932,7 @@ javascript:(function(){
             <input type="range" class="bv-glass-slider" id="element-text-size" value="${styles.textSize || 8}" min="6" max="16">
           </div>
         </div>
-        <div style="margin-top: 10px; text-align: center; color: #999; font-size: 12px;">
-          提示：雙擊元素可刪除
-        </div>
+        <div class="bv-help-text">提示：雙擊元素可直接刪除</div>
       `;
     }
     
@@ -1983,6 +1964,18 @@ javascript:(function(){
           element.dataset.styles = JSON.stringify(styles);
           element.querySelector('.bv-element-text').style.fontSize = `${styles.fontSize}px`;
           document.getElementById('element-font-size-label').textContent = `${styles.fontSize}px`;
+          updateElementData(element);
+        });
+      }
+      
+      // 字體粗細
+      const fontWeight = document.getElementById('element-font-weight');
+      if (fontWeight) {
+        fontWeight.addEventListener('input', (e) => {
+          styles.fontWeight = parseInt(e.target.value);
+          element.dataset.styles = JSON.stringify(styles);
+          element.querySelector('.bv-element-text').style.fontWeight = styles.fontWeight;
+          document.getElementById('element-font-weight-label').textContent = styles.fontWeight;
           updateElementData(element);
         });
       }
@@ -2059,8 +2052,6 @@ javascript:(function(){
         labelWidth: document.getElementById('label-width-slider')?.value || 40,
         labelHeight: document.getElementById('label-height-slider')?.value || 30,
         fontFamily: document.getElementById('font-family-select')?.value || 'Arial, sans-serif',
-        fontSize: document.getElementById('font-size-slider')?.value || 10,
-        fontWeight: document.getElementById('font-weight-slider')?.value || 400,
         logoDataUrl: logoDataUrl,
         logoSize: document.getElementById('logo-size-slider')?.value || 30,
         logoX: document.getElementById('logo-x-slider')?.value || 50,
@@ -2105,14 +2096,10 @@ javascript:(function(){
           const labelWidth = document.getElementById('label-width-slider');
           const labelHeight = document.getElementById('label-height-slider');
           const fontFamily = document.getElementById('font-family-select');
-          const fontSize = document.getElementById('font-size-slider');
-          const fontWeight = document.getElementById('font-weight-slider');
           
           if (labelWidth) labelWidth.value = savedSettings.labelWidth || 40;
           if (labelHeight) labelHeight.value = savedSettings.labelHeight || 30;
           if (fontFamily) fontFamily.value = savedSettings.fontFamily || 'Arial, sans-serif';
-          if (fontSize) fontSize.value = savedSettings.fontSize || 10;
-          if (fontWeight) fontWeight.value = savedSettings.fontWeight || 400;
           
           // 載入底圖
           if (savedSettings.logoDataUrl) {
@@ -2358,25 +2345,6 @@ javascript:(function(){
                     ${fontOptions.map(font => `<option value="${font.value}">${font.name}</option>`).join('')}
                   </select>
                 </div>
-                
-                <!-- 全域字體設定 -->
-                <div class="bv-slider-group" style="margin-top: 20px;">
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>預設字體大小</span>
-                      <span class="bv-value-label" id="font-size">10px</span>
-                    </div>
-                    <input type="range" id="font-size-slider" min="6" max="72" value="10" class="bv-glass-slider">
-                  </div>
-                  
-                  <div class="bv-slider-item">
-                    <div class="bv-slider-header">
-                      <span>預設字體粗細</span>
-                      <span class="bv-value-label" id="font-weight">400</span>
-                    </div>
-                    <input type="range" id="font-weight-slider" min="100" max="900" step="100" value="400" class="bv-glass-slider">
-                  </div>
-                </div>
               </div>
             </div>
             
@@ -2480,8 +2448,6 @@ javascript:(function(){
       const labelWidth = document.getElementById('label-width-slider');
       const labelHeight = document.getElementById('label-height-slider');
       const fontFamily = document.getElementById('font-family-select');
-      const fontSize = document.getElementById('font-size-slider');
-      const fontWeight = document.getElementById('font-weight-slider');
       
       /* Logo 相關控制項 */
       const logoUploadArea = document.getElementById('logo-upload-area');
@@ -2507,8 +2473,6 @@ javascript:(function(){
         /* 更新顯示值 */
         document.getElementById('label-width').textContent = labelWidth.value + 'mm';
         document.getElementById('label-height').textContent = labelHeight.value + 'mm';
-        document.getElementById('font-size').textContent = fontSize.value + 'px';
-        document.getElementById('font-weight').textContent = fontWeight.value;
         
         if (logoSizeSlider) {
           document.getElementById('logo-size').textContent = logoSizeSlider.value + '%';
@@ -2521,7 +2485,7 @@ javascript:(function(){
         const logoWidthMM = logoHeightMM * logoAspectRatio;
         
         /* 更新所有滑桿的進度條 */
-        [labelWidth, labelHeight, fontSize, fontWeight, logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider].forEach(control => {
+        [labelWidth, labelHeight, logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider].forEach(control => {
           if (control && control.type === 'range') {
             updateRangeProgress(control);
           }
@@ -2547,15 +2511,6 @@ javascript:(function(){
           /* 元素樣式應用 */
           .bv-label-element {
             font-family: ${fontFamily.value} !important;
-          }
-          
-          .bv-element-text {
-            font-weight: ${fontWeight.value} !important;
-          }
-          
-          /* 新元素的預設字體大小 */
-          .bv-element-text {
-            font-size: ${fontSize.value}px !important;
           }
           
           /* 底圖樣式 */
@@ -2739,7 +2694,7 @@ javascript:(function(){
       initDragFunction();
       
       /* 添加事件監聽器 */
-      const controls = [labelWidth, labelHeight, fontFamily, fontSize, fontWeight, logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider];
+      const controls = [labelWidth, labelHeight, fontFamily, logoSizeSlider, logoXSlider, logoYSlider, logoOpacitySlider];
       
       controls.forEach(control => {
         if(control) {
