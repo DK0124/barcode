@@ -664,6 +664,7 @@ javascript:(function(){
             if (skuDiv) {
               data.sku = skuDiv.textContent?.trim() || '';
             }
+          }
           
           if (specBarcode7) {
             // 價格處理（同樣式5）
