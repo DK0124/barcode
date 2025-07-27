@@ -2908,6 +2908,7 @@ javascript:(function(){
         }
         
         // 載入元素位置
+        if (settings.elementPositions) {
           elementPositions = settings.elementPositions;
           // 套用儲存的位置
           Object.keys(elementPositions).forEach(elementId => {
