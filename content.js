@@ -74,21 +74,21 @@ javascript:(function(){
         subLineHeight: 9
       }
     },
-    { 
-      name: 'Brother小標籤', 
-      width: 29, 
-      height: 20,
-      type: 'brother',
-      settings: {
-        mainSize: 5,        // 更小
-        subSize: 4,         // 最小值
-        barcodeTextSize: 4, // 最小值
-        barcodeTextLineHeight: 4, // 與文字相同
-        barcodeHeight: 40,  // 更小
-        barcodeWidth: 100,
-        mainLineHeight: 5,  // 與文字相同
-        subLineHeight: 4    // 與文字相同
-      }
+     { 
+    name: 'Brother小標籤', 
+    width: 29, 
+    height: 20,
+    type: 'brother',
+    settings: {
+      mainSize: 4,        // 最小值
+      subSize: 4,         // 最小值
+      barcodeTextSize: 4, // 最小值
+      barcodeTextLineHeight: 4, // 與文字相同
+      barcodeHeight: 35,  // 更小一點
+      barcodeWidth: 100,
+      mainLineHeight: 4,  // 與文字相同
+      subLineHeight: 4    // 與文字相同
+    }
     }
   ];
 
@@ -2416,7 +2416,7 @@ javascript:(function(){
         updateStyles();
       }
       
-      /* 預設尺寸按鈕事件 */
+      /* 預設尺寸按鈕事件 - 修正版 */
       document.querySelectorAll('.bv-preset-size-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const width = this.dataset.width;
@@ -2431,14 +2431,40 @@ javascript:(function(){
           
           // 應用預設的文字和條碼設定
           if (preset && preset.settings) {
-            if (mainSize) mainSize.value = preset.settings.mainSize;
-            if (subSize) subSize.value = preset.settings.subSize;
-            if (barcodeTextSize) barcodeTextSize.value = preset.settings.barcodeTextSize;
-            if (barcodeTextLineHeightSlider) barcodeTextLineHeightSlider.value = preset.settings.barcodeTextLineHeight;
+            // 重置行高修改標記，讓系統自動計算
+            if (mainLineHeightSlider) mainLineHeightSlider.dataset.userModified = 'false';
+            if (subLineHeightSlider) subLineHeightSlider.dataset.userModified = 'false';
+            if (barcodeTextLineHeightSlider) barcodeTextLineHeightSlider.dataset.userModified = 'false';
+            
+            // 設定文字大小
+            if (mainSize) {
+              mainSize.value = preset.settings.mainSize;
+              // 觸發 input 事件以自動調整行高
+              mainSize.dispatchEvent(new Event('input'));
+            }
+            if (subSize) {
+              subSize.value = preset.settings.subSize;
+              subSize.dispatchEvent(new Event('input'));
+            }
+            if (barcodeTextSize) {
+              barcodeTextSize.value = preset.settings.barcodeTextSize;
+              barcodeTextSize.dispatchEvent(new Event('input'));
+            }
+            
+            // 設定行高（如果使用者沒有手動調整過的話）
+            if (mainLineHeightSlider && !mainLineHeightSlider.dataset.userModified) {
+              mainLineHeightSlider.value = preset.settings.mainLineHeight;
+            }
+            if (subLineHeightSlider && !subLineHeightSlider.dataset.userModified) {
+              subLineHeightSlider.value = preset.settings.subLineHeight;
+            }
+            if (barcodeTextLineHeightSlider && !barcodeTextLineHeightSlider.dataset.userModified) {
+              barcodeTextLineHeightSlider.value = preset.settings.barcodeTextLineHeight;
+            }
+            
+            // 設定條碼相關
             if (barcodeHeight) barcodeHeight.value = preset.settings.barcodeHeight;
             if (barcodeWidth) barcodeWidth.value = preset.settings.barcodeWidth;
-            if (mainLineHeightSlider) mainLineHeightSlider.value = preset.settings.mainLineHeight;
-            if (subLineHeightSlider) subLineHeightSlider.value = preset.settings.subLineHeight;
             
             // 更新所有控制項的顯示
             document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
@@ -2449,7 +2475,13 @@ javascript:(function(){
           this.classList.add('active');
           
           updateStyles();
-          showNotification(`已切換至 ${this.textContent}`);
+          
+          // 顯示更詳細的通知，包含套用的設定
+          if (preset && preset.type === 'brother' && presetName.includes('小標籤')) {
+            showNotification(`已切換至 ${this.textContent}，並套用小標籤優化設定`);
+          } else {
+            showNotification(`已切換至 ${this.textContent}`);
+          }
         });
       });
       
