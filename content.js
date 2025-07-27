@@ -1,5 +1,5 @@
 javascript:(function(){
-  /* BV SHOP 條碼標籤自由編輯器 v8 - 修正版 */
+  /* BV SHOP 條碼標籤自由編輯器 v8.1 - 完整修正版 */
   
   // 只在條碼列印頁面上執行
   if (!document.querySelector('.print_barcode_area')) return;
@@ -41,6 +41,7 @@ javascript:(function(){
   let startX = 0;
   let startY = 0;
   let labelElements = []; // 儲存所有標籤上的元素
+  const PREVIEW_SCALE = 2; // 預覽區域的縮放比例
 
   /* 預設值物件 */
   const defaultSettings = {
@@ -185,6 +186,46 @@ javascript:(function(){
     return element;
   }
 
+  /* 顯示通知訊息 - 全域函數 */
+  function showNotification(message, type = 'success') {
+    const existingNotification = document.querySelector('.bv-notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `bv-notification ${type}`;
+    
+    const icon = document.createElement('span');
+    icon.className = 'material-icons';
+    icon.textContent = type === 'success' ? 'check_circle' : 'warning';
+    
+    notification.appendChild(icon);
+    notification.appendChild(document.createTextNode(message));
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      setTimeout(() => notification.remove(), 400);
+    }, 3000);
+  }
+
+  /* 更新所有標籤的底圖 - 全域函數 */
+  function updateAllLogos() {
+    // 移除現有底圖
+    document.querySelectorAll('.label-background-logo').forEach(logo => logo.remove());
+    
+    // 為每個標籤添加底圖
+    if (logoDataUrl) {
+      document.querySelectorAll('.print_sample').forEach(sample => {
+        const logo = document.createElement('img');
+        logo.className = 'label-background-logo';
+        logo.src = logoDataUrl;
+        sample.insertBefore(logo, sample.firstChild);
+      });
+    }
+  }
+
   /* 建立基本樣式 */
   const style = document.createElement('style');
   style.innerHTML = `
@@ -195,9 +236,9 @@ javascript:(function(){
     
     /* 預覽區域容器 */
     .bv-preview-container {
-      transform: scale(2);
+      transform: scale(${PREVIEW_SCALE});
       transform-origin: top left;
-      width: 50%;
+      width: ${100 / PREVIEW_SCALE}%;
       margin: 0;
       padding: 20px;
       background: #f0f0f0;
@@ -1372,7 +1413,7 @@ javascript:(function(){
     e.dataTransfer.dropEffect = 'copy';
   }
 
-  /* 處理標籤放置 */
+  /* 處理標籤放置 - 修正縮放問題 */
   function handleLabelDrop(e) {
     e.preventDefault();
     
@@ -1380,8 +1421,8 @@ javascript:(function(){
     
     const sample = e.currentTarget;
     const rect = sample.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) / PREVIEW_SCALE;
+    const y = (e.clientY - rect.top) / PREVIEW_SCALE;
     
     const product = productData[0];
     let content = '';
@@ -1439,7 +1480,7 @@ javascript:(function(){
     });
   }
 
-  /* 處理元素拖曳 */
+  /* 處理元素拖曳 - 修正縮放問題 */
   function handleElementMouseDown(e) {
     if (e.button !== 0) return; // 只響應左鍵
     
@@ -1453,8 +1494,8 @@ javascript:(function(){
     const rect = element.getBoundingClientRect();
     const parentRect = element.parentElement.getBoundingClientRect();
     
-    startX = e.clientX - rect.left;
-    startY = e.clientY - rect.top;
+    startX = (e.clientX - rect.left) / PREVIEW_SCALE;
+    startY = (e.clientY - rect.top) / PREVIEW_SCALE;
     
     isDragging = true;
     
@@ -1465,7 +1506,7 @@ javascript:(function(){
     document.addEventListener('mouseup', handleElementDragEnd);
   }
 
-  /* 處理元素拖曳中 */
+  /* 處理元素拖曳中 - 修正縮放問題 */
   function handleElementDrag(e) {
     if (!isDragging || !selectedElement) return;
     
@@ -1476,14 +1517,14 @@ javascript:(function(){
     const marginIndicator = parent.querySelector('.bv-margin-indicator');
     const marginRect = marginIndicator ? marginIndicator.getBoundingClientRect() : parentRect;
     
-    let newX = e.clientX - parentRect.left - startX;
-    let newY = e.clientY - parentRect.top - startY;
+    let newX = (e.clientX - parentRect.left) / PREVIEW_SCALE - startX;
+    let newY = (e.clientY - parentRect.top) / PREVIEW_SCALE - startY;
     
     // 限制在邊界內
-    const minX = marginRect.left - parentRect.left;
-    const minY = marginRect.top - parentRect.top;
-    const maxX = marginRect.right - parentRect.left - selectedElement.offsetWidth;
-    const maxY = marginRect.bottom - parentRect.top - selectedElement.offsetHeight;
+    const minX = (marginRect.left - parentRect.left) / PREVIEW_SCALE;
+    const minY = (marginRect.top - parentRect.top) / PREVIEW_SCALE;
+    const maxX = (marginRect.right - parentRect.left) / PREVIEW_SCALE - selectedElement.offsetWidth;
+    const maxY = (marginRect.bottom - parentRect.top) / PREVIEW_SCALE - selectedElement.offsetHeight;
     
     newX = Math.max(minX, Math.min(newX, maxX));
     newY = Math.max(minY, Math.min(newY, maxY));
@@ -2148,22 +2189,6 @@ javascript:(function(){
         saveElementsData();
       }
       
-      /* 更新所有標籤的底圖 */
-      function updateAllLogos() {
-        // 移除現有底圖
-        document.querySelectorAll('.label-background-logo').forEach(logo => logo.remove());
-        
-        // 為每個標籤添加底圖
-        if (logoDataUrl) {
-          document.querySelectorAll('.print_sample').forEach(sample => {
-            const logo = document.createElement('img');
-            logo.className = 'label-background-logo';
-            logo.src = logoDataUrl;
-            sample.insertBefore(logo, sample.firstChild);
-          });
-        }
-      }
-      
       /* 預設尺寸按鈕事件 */
       document.querySelectorAll('.bv-preset-size-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -2365,30 +2390,6 @@ javascript:(function(){
             showNotification('已清空所有元素');
           }
         });
-      }
-      
-      /* 顯示通知訊息 */
-      window.showNotification = function(message, type = 'success') {
-        const existingNotification = document.querySelector('.bv-notification');
-        if (existingNotification) {
-          existingNotification.remove();
-        }
-        
-        const notification = document.createElement('div');
-        notification.className = `bv-notification ${type}`;
-        
-        const icon = document.createElement('span');
-        icon.className = 'material-icons';
-        icon.textContent = type === 'success' ? 'check_circle' : 'warning';
-        
-        notification.appendChild(icon);
-        notification.appendChild(document.createTextNode(message));
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-          notification.style.animation = 'slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-          setTimeout(() => notification.remove(), 400);
-        }, 3000);
       }
       
       /* 載入儲存的面板狀態 */
