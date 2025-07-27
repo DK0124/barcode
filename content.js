@@ -306,24 +306,44 @@ javascript:(function(){
       barcodeHeight: 70,
       barcodeWidth: 100,
       barcodeYPosition: 60,
-      rebuild: function(sample, data) {
-        sample.innerHTML = `
-          <div class="spec_info">
-            <ul>
-              <li class="main break-all show-multi-line">${data.productName || '商品名稱'}</li>
-              <li class="sub spec-sub">${data.spec || '規格名稱一 / 規格名稱二'}</li>
-              <li class="sub"></li>
-              <div class="sub sku-text">${data.productCode || data.sku || 'SKU123'}</div>
-            </ul>
-          </div>
-          <div class="spec_barcode style5-barcode">
-            <span style="text-align: right" class="sub">
-              <b>${data.price || '售價 $1,234'} ${data.specialPrice || '特價 $1,111'}</b>
-            </span>
-            ${data.barcodeImage ? `<img src="${data.barcodeImage}" alt="barcode">` : ''}
-            <b><div class="sub" style="margin-top: 1%;">${data.barcodeNumber || '123456789'}</div></b>
-          </div>
-        `;
+      rebuild: (sample, data) => {
+        sample.innerHTML = '';
+        sample.classList.add('style7-layout');
+        
+        // 商品名稱
+        if (data.productName) {
+          const main = document.createElement('div');
+          main.className = 'main';
+          main.textContent = data.productName;
+          sample.appendChild(main);
+        }
+        
+        // 條碼區域
+        const specBarcode = document.createElement('div');
+        specBarcode.className = 'spec_barcode compact-barcode';
+        
+        if (data.barcodeImage) {
+          const img = document.createElement('img');
+          img.src = data.barcodeImage;
+          specBarcode.appendChild(img);
+        }
+        
+        if (data.barcodeNumber) {
+          const barcodeText = document.createElement('span');
+          barcodeText.className = 'sub';
+          barcodeText.textContent = data.barcodeNumber;
+          specBarcode.appendChild(barcodeText);
+        }
+        
+        sample.appendChild(specBarcode);
+        
+        // SKU
+        if (data.sku) {
+          const skuDiv = document.createElement('div');
+          skuDiv.className = 'sub sku-text';
+          skuDiv.textContent = data.sku;
+          sample.appendChild(skuDiv);
+        }
       }
     },
     
@@ -475,121 +495,117 @@ javascript:(function(){
     return 'style1';
   }
 
-  /* 抓取頁面資料 - 完全重寫版 */
+  /* 抓取產品資料函數 */
   function extractProductData() {
     productData = [];
     
     document.querySelectorAll('.print_sample').forEach((sample, index) => {
-      // 保存原始HTML
-      originalHTML[index] = sample.innerHTML;
+      let data = {};
       
-      const data = {
-        productName: '',
-        spec: '',
-        price: '',
-        specialPrice: '',
-        productCode: '',
-        sku: '',
-        barcodeImage: '',
-        barcodeNumber: '',
-        originalHTML: sample.innerHTML
-      };
-      
-      // 抓取商品名稱
-      const mainElement = sample.querySelector('.main');
-      if (mainElement) {
-        data.productName = mainElement.textContent.trim();
-      }
-      
-      // 抓取條碼圖片
-      const barcodeImg = sample.querySelector('img[alt="barcode"]');
-      if (barcodeImg) {
-        data.barcodeImage = barcodeImg.src;
-      }
-      
-      // 根據樣式來抓取資料
-      const detectedStyle = detectOriginalLayout();
-      
-      if (detectedStyle === 'style8') {
-        // 純條碼樣式
-        const barcodeNumberElement = sample.querySelector('.spec_barcode .sub');
-        if (barcodeNumberElement) {
-          data.barcodeNumber = barcodeNumberElement.textContent.trim();
-        }
-      } else if (detectedStyle === 'style5' || detectedStyle === 'style7') {
-        // 價格在條碼區的樣式
-        const specInfo = sample.querySelector('.spec_info');
-        const specBarcode = sample.querySelector('.spec_barcode');
-        
-        // 抓取規格（第一個 .sub）
-        const specSub = specInfo?.querySelector('li.sub');
-        if (specSub) {
-          data.spec = specSub.textContent.trim();
-        }
-        
-        // 抓取 SKU（樣式7）
-        if (detectedStyle === 'style7') {
-          const skuDiv = specInfo?.querySelector('div.sub');
-          if (skuDiv) {
-            data.sku = skuDiv.textContent.trim();
-            data.productCode = data.sku;
-          }
-        }
-        
-        // 抓取價格（在條碼區）
-        const priceElement = specBarcode?.querySelector('span.sub b');
-        if (priceElement) {
-          const priceText = priceElement.textContent.trim();
-          const priceMatch = priceText.match(/售價\s*\$?([\d,]+)/);
-          const specialMatch = priceText.match(/特價\s*\$?([\d,]+)/);
+      // 根據當前樣式抓取資料
+      switch(currentLayout) {
+        case 'style1':
+        case 'style2':
+          // 樣式1和2：上中下佈局
+          const specInfo = sample.querySelector('.spec_info');
+          const specBarcode = sample.querySelector('.spec_barcode');
           
-          if (priceMatch) {
-            data.price = `售價 $${priceMatch[1]}`;
+          if (specInfo) {
+            const mainText = specInfo.querySelector('.main');
+            const subTexts = specInfo.querySelectorAll('.sub');
+            
+            data.productName = mainText?.textContent?.trim() || '';
+            data.spec = subTexts[0]?.textContent?.trim() || '';
+            data.productNumber = subTexts[1]?.textContent?.trim() || '';
+            data.price = subTexts[2]?.textContent?.trim() || '';
           }
-          if (specialMatch) {
-            data.specialPrice = `特價 $${specialMatch[1]}`;
-          }
-        }
-        
-        // 抓取條碼號碼
-        const barcodeNumberElement = specBarcode?.querySelector('div.sub, > span.sub:last-child');
-        if (barcodeNumberElement) {
-          data.barcodeNumber = barcodeNumberElement.textContent.trim();
-        }
-      } else {
-        // 其他樣式
-        const subElements = sample.querySelectorAll('.sub');
-        let specFound = false;
-        
-        subElements.forEach((sub) => {
-          const text = sub.textContent.trim();
           
-          // 跳過空白或 &nbsp;
-          if (!text || text === '\u00A0') return;
+          if (specBarcode) {
+            data.barcodeNumber = specBarcode.querySelector('.sub')?.textContent?.trim() || '';
+            data.barcodeImage = specBarcode.querySelector('img')?.src || '';
+          }
+          break;
           
-          // 條碼號碼（純數字且長度大於8）
-          if (/^\d{8,}$/.test(text)) {
-            data.barcodeNumber = text;
+        case 'style3':
+        case 'style4':
+          // 樣式3和4：內嵌條碼
+          data.productName = sample.querySelector('.main')?.textContent?.trim() || '';
+          
+          const subElements = sample.querySelectorAll('.sub');
+          subElements.forEach((sub, idx) => {
+            const text = sub.textContent?.trim() || '';
+            if (idx === 0) data.spec = text;
+            else if (idx === 1) data.productNumber = text;
+            else if (idx === 2) data.barcodeNumber = text;
+            else if (idx === 3) data.price = text;
+          });
+          
+          data.barcodeImage = sample.querySelector('img')?.src || '';
+          break;
+          
+        case 'style5':
+          // 樣式5：價格在右側
+          data.productName = sample.querySelector('.main')?.textContent?.trim() || '';
+          
+          const specBarcode5 = sample.querySelector('.spec_barcode');
+          if (specBarcode5) {
+            const priceSpan = specBarcode5.querySelector('span.sub:first-child');
+            const barcodeSpan = specBarcode5.querySelector('span.sub:last-child');
+            
+            data.price = priceSpan?.textContent?.trim() || '';
+            data.barcodeNumber = barcodeSpan?.textContent?.trim() || '';
+            data.barcodeImage = specBarcode5.querySelector('img')?.src || '';
           }
-          // 規格（包含 / 的）
-          else if (!specFound && text.includes('/')) {
-            data.spec = text;
-            specFound = true;
+          
+          // 其他sub元素
+          const otherSubs = sample.querySelectorAll('.spec_info .sub');
+          data.spec = otherSubs[0]?.textContent?.trim() || '';
+          data.productNumber = otherSubs[1]?.textContent?.trim() || '';
+          break;
+          
+        case 'style6':
+          // 樣式6：緊湊佈局
+          data.productName = sample.querySelector('.main')?.textContent?.trim() || '';
+          
+          const subs6 = sample.querySelectorAll('.sub');
+          data.spec = subs6[0]?.textContent?.trim() || '';
+          data.price = subs6[1]?.textContent?.trim() || '';
+          
+          const barcode6 = sample.querySelector('.spec_barcode');
+          if (barcode6) {
+            data.barcodeNumber = barcode6.querySelector('.sub')?.textContent?.trim() || '';
+            data.barcodeImage = barcode6.querySelector('img')?.src || '';
           }
-          // 價格
-          else if (text.includes('售價')) {
-            data.price = text;
+          break;
+          
+        case 'style7':
+          // 樣式7：帶SKU - 修正選擇器錯誤
+          data.productName = sample.querySelector('.main')?.textContent?.trim() || '';
+          
+          const barcode7 = sample.querySelector('.spec_barcode');
+          if (barcode7) {
+            data.barcodeNumber = barcode7.querySelector('.sub')?.textContent?.trim() || '';
+            data.barcodeImage = barcode7.querySelector('img')?.src || '';
           }
-          else if (text.includes('特價')) {
-            data.specialPrice = text;
+          
+          // 修正：正確抓取 SKU
+          data.sku = sample.querySelector('div.sub')?.textContent?.trim() || '';
+          break;
+          
+        case 'style8':
+          // 樣式8：純條碼
+          const barcode8 = sample.querySelector('.spec_barcode');
+          if (barcode8) {
+            data.barcodeNumber = barcode8.querySelector('.sub')?.textContent?.trim() || '';
+            data.barcodeImage = barcode8.querySelector('img')?.src || '';
           }
-        });
+          break;
       }
       
       productData.push(data);
     });
     
-    console.log('抓取到的產品資料:', productData);
+    console.log('抓取到的產品資料：', productData);
   }
   
   /* 驗證行高合理性 */
