@@ -3,9 +3,10 @@
 
   /* 檢查當前網址是否為指定的條碼顯示頁面 */
   if (!window.location.href.includes('https://bvshop-manage.bvshop.tw/barcode/show')) {
-    console.log('BV 條碼標籤編輯器：此工具只能在條碼顯示頁面使用');
+    console.log('BV 條碼標籤控制面板：此工具只能在條碼顯示頁面使用');
     return; // 結束執行
-  
+  }
+    
   /* 全域變數 */
   let dynamicStyle = null;
   let originalLayout = 'style1';
