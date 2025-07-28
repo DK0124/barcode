@@ -169,14 +169,18 @@
           ul.appendChild(li);
         }
         
-        if (data.price || data.specialPrice) {
+        // 售價和特價分開顯示
+        if (data.price) {
           const li = document.createElement('li');
-          li.className = 'sub price-info';
-          let priceText = data.price || '';
-          if (data.specialPrice) {
-            priceText += (priceText ? ' ' : '') + data.specialPrice;
-          }
-          li.textContent = priceText;
+          li.className = 'sub price-sub';
+          li.textContent = data.price;
+          ul.appendChild(li);
+        }
+        
+        if (data.specialPrice) {
+          const li = document.createElement('li');
+          li.className = 'sub';
+          li.textContent = data.specialPrice;
           ul.appendChild(li);
         }
         
@@ -346,14 +350,18 @@
         
         ul.appendChild(specBarcode);
         
-        if (data.price || data.specialPrice) {
+        // 售價和特價分開顯示
+        if (data.price) {
           const li = document.createElement('li');
-          li.className = 'sub price-info';
-          let priceText = data.price || '';
-          if (data.specialPrice) {
-            priceText += (priceText ? ' ' : '') + data.specialPrice;
-          }
-          li.textContent = priceText;
+          li.className = 'sub price-sub';
+          li.textContent = data.price;
+          ul.appendChild(li);
+        }
+        
+        if (data.specialPrice) {
+          const li = document.createElement('li');
+          li.className = 'sub';
+          li.textContent = data.specialPrice;
           ul.appendChild(li);
         }
         
@@ -580,17 +588,7 @@
         const specBarcode = document.createElement('div');
         specBarcode.className = 'spec_barcode style6-barcode';
         
-        if (data.price) {
-          const priceSpan = document.createElement('span');
-          priceSpan.style.textAlign = 'right';
-          priceSpan.className = 'sub';
-          
-          const b = document.createElement('b');
-          b.textContent = data.price;
-          
-          priceSpan.appendChild(b);
-          specBarcode.appendChild(priceSpan);
-        }
+        // 樣式6沒有價格資訊
         
         if (data.barcodeImage) {
           const img = document.createElement('img');
@@ -600,17 +598,16 @@
         
         if (data.barcodeNumber) {
           const b = document.createElement('b');
-          const div = document.createElement('div');
-          div.className = 'sub';
-          div.style.marginTop = '1%';
-          div.textContent = data.barcodeNumber;
-          b.appendChild(div);
+          const span = document.createElement('span');
+          span.className = 'sub';
+          span.textContent = data.barcodeNumber;
+          b.appendChild(span);
           specBarcode.appendChild(b);
         }
         
         sample.appendChild(specBarcode);
       }
-    },
+    }
     
     style7: {
       name: '樣式7 - 帶SKU',
