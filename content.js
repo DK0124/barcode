@@ -13,32 +13,78 @@
   
   /* 預設標籤尺寸 */
   const presetSizes = [
-    { name: 'BV常用 40×30', width: 40, height: 30, type: 'standard', settings: {
-      mainSize: 10, subSize: 8, barcodeTextSize: 8, barcodeTextLineHeight: 10,
-      barcodeHeight: 100, barcodeWidth: 100, mainLineHeight: 11, subLineHeight: 9
-    }},
-    { name: 'BV常用 40×25', width: 40, height: 25, type: 'standard', settings: {
-      mainSize: 9, subSize: 7, barcodeTextSize: 7, barcodeTextLineHeight: 9,
-      barcodeHeight: 80, barcodeWidth: 100, mainLineHeight: 10, subLineHeight: 8
-    }},
-    { name: 'Brother標籤 42×30', width: 42, height: 30, type: 'brother', settings: {
-      mainSize: 10, subSize: 8, barcodeTextSize: 8, barcodeTextLineHeight: 10,
-      barcodeHeight: 100, barcodeWidth: 100, mainLineHeight: 11, subLineHeight: 9
-    }},
-    { name: 'Brother小標籤 29×20', width: 29, height: 20, type: 'brother', settings: {
-      mainSize: 8, subSize: 5, barcodeTextSize: 5, barcodeTextLineHeight: 5,
-      barcodeHeight: 47, barcodeWidth: 100, mainLineHeight: 9, subLineHeight: 6
-    }}
+    { 
+      name: '40×30mm', 
+      width: 40, 
+      height: 30,
+      type: 'standard',
+      settings: {
+        mainSize: 10,
+        subSize: 8,
+        barcodeTextSize: 8,
+        barcodeTextLineHeight: 10,
+        barcodeHeight: 100,
+        barcodeWidth: 100,
+        mainLineHeight: 11,
+        subLineHeight: 9
+      }
+    },
+    { 
+      name: '40×25mm', 
+      width: 40, 
+      height: 25,
+      type: 'standard',
+      settings: {
+        mainSize: 9,
+        subSize: 7,
+        barcodeTextSize: 7,
+        barcodeTextLineHeight: 9,
+        barcodeHeight: 80,
+        barcodeWidth: 100,
+        mainLineHeight: 10,
+        subLineHeight: 8
+      }
+    },
+    { 
+      name: 'Brother大標籤', 
+      width: 42, 
+      height: 30,
+      type: 'brother',
+      settings: {
+        mainSize: 10,
+        subSize: 8,
+        barcodeTextSize: 8,
+        barcodeTextLineHeight: 10,
+        barcodeHeight: 100,
+        barcodeWidth: 100,
+        mainLineHeight: 11,
+        subLineHeight: 9
+      }
+    },
+    { 
+      name: 'Brother小標籤', 
+      width: 29, 
+      height: 20,
+      type: 'brother',
+      settings: {
+        mainSize: 8,
+        subSize: 5,
+        barcodeTextSize: 5,
+        barcodeTextLineHeight: 5,
+        barcodeHeight: 47,
+        barcodeWidth: 100,
+        mainLineHeight: 9,
+        subLineHeight: 6
+      }
+    }
   ];
   
   /* 字體選項 */
   const fontOptions = [
-    { name: 'Arial (預設)', value: 'Arial, sans-serif' },
-    { name: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
+    { name: '思源黑體', value: '"Noto Sans TC", sans-serif' },
+    { name: '系統預設', value: 'Arial, sans-serif' },
     { name: '微軟正黑體', value: '"Microsoft JhengHei", "微軟正黑體", sans-serif' },
-    { name: '標楷體', value: '"DFKai-SB", "標楷體", serif' },
-    { name: 'Noto Sans TC', value: '"Noto Sans TC", sans-serif' },
-    { name: '思源黑體', value: '"Source Han Sans TC", "思源黑體", sans-serif' }
+    { name: '標楷體', value: '"DFKai-SB", "標楷體", serif' }
   ];
   
   /* 預設設定值 - Brother 小標籤 29×20 */
@@ -1013,134 +1059,263 @@
     document.head.appendChild(dynamicStyle);
   }
   
-  /* 建立基礎樣式 */
+  /* 建立基礎樣式 - 新的 UI/UX 設計 */
   const style = document.createElement('style');
   style.innerHTML = `
     /* 字體引入 */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
     @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
     
-    /* 基礎樣式 */
+    /* 移除所有 focus outline */
+    * {
+      outline: none !important;
+    }
+    
+    *:focus,
+    *:focus-visible,
+    *:focus-within,
+    *:active {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* 預覽區域容器 */
+    .bv-preview-container {
+      transform: scale(2);
+      transform-origin: top left;
+      width: 50%;
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    
+    /* body 保持原始大小 */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f0f0;
+      overflow-x: auto;
+    }
+    
+    /* 隱藏原本的列印按鈕 */
+    body > button.no-print {
+      display: none !important;
+    }
+    
+    /* 為每個標籤添加效果 */
+    .print_sample {
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e8e8e8;
+      position: relative;
+      transition: all 0.2s ease;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      overflow: hidden !important;
+    }
+    
+    /* 標籤懸停效果 */
+    @media (hover: hover) {
+      .print_sample:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+    }
+    
+    @media print {
+      .bv-preview-container {
+        transform: scale(1) !important;
+        width: 100% !important;
+        padding: 0 !important;
+        background: white !important;
+      }
+      
+      body {
+        background: white !important;
+      }
+      
+      .print_sample {
+        box-shadow: none !important;
+        border: none !important;
+        margin-bottom: 0 !important;
+        border-radius: 0 !important;
+        transform: none !important;
+      }
+      
+      #bv-barcode-control-panel {
+        display: none !important;
+      }
+      
+      .bv-floating-button {
+        display: none !important;
+      }
+      
+      .bv-notification {
+        display: none !important;
+      }
+      
+      /* 移除多餘的分頁 */
+      .print_barcode_area {
+        page-break-after: auto !important;
+      }
+      
+      .print_sample {
+        page-break-inside: avoid !important;
+        page-break-after: auto !important;
+      }
+    }
+  
+    /* 主面板 - 更強的玻璃感 */
     #bv-barcode-control-panel {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      right: 24px;
+      top: 24px;
+      bottom: 24px;
       width: 360px;
       z-index: 10000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      will-change: transform;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Noto Sans TC', sans-serif;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
     
-    #bv-barcode-control-panel.minimized {
-      transform: translateY(calc(-100% + 64px));
-    }
-    
-    #bv-barcode-control-panel * {
-      box-sizing: border-box;
-    }
-    
-    /* 動畫定義 */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      to {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-    }
-    
-    /* 磨砂玻璃面板 */
     .bv-glass-panel {
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(24px) saturate(140%);
+      -webkit-backdrop-filter: blur(24px) saturate(140%);
       border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 
-                  0 1px 3px rgba(0, 0, 0, 0.08),
-                  inset 0 1px 1px rgba(255, 255, 255, 0.16);
-      border: 0.5px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.05),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset,
+        0 0 60px rgba(255, 255, 255, 0.4);
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
-      animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
     
-    /* 面板頭部 */
-    .bv-panel-header {
-      padding: 20px 20px 16px;
-      border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-      cursor: move;
+    /* 最小化狀態 */
+    #bv-barcode-control-panel.minimized {
+      height: auto;
+      bottom: auto;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    #bv-barcode-control-panel.minimized .bv-glass-panel {
+      height: auto;
+    }
+    
+    #bv-barcode-control-panel.minimized .bv-panel-content-wrapper {
+      display: none;
+    }
+    
+    /* 浮動按鈕 */
+    .bv-floating-button {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      box-shadow: 
+        0 4px 24px rgba(81, 138, 255, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.2),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    .bv-floating-button:hover {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 
+        0 8px 32px rgba(81, 138, 255, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.3),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.4);
+    }
+    
+    .bv-floating-button:active {
+      transform: scale(0.98);
+    }
+    
+    .bv-floating-button .material-icons {
+      font-size: 26px;
+    }
+    
+    #bv-barcode-control-panel.minimized ~ .bv-floating-button {
       display: flex;
-      align-items: flex-start;
+    }
+    
+    /* 面板標題 - 增強玻璃感 */
+    .bv-panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      display: flex;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.3);
+      align-items: center;
+      flex-shrink: 0;
+      cursor: move;
+      user-select: none;
     }
     
     .bv-header-content {
       display: flex;
-      gap: 14px;
-      align-items: flex-start;
+      align-items: center;
+      gap: 16px;
       flex: 1;
     }
     
     .bv-icon-wrapper {
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #518aff 0%, #4c7ff7 100%);
+      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(81, 138, 255, 0.3);
+      color: white;
+      box-shadow: 
+        0 2px 8px rgba(81, 138, 255, 0.2),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
     }
     
     .bv-icon-wrapper .material-icons {
-      color: white;
       font-size: 22px;
     }
     
     .bv-title-group {
-      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
     
     .bv-panel-title {
       margin: 0;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 600;
-      color: rgba(0, 0, 0, 0.85);
-      letter-spacing: -0.01em;
-      line-height: 1.3;
+      color: #000;
+      letter-spacing: -0.02em;
     }
     
     .bv-panel-subtitle {
-      margin: 2px 0 0;
-      font-size: 12px;
+      font-size: 13px;
       color: rgba(0, 0, 0, 0.5);
       font-weight: 400;
     }
     
+    /* 當前樣式顯示 */
     .bv-current-style {
-      margin-top: 6px;
-      font-size: 11px;
-      color: rgba(0, 0, 0, 0.4);
-      font-weight: 400;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.5);
+      margin-top: 4px;
     }
     
     .bv-current-style-name {
@@ -1148,106 +1323,217 @@
       font-weight: 500;
     }
     
-    /* 面板內容 */
+    /* Glass 按鈕 - 增強玻璃感 */
+    .bv-glass-button {
+      width: 32px;
+      height: 32px;
+      background: rgba(0, 0, 0, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: rgba(0, 0, 0, 0.7);
+    }
+    
+    .bv-glass-button:hover {
+      background: rgba(0, 0, 0, 0.05);
+      transform: scale(1.04);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .bv-glass-button:active {
+      transform: scale(0.96);
+    }
+    
+    .bv-glass-button .material-icons {
+      font-size: 20px;
+    }
+    
+    .bv-glass-button.bv-primary {
+      background: rgba(81, 138, 255, 0.08);
+      color: #518aff;
+      border-color: rgba(81, 138, 255, 0.15);
+    }
+    
+    .bv-glass-button.bv-primary:hover {
+      background: rgba(81, 138, 255, 0.12);
+    }
+    
+    /* 內容區域 - 增強玻璃感 */
     .bv-panel-content-wrapper {
-      max-height: calc(100vh - 140px);
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    
-    .bv-panel-content-wrapper::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    .bv-panel-content-wrapper::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.02);
-    }
-    
-    .bv-panel-content-wrapper::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.12);
-      border-radius: 3px;
-      transition: background 0.2s;
-    }
-    
-    .bv-panel-content-wrapper::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
     }
     
     .bv-panel-body {
-      padding: 16px;
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+      -webkit-overflow-scrolling: touch;
     }
     
+    /* 主要操作區 */
     .bv-primary-section {
+      margin-bottom: 28px;
+    }
+    
+    .bv-reset-button {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      box-shadow: 
+        0 3px 12px rgba(16, 185, 129, 0.25),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      color: white;
       margin-bottom: 16px;
     }
     
-    /* 設定卡片 */
+    .bv-reset-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 
+        0 6px 20px rgba(16, 185, 129, 0.35),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+    }
+    
+    .bv-reset-button:active {
+      transform: translateY(0);
+    }
+    
+    .bv-button-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .bv-button-icon .material-icons {
+      font-size: 26px;
+    }
+    
+    .bv-button-content {
+      flex: 1;
+      text-align: left;
+    }
+    
+    .bv-button-title {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      letter-spacing: -0.01em;
+    }
+    
+    .bv-button-subtitle {
+      display: block;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+    
+    /* 設定卡片 - 增強玻璃感 */
     .bv-settings-card {
-      background: rgba(255, 255, 255, 0.5);
-      border: 0.5px solid rgba(0, 0, 0, 0.08);
+      background: rgba(248, 250, 252, 0.5);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
       border-radius: 12px;
-      margin-bottom: 12px;
-      overflow: hidden;
+      padding: 20px;
+      margin-bottom: 16px;
       transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+    
+    .bv-settings-card:hover {
+      background: rgba(248, 250, 252, 0.7);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+    
+    .bv-settings-card.collapsed {
+      padding-bottom: 20px;
     }
     
     .bv-settings-card.collapsed .bv-card-content {
       display: none;
     }
     
-    .bv-settings-card.collapsed .bv-collapse-icon {
-      transform: rotate(0);
-    }
-    
     .bv-card-title {
-      padding: 14px 16px;
-      margin: 0;
+      margin: 0 0 20px 0;
       font-size: 14px;
       font-weight: 600;
-      color: rgba(0, 0, 0, 0.8);
+      color: #000;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
       cursor: pointer;
       user-select: none;
-      background: rgba(255, 255, 255, 0.3);
-      transition: background 0.2s;
-      position: relative;
     }
     
-    .bv-card-title:hover {
-      background: rgba(255, 255, 255, 0.5);
+    .bv-settings-card.collapsed .bv-card-title {
+      margin-bottom: 0;
     }
     
-    .bv-card-title .material-icons:first-child {
+    .bv-card-title .material-icons {
       font-size: 18px;
-      color: #518aff;
+      color: rgba(0, 0, 0, 0.5);
     }
     
-    .bv-collapse-icon {
+    .bv-card-title .bv-collapse-icon {
       margin-left: auto;
-      font-size: 20px;
-      color: rgba(0, 0, 0, 0.4);
       transition: transform 0.3s ease;
-      transform: rotate(180deg);
+    }
+    
+    .bv-settings-card.collapsed .bv-card-title .bv-collapse-icon {
+      transform: rotate(-90deg);
     }
     
     .bv-card-content {
-      padding: 16px;
-      padding-top: 8px;
+      animation: fadeIn 0.3s ease;
     }
     
-    /* 預設尺寸按鈕 */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* 預設尺寸按鈕 - Brother 品牌色 */
     .bv-preset-sizes {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
       gap: 8px;
       margin-bottom: 16px;
+      flex-wrap: wrap;
     }
     
     .bv-preset-size-btn {
-      padding: 10px 12px;
+      flex: 1;
+      min-width: calc(50% - 4px);
+      padding: 8px 12px;
       background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
       border: 0.5px solid rgba(0, 0, 0, 0.12);
       border-radius: 8px;
       font-size: 12px;
@@ -1256,34 +1542,52 @@
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
-      white-space: nowrap;
+    }
+    
+    .bv-preset-size-btn[data-type="brother"] {
+      background: rgba(1, 72, 152, 0.08);
+      border-color: rgba(1, 72, 152, 0.15);
+      color: #014898;
     }
     
     .bv-preset-size-btn:hover {
-      background: rgba(81, 138, 255, 0.08);
-      border-color: rgba(81, 138, 255, 0.3);
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.16);
       color: #518aff;
+    }
+    
+    .bv-preset-size-btn[data-type="brother"]:hover {
+      background: rgba(1, 72, 152, 0.12);
+      border-color: rgba(1, 72, 152, 0.2);
     }
     
     .bv-preset-size-btn.active {
-      background: rgba(81, 138, 255, 0.12);
-      border-color: #518aff;
-      color: #518aff;
+      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 
+        0 2px 8px rgba(81, 138, 255, 0.25),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
     }
     
-    /* 滑桿群組 */
+    .bv-preset-size-btn[data-type="brother"].active {
+      background: linear-gradient(135deg, #014898 0%, #003070 100%);
+      box-shadow: 
+        0 2px 8px rgba(1, 72, 152, 0.25),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Glass Slider - 更強的玻璃感 */
     .bv-slider-group {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 20px;
     }
     
     .bv-slider-item {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      opacity: 1;
-      transition: opacity 0.2s;
+      gap: 12px;
     }
     
     .bv-slider-item.disabled {
@@ -1295,72 +1599,161 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 12px;
-      color: rgba(0, 0, 0, 0.6);
-      padding: 0 2px;
+      font-size: 13px;
+      color: #000;
     }
     
     .bv-value-label {
-      font-weight: 600;
+      background: rgba(81, 138, 255, 0.08);
       color: #518aff;
-      font-variant-numeric: tabular-nums;
-      min-width: 40px;
-      text-align: right;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', monospace;
+      min-width: 48px;
+      text-align: center;
     }
     
-    /* 滑桿樣式 */
     .bv-glass-slider {
       -webkit-appearance: none;
-      appearance: none;
       width: 100%;
-      height: 5px;
-      background: rgba(0, 0, 0, 0.08);
-      border-radius: 5px;
+      height: 6px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 3px;
       outline: none;
       position: relative;
       cursor: pointer;
+      margin: 12px 0;
+    }
+    
+    .bv-glass-slider:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    
+    .bv-glass-slider:before {
+      content: '';
+      position: absolute;
+      height: 6px;
+      border-radius: 3px;
+      background: #518aff;
+      width: var(--value, 0%);
+      pointer-events: none;
     }
     
     .bv-glass-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       background: white;
-      border: 2px solid #518aff;
       border-radius: 50%;
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      box-shadow: 
+        0 1px 4px rgba(0, 0, 0, 0.15),
+        0 0 0 0.5px rgba(0, 0, 0, 0.05);
       transition: all 0.2s ease;
-    }
-    
-    .bv-glass-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.1);
-      box-shadow: 0 2px 8px rgba(81, 138, 255, 0.4);
-    }
-    
-    .bv-glass-slider::-webkit-slider-thumb:active {
-      transform: scale(0.95);
-    }
-    
-    .bv-glass-slider::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      background: white;
-      border: 2px solid #518aff;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-      transition: all 0.2s ease;
-    }
-    
-    .bv-glass-slider:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+      position: relative;
+      z-index: 1;
     }
     
     .bv-glass-slider:disabled::-webkit-slider-thumb {
       cursor: not-allowed;
+    }
+    
+    .bv-glass-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(0, 0, 0, 0.08);
+    }
+    
+    .bv-glass-slider:disabled::-webkit-slider-thumb:hover {
+      transform: scale(1);
+    }
+    
+    .bv-glass-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s ease;
+      border: none;
+    }
+    
+    /* Glass Select - 增強玻璃感 */
+    .bv-glass-select {
+      width: 100%;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border: 0.5px solid rgba(0, 0, 0, 0.08);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: #000;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23666666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+    
+    .bv-glass-select:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+    
+    .bv-glass-select:focus {
+      background-color: white;
+      border-color: #518aff;
+      box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
+    }
+    
+    /* 粗體按鈕 */
+    .bv-bold-button {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border: 0.5px solid rgba(0, 0, 0, 0.12);
+      border-radius: 8px;
+      padding: 8px 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 16px;
+      font-weight: 700;
+      color: rgba(0, 0, 0, 0.5);
+      user-select: none;
+      min-width: 40px;
+    }
+    
+    .bv-bold-button:hover {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.16);
+      color: #518aff;
+    }
+    
+    .bv-bold-button.active {
+      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 
+        0 2px 8px rgba(81, 138, 255, 0.25),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+    }
+    
+    .bv-bold-button.active:hover {
+      transform: scale(1.05);
+      box-shadow: 
+        0 4px 12px rgba(81, 138, 255, 0.35),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
     }
     
     /* 設定項目 */
@@ -1368,322 +1761,38 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 0;
-      opacity: 1;
-      transition: opacity 0.2s;
+      padding: 14px 0;
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);
     }
     
-    .bv-setting-item.disabled {
-      opacity: 0.5;
-      pointer-events: none;
+    .bv-setting-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .bv-setting-item:first-child {
+      padding-top: 0;
     }
     
     .bv-setting-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      flex: 1;
     }
     
     .bv-setting-label {
-      font-size: 12px;
-      color: rgba(0, 0, 0, 0.7);
-      font-weight: 500;
-    }
-    
-    /* 粗體按鈕 */
-    .bv-bold-button {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      background: rgba(255, 255, 255, 0.8);
-      font-weight: 700;
       font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      color: rgba(0, 0, 0, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: Georgia, serif;
-    }
-    
-    .bv-bold-button:hover:not(:disabled) {
-      background: rgba(81, 138, 255, 0.08);
-      border-color: rgba(81, 138, 255, 0.3);
-      color: #518aff;
-    }
-    
-    .bv-bold-button.active {
-      background: rgba(81, 138, 255, 0.12);
-      border-color: #518aff;
-      color: #518aff;
-    }
-    
-    .bv-bold-button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    /* 下拉選單 */
-    .bv-glass-select {
-      width: 100%;
-      padding: 10px 12px;
-      background: rgba(255, 255, 255, 0.8);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      border-radius: 8px;
-      font-size: 13px;
-      color: rgba(0, 0, 0, 0.8);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-    
-    .bv-glass-select:hover {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(0, 0, 0, 0.2);
-    }
-    
-    .bv-glass-select:focus {
-      outline: none;
-      border-color: #518aff;
-      box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
-    }
-    
-    /* 按鈕樣式 */
-    .bv-glass-button {
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(10px);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      border-radius: 8px;
-      font-size: 12px;
       font-weight: 500;
-      color: rgba(0, 0, 0, 0.7);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    .bv-glass-button:hover {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(0, 0, 0, 0.16);
-      color: rgba(0, 0, 0, 0.8);
-    }
-    
-    .bv-glass-button.bv-primary {
-      background: rgba(81, 138, 255, 0.12);
-      border-color: rgba(81, 138, 255, 0.3);
-      color: #518aff;
-    }
-    
-    .bv-glass-button.bv-primary:hover {
-      background: rgba(81, 138, 255, 0.18);
-      border-color: rgba(81, 138, 255, 0.4);
-    }
-    
-    .bv-glass-button .material-icons {
-      font-size: 16px;
-    }
-    
-    /* 清除格式按鈕 */
-    .bv-reset-button {
-      width: 100%;
-      padding: 14px 16px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
-      backdrop-filter: blur(20px);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
-      border-radius: 10px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-    
-    .bv-reset-button:hover {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 100%);
-      border-color: rgba(255, 59, 48, 0.3);
-      box-shadow: 0 4px 12px rgba(255, 59, 48, 0.15);
-      transform: translateY(-1px);
-    }
-    
-    .bv-button-icon {
-      width: 36px;
-      height: 36px;
-      background: rgba(255, 59, 48, 0.1);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
-    
-    .bv-reset-button:hover .bv-button-icon {
-      background: rgba(255, 59, 48, 0.15);
-    }
-    
-    .bv-button-icon .material-icons {
-      font-size: 20px;
-      color: #FF3B30;
-    }
-    
-    .bv-button-content {
-      flex: 1;
-      text-align: left;
-    }
-    
-    .bv-button-title {
-      display: block;
-      font-weight: 600;
-      color: rgba(0, 0, 0, 0.85);
-      margin-bottom: 2px;
-    }
-    
-    .bv-button-subtitle {
-      display: block;
-      font-size: 11px;
-      color: rgba(0, 0, 0, 0.5);
-      font-weight: 400;
-    }
-    
-    /* 最小化按鈕 */
-    .bv-minimize-btn {
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      background: rgba(0, 0, 0, 0.04);
-      border: none;
-    }
-    
-    .bv-minimize-btn:hover {
-      background: rgba(0, 0, 0, 0.08);
-    }
-    
-    .bv-minimize-btn .material-icons {
-      font-size: 18px;
-    }
-    
-    /* 列印按鈕 */
-    .bv-glass-action-button {
-      width: 100%;
-      padding: 14px 20px;
-      background: linear-gradient(135deg, #518aff 0%, #4c7ff7 100%);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(81, 138, 255, 0.35);
+      color: #000;
       letter-spacing: -0.01em;
-    }
-    
-    .bv-glass-action-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(81, 138, 255, 0.45);
-    }
-    
-    .bv-glass-action-button:active {
-      transform: translateY(0);
-    }
-    
-    .bv-glass-action-button .material-icons {
-      font-size: 20px;
-    }
-    
-    .bv-panel-footer {
-      padding: 16px;
-      padding-top: 8px;
-      border-top: 0.5px solid rgba(0, 0, 0, 0.08);
-      background: rgba(255, 255, 255, 0.3);
-    }
-    
-    /* 浮動列印按鈕 */
-    .bv-floating-button {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #518aff 0%, #4c7ff7 100%);
-      border: none;
-      border-radius: 50%;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(81, 138, 255, 0.4), 
-                  0 2px 4px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .bv-floating-button:hover {
-      transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 6px 20px rgba(81, 138, 255, 0.5), 
-                  0 3px 6px rgba(0, 0, 0, 0.15);
-    }
-    
-    .bv-floating-button:active {
-      transform: translateY(0) scale(0.98);
-    }
-    
-    .bv-floating-button .material-icons {
-      font-size: 24px;
-    }
-    
-    /* 通知訊息 */
-    .bv-notification {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border: 0.5px solid rgba(0, 0, 0, 0.08);
-      border-radius: 8px;
-      padding: 12px 20px;
-      font-size: 13px;
-      font-weight: 500;
-      color: rgba(0, 0, 0, 0.8);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 10001;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    
-    .bv-notification.success .material-icons {
-      color: #34C759;
-    }
-    
-    .bv-notification.warning .material-icons {
-      color: #FF9500;
-    }
-    
-    .bv-notification .material-icons {
-      font-size: 18px;
     }
     
     /* 預設管理 */
     .bv-preset-controls {
       display: flex;
       gap: 8px;
-      margin-bottom: 12px;
+      align-items: center;
     }
     
     .bv-preset-select-wrapper {
@@ -1698,77 +1807,202 @@
     .bv-preset-save-row {
       display: flex;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 12px;
     }
     
     .bv-glass-input {
       flex: 1;
-      padding: 10px 12px;
+      height: 36px;
       background: rgba(255, 255, 255, 0.8);
-      border: 0.5px solid rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(20px);
+      border: 0.5px solid rgba(0, 0, 0, 0.08);
       border-radius: 8px;
-      font-size: 13px;
-      color: rgba(0, 0, 0, 0.8);
+      padding: 0 12px;
+      font-size: 14px;
+      color: #000;
       transition: all 0.2s ease;
-      font-family: inherit;
+    }
+    
+    .bv-glass-input::placeholder {
+      color: rgba(0, 0, 0, 0.4);
+    }
+    
+    .bv-glass-input:hover {
+      background-color: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.12);
     }
     
     .bv-glass-input:focus {
-      outline: none;
+      background-color: white;
       border-color: #518aff;
       box-shadow: 0 0 0 3px rgba(81, 138, 255, 0.1);
     }
     
-    /* Logo 上傳區域 */
-    .bv-logo-upload-area {
-      position: relative;
+    /* 底部區域 */
+    .bv-panel-footer {
+      padding: 16px 24px 24px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
+    }
+    
+    .bv-glass-action-button {
       width: 100%;
-      height: 120px;
-      background: rgba(0, 0, 0, 0.03);
-      border: 2px dashed rgba(0, 0, 0, 0.15);
-      border-radius: 8px;
+      height: 48px;
+      background: linear-gradient(135deg, #518aff 0%, #0040ff 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      box-shadow: 
+        0 3px 12px rgba(81, 138, 255, 0.25),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+      letter-spacing: -0.01em;
+    }
+    
+    .bv-glass-action-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 
+        0 6px 20px rgba(81, 138, 255, 0.35),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+    }
+    
+    .bv-glass-action-button:active {
+      transform: translateY(0);
+    }
+    
+    .bv-glass-action-button .material-icons {
+      font-size: 22px;
+    }
+    
+    /* 滾動條 */
+    .bv-panel-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .bv-panel-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .bv-panel-body::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 6px;
+      transition: background 0.2s ease;
+    }
+    
+    .bv-panel-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.25);
+    }
+    
+    /* 通知 - 增強玻璃感 */
+    .bv-notification {
+      position: fixed;
+      top: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(50px) saturate(180%);
+      -webkit-backdrop-filter: blur(50px) saturate(180%);
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 0 0 0.5px rgba(0, 0, 0, 0.05),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.9);
+      z-index: 100001;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideDown 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      letter-spacing: -0.01em;
+    }
+    
+    .bv-notification.success {
+      color: #248A3D;
+    }
+    
+    .bv-notification.warning {
+      color: #C04C00;
+    }
+    
+    .bv-notification .material-icons {
+      font-size: 20px;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      to {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+      }
+    }
+    
+    /* 底圖上傳樣式 - 增強玻璃感 */
+    .bv-logo-upload-area {
+      border: 2px dashed rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
+      background: rgba(248, 250, 252, 0.3);
+      margin-bottom: 20px;
+      position: relative;
       overflow: hidden;
     }
     
     .bv-logo-upload-area:hover {
-      background: rgba(0, 0, 0, 0.05);
-      border-color: rgba(0, 0, 0, 0.25);
+      border-color: #518aff;
+      background: rgba(81, 138, 255, 0.02);
     }
     
     .bv-logo-upload-area.has-logo {
       border-style: solid;
-      border-color: rgba(81, 138, 255, 0.3);
-      background: rgba(81, 138, 255, 0.03);
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.6);
     }
     
-    #upload-prompt {
-      text-align: center;
-      color: rgba(0, 0, 0, 0.4);
-    }
-    
-    .bv-upload-hint {
-      font-size: 12px;
-      margin-top: 8px;
+    .bv-logo-upload-area .material-icons {
+      vertical-align: middle;
+      line-height: 1;
     }
     
     .bv-logo-preview {
       max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
+      max-height: 120px;
+      margin: 0 auto;
+      display: block;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
     
-    .bv-logo-controls {
-      margin-top: 16px;
-    }
-    
-    .bv-panel-subtitle {
-      font-size: 12px;
+    .bv-upload-hint {
       color: rgba(0, 0, 0, 0.5);
+      font-size: 14px;
+      margin-top: 12px;
       font-weight: 500;
     }
     
@@ -1863,29 +2097,6 @@
     /* 檔案輸入隱藏 */
     .bv-file-input-hidden {
       display: none;
-    }
-    
-    /* 預覽容器 */
-    .bv-preview-container {
-      background: rgba(0, 0, 0, 0.02);
-      border-radius: 8px;
-      padding: 16px;
-      margin: 20px 0;
-    }
-    
-    @media print {
-      #bv-barcode-control-panel,
-      .bv-floating-button,
-      .bv-notification,
-      .no-print {
-        display: none !important;
-      }
-      
-      .bv-preview-container {
-        background: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-      }
     }
   `;
   document.head.appendChild(style);
@@ -2011,17 +2222,17 @@
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>標籤寬度</span>
-                      <span class="bv-value-label" id="label-width">40mm</span>
+                      <span class="bv-value-label" id="label-width">29mm</span>
                     </div>
-                    <input type="range" id="label-width-slider" min="19" max="60" value="40" class="bv-glass-slider">
+                    <input type="range" id="label-width-slider" min="19" max="60" value="29" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>標籤高度</span>
-                      <span class="bv-value-label" id="label-height">30mm</span>
+                      <span class="bv-value-label" id="label-height">20mm</span>
                     </div>
-                    <input type="range" id="label-height-slider" min="19" max="60" value="30" class="bv-glass-slider">
+                    <input type="range" id="label-height-slider" min="19" max="60" value="20" class="bv-glass-slider">
                   </div>
                 </div>
                 
@@ -2058,17 +2269,17 @@
                   <div class="bv-slider-item" id="main-size-setting">
                     <div class="bv-slider-header">
                       <span>文字大小</span>
-                      <span class="bv-value-label" id="main-size">10px</span>
+                      <span class="bv-value-label" id="main-size">8px</span>
                     </div>
-                    <input type="range" id="main-slider" min="4" max="20" value="10" class="bv-glass-slider">
+                    <input type="range" id="main-slider" min="4" max="20" value="8" class="bv-glass-slider">
                   </div>
 
                   <div class="bv-slider-item" id="main-line-height-setting">
                     <div class="bv-slider-header">
                       <span>行高</span>
-                      <span class="bv-value-label" id="main-line-height">11px</span>
+                      <span class="bv-value-label" id="main-line-height">9px</span>
                     </div>
-                    <input type="range" id="main-line-height-slider" min="4" max="30" value="11" class="bv-glass-slider">
+                    <input type="range" id="main-line-height-slider" min="4" max="30" value="9" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item" id="main-gap-setting">
@@ -2093,17 +2304,17 @@
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>文字大小</span>
-                      <span class="bv-value-label" id="sub-size">8px</span>
+                      <span class="bv-value-label" id="sub-size">5px</span>
                     </div>
-                    <input type="range" id="sub-slider" min="4" max="16" value="8" class="bv-glass-slider">
+                    <input type="range" id="sub-slider" min="4" max="16" value="5" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>行高</span>
-                      <span class="bv-value-label" id="sub-line-height">9px</span>
+                      <span class="bv-value-label" id="sub-line-height">6px</span>
                     </div>
-                    <input type="range" id="sub-line-height-slider" min="4" max="20" value="9" class="bv-glass-slider">
+                    <input type="range" id="sub-line-height-slider" min="4" max="20" value="6" class="bv-glass-slider">
                   </div>
                   
                   <!-- 分隔線 -->
@@ -2120,17 +2331,17 @@
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>文字大小</span>
-                      <span class="bv-value-label" id="barcode-text-size">8px</span>
+                      <span class="bv-value-label" id="barcode-text-size">5px</span>
                     </div>
-                    <input type="range" id="barcode-text-slider" min="4" max="16" value="8" class="bv-glass-slider">
+                    <input type="range" id="barcode-text-slider" min="4" max="16" value="5" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item">
                     <div class="bv-slider-header">
                       <span>行高</span>
-                      <span class="bv-value-label" id="barcode-text-line-height">10px</span>
+                      <span class="bv-value-label" id="barcode-text-line-height">5px</span>
                     </div>
-                    <input type="range" id="barcode-text-line-height-slider" min="4" max="20" value="10" class="bv-glass-slider">
+                    <input type="range" id="barcode-text-line-height-slider" min="4" max="20" value="5" class="bv-glass-slider">
                   </div>
                 </div>
               </div>
@@ -2198,9 +2409,9 @@
                   <div class="bv-slider-item" id="barcode-height-setting">
                     <div class="bv-slider-header">
                       <span>條碼圖片高度（Y軸拉伸）</span>
-                      <span class="bv-value-label" id="barcode-height">100%</span>
+                      <span class="bv-value-label" id="barcode-height">47%</span>
                     </div>
-                    <input type="range" id="barcode-height-slider" min="30" max="200" value="100" class="bv-glass-slider">
+                    <input type="range" id="barcode-height-slider" min="30" max="200" value="47" class="bv-glass-slider">
                   </div>
                   
                   <div class="bv-slider-item" id="barcode-width-setting">
@@ -2214,9 +2425,9 @@
                   <div class="bv-slider-item" id="barcode-y-position-setting">
                     <div class="bv-slider-header">
                       <span>條碼垂直位置</span>
-                      <span class="bv-value-label" id="barcode-y-position">70%</span>
+                      <span class="bv-value-label" id="barcode-y-position">71%</span>
                     </div>
-                    <input type="range" id="barcode-y-position-slider" min="0" max="100" value="70" class="bv-glass-slider">
+                    <input type="range" id="barcode-y-position-slider" min="0" max="100" value="71" class="bv-glass-slider">
                   </div>
                 </div>
               </div>
@@ -2765,43 +2976,33 @@
             margin-top: ${(barcodeYPercent - 70) * 0.5}mm !important;
           }
           
-          /* 樣式7 - 特殊佈局處理 */
+          /* 樣式7特殊處理 - 不使用彈性佈局 */
           .print_barcode_area .print_sample.style7-layout {
-            position: relative !important;
+            display: block !important;
           }
           
           .print_barcode_area .print_sample.style7-layout .spec_info {
-            width: 100% !important;
+            margin-bottom: auto !important;
           }
           
           .print_barcode_area .print_sample.style7-layout .spec_barcode {
-            position: relative !important;
-            margin-top: -${20 + parseFloat(subSize.value) * 1.5}px !important;
+            position: absolute !important;
+            bottom: ${paddingOther}mm !important;
+            left: ${paddingLeft}mm !important;
+            right: ${paddingOther}mm !important;
+            width: calc(100% - ${paddingLeft + paddingOther}mm) !important;
           }
           
-          /* 樣式7的價格定位 */
+          /* 樣式7的價格文字特殊樣式 */
           .print_barcode_area .print_sample.style7-layout .spec_barcode > span.sub:first-child {
             position: absolute !important;
             right: 0 !important;
-            top: -${(parseFloat(mainSize.value) + parseFloat(subSize.value) + mainGap.value + specGap.value + 8)}px !important;
+            top: ${-15 - priceGap}px !important;
             font-size: ${subSize.value}px !important;
             line-height: ${validatedSubLineHeight}px !important;
-            font-weight: ${subFontWeight} !important;
             z-index: 3 !important;
             text-align: right !important;
-            white-space: pre-line !important;
-          }
-          
-          /* 樣式7的SKU樣式 */
-          .print_barcode_area .print_sample.style7-layout .spec_info div.sub {
-            font-size: ${Math.max(subSize.value - 1, 4)}px !important;
-            margin-top: ${skuGap}px !important;
-            margin-bottom: 4px !important;
-          }
-          
-          /* 樣式7的條碼位置 */
-          .print_barcode_area .print_sample.style7-layout .spec_barcode img {
-            margin-top: ${8 + parseFloat(subSize.value) * 2}px !important;
+            white-space: pre !important;
           }
           
           /* 底圖樣式 */
