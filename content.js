@@ -619,7 +619,7 @@
       hasSpecGap: false,
       hasPriceGap: true,
       hasSkuGap: true,
-      canAdjustBarcodeY: false,
+      canAdjustBarcodeY: true,
       barcodePosition: 'special',
       defaultPriceGap: -5,
       smallLabelDefaults: {
@@ -892,16 +892,30 @@
       
       // 處理條碼資料
       if (specBarcode) {
-        // 條碼數字
-        const barcodeSpan = specBarcode.querySelector('span.sub') || 
-                           specBarcode.querySelector('b > span.sub') ||
-                           specBarcode.querySelector('div.sub');
-        if (barcodeSpan && !barcodeSpan.style.textAlign) { // 排除價格的span
-          data.barcodeNumber = barcodeSpan.textContent?.trim() || '';
-        }
-        
         // 條碼圖片
         data.barcodeImage = specBarcode.querySelector('img')?.src || '';
+        
+        // 條碼數字 - 多種可能的位置
+        let barcodeNumber = '';
+        
+        // 嘗試各種可能的選擇器
+        const possibleSelectors = [
+          'span.sub',                    // 直接的 span.sub
+          'b > span.sub',               // b 標籤內的 span.sub（樣式1,2,5）
+          'div.sub',                    // div.sub（樣式7）
+          'b > div.sub',                // b 標籤內的 div.sub
+          'div.sub[style*="margin-top"]' // 有 margin-top 的 div.sub（樣式7）
+        ];
+        
+        for (const selector of possibleSelectors) {
+          const element = specBarcode.querySelector(selector);
+          if (element && !element.style.textAlign && !element.textContent.includes('售價') && !element.textContent.includes('特價')) {
+            barcodeNumber = element.textContent?.trim() || '';
+            if (barcodeNumber) break;
+          }
+        }
+        
+        data.barcodeNumber = barcodeNumber;
         
         // 特殊處理樣式5、6、7的價格（在右側）
         const priceSpan = specBarcode.querySelector('span[style*="text-align: right"]');
@@ -918,6 +932,31 @@
             data.specialPrice = specialMatch[0].trim();
           }
         }
+      }
+      
+      // 根據當前樣式進行特殊處理
+      switch(currentLayout) {
+        case 'style3':
+        case 'style4':
+          // 內嵌條碼樣式 - 條碼在 spec_info 內
+          const embeddedBarcode = specInfo?.querySelector('.spec_barcode');
+          if (embeddedBarcode) {
+            data.barcodeImage = embeddedBarcode.querySelector('img')?.src || '';
+            const barcodeText = embeddedBarcode.querySelector('span.sub');
+            data.barcodeNumber = barcodeText?.textContent?.trim() || '';
+          }
+          break;
+          
+        case 'style8':
+          // 純條碼樣式
+          const barcode8 = sample.querySelector('.spec_barcode');
+          if (barcode8) {
+            data.barcodeImage = barcode8.querySelector('img')?.src || '';
+            const barcodeSpan = barcode8.querySelector('span.sub') || 
+                               barcode8.querySelector('b > span.sub');
+            data.barcodeNumber = barcodeSpan?.textContent?.trim() || '';
+          }
+          break;
       }
       
       productData.push(data);
