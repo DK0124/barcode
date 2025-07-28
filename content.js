@@ -2638,29 +2638,14 @@
         
         const totalWidth = parseFloat(labelWidth.value);
         const totalHeight = parseFloat(labelHeight.value);
+        // Brother 標籤左邊界要多 1mm
+        const isBrotherLabel = labelWidth.value == 42 || labelWidth.value == 29;
+        const paddingLeft = isBrotherLabel ? 4 : 3;
+        const paddingOther = 3;
         
-        // Brother 標籤邊界設定
-        let paddingTop, paddingRight, paddingBottom, paddingLeft;
-        
-        if (labelWidth.value == 42 && labelHeight.value == 29) {
-          // Brother 大標籤 (42×29mm)：上4mm，左右下3mm
-          paddingTop = 4;
-          paddingRight = 3;
-          paddingBottom = 3;
-          paddingLeft = 3;
-        } else if (labelWidth.value == 29 && labelHeight.value == 20) {
-          // Brother 小標籤 (29×20mm)：左4mm，上下右3mm
-          paddingTop = 3;
-          paddingRight = 3;
-          paddingBottom = 3;
-          paddingLeft = 4;
-        } else {
-          // 其他標籤：全部3mm
-          paddingTop = 3;
-          paddingRight = 3;
-          paddingBottom = 3;
-          paddingLeft = 3;
-        }
+        const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 70;
+        const barcodeHeightScale = barcodeHeight ? parseFloat(barcodeHeight.value) / 100 : 1;
+        const barcodeWidthScale = barcodeWidth ? parseFloat(barcodeWidth.value) / 100 : 1;
         
         // 間距值
         const specGap = specGapSlider ? parseFloat(specGapSlider.value) : 0;
@@ -2756,7 +2741,7 @@
           html .print_barcode_area .print_sample,
           body .print_barcode_area .print_sample {
             height: ${labelHeight.value}mm !important;
-            padding: ${paddingTop}mm ${paddingRight}mm ${paddingBottom}mm ${paddingLeft}mm !important;
+            padding: ${paddingOther}mm ${paddingOther}mm ${paddingOther}mm ${paddingLeft}mm !important;
             box-sizing: border-box !important;
             position: relative !important;
             display: flex !important;
