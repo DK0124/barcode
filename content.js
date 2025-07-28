@@ -625,7 +625,7 @@
         barcodeHeight: 45,
         skuGap: -2,
         mainGap: -1,
-        priceGap: -10
+        priceGap: -6
       },
       rebuild: (sample, data) => {
         sample.innerHTML = '';
