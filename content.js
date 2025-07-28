@@ -2640,7 +2640,7 @@
         const totalHeight = parseFloat(labelHeight.value);
         // Brother 標籤左邊界要多 1mm
         const isBrotherLabel = labelWidth.value == 42 || labelWidth.value == 29;
-        const paddingLeft = isBrotherLabel ? 4 : 3;
+        const paddingLeft = isBrotherLabel ? 3 : 3;
         const paddingOther = 3;
         
         const barcodeYPercent = barcodeYPosition ? parseFloat(barcodeYPosition.value) : 70;
