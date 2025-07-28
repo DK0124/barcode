@@ -607,7 +607,7 @@
         
         sample.appendChild(specBarcode);
       }
-    }
+    },
     
     style7: {
       name: '樣式7 - 帶SKU',
