@@ -1010,10 +1010,11 @@
     .bv-preview-container {
       transform: scale(2);
       transform-origin: top left;
-      width: 50%;
+      width: calc(50% - 40px); /* 扣除 padding */
       margin: 0;
       padding: 20px;
       background: #f0f0f0;
+      max-width: calc(100vw / 2 - 40px); /* 確保不超過視窗寬度的一半 */
     }
     
     /* body 保持原始大小 */
@@ -1021,7 +1022,9 @@
       margin: 0;
       padding: 0;
       background: #f0f0f0;
-      overflow-x: auto;
+      overflow-x: hidden; /* 隱藏橫向捲軸 */
+      overflow-y: auto;
+      width: 100vw; /* 確保 body 寬度為視窗寬度 */
     }
     
     /* 隱藏原本的列印按鈕 */
