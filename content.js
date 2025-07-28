@@ -3,7 +3,7 @@
   
   /* 檢查當前網址是否為指定的條碼顯示頁面 */
   if (!window.location.href.includes('https://bvshop-manage.bvshop.tw/barcode/show')) {
-    console.log('BV 條碼標籤控制面板：此工具只能在條碼顯示頁面使用');
+    console.log('BV 條碼標籤編輯器：此工具只能在條碼顯示頁面使用');
     return;
   }
   
@@ -2184,8 +2184,7 @@
               <span class="material-icons">label</span>
             </div>
             <div class="bv-title-group">
-              <h3 class="bv-panel-title">BV 條碼標籤控制面板</h3>
-              <div class="bv-panel-subtitle">精準控制每個印刷細節</div>
+              <h3 class="bv-panel-title">BV 條碼標籤編輯器</h3>
               <div class="bv-current-style">
                 目前使用：<span class="bv-current-style-name">${layoutTemplates[currentLayout].name}</span>
               </div>
